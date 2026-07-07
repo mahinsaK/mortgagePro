@@ -17,7 +17,7 @@ export function createLoanSearchText({
     }
   }
 
-  return Array.from(tokens).join(" ").slice(0, 4000);
+  return Array.from(tokens).join(" ").slice(0, 2000);
 }
 
 export function normalizeSearchText(value: string) {

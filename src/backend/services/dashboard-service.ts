@@ -64,6 +64,14 @@ export async function getLenderDashboardData(
     Query.orderDesc("created_at"),
     Query.limit(pagination.pageSize),
     Query.offset((pagination.page - 1) * pagination.pageSize),
+    Query.select([
+      "$id",
+      "borrower_id",
+      "amount",
+      "daily_payment",
+      "status",
+      "end_date",
+    ]),
   ];
 
   if (searchQuery) {
@@ -83,6 +91,7 @@ export async function getLenderDashboardData(
         Query.equal("lender_id", lender.id),
         Query.equal("status", "active"),
         Query.limit(1),
+        Query.select(["$id"]),
       ],
     }),
     databases.listDocuments({
@@ -93,6 +102,7 @@ export async function getLenderDashboardData(
         Query.greaterThanEqual("date", todayRange.start),
         Query.lessThan("date", todayRange.end),
         Query.limit(MAX_DAILY_PAYMENT_LIMIT),
+        Query.select(["amount"]),
       ],
     }),
   ]);
@@ -108,6 +118,7 @@ export async function getLenderDashboardData(
             Query.equal("lender_id", lender.id),
             Query.equal("$id", borrowerIds),
             Query.limit(borrowerIds.length),
+            Query.select(["$id", "name", "contact_info"]),
           ],
         })
       : { documents: [] };

@@ -1,5 +1,6 @@
 import { getCollectorsPageData } from "@/backend/services/lending-service";
 import { AddCollectorForm } from "@/frontend/components/collectors/add-collector-form";
+import { CollectorsTable } from "@/frontend/components/collectors/collectors-table";
 import { PaginationControls } from "@/frontend/components/ui/pagination-controls";
 
 export const dynamic = "force-dynamic";
@@ -37,50 +38,7 @@ export default async function CollectorsPage({
           <h2 className="text-lg font-semibold">Collectors list</h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-left text-sm">
-            <thead className="bg-[#f8fafc] text-[#657386]">
-              <tr>
-                <th className="px-5 py-3 font-semibold">Name</th>
-                <th className="px-5 py-3 font-semibold">Contact</th>
-                <th className="px-5 py-3 font-semibold">Status</th>
-                <th className="px-5 py-3 font-semibold">Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {collectors.map((collector) => (
-                <tr className="border-t border-[#eef2f6]" key={collector.id}>
-                  <td className="px-5 py-4">
-                    <p className="font-medium">{collector.name}</p>
-                    <p className="mt-1 text-xs text-[#657386]">{collector.id}</p>
-                  </td>
-                  <td className="px-5 py-4 text-[#657386]">
-                    {collector.contactInfo || "No contact info"}
-                  </td>
-                  <td className="px-5 py-4">
-                    <span
-                      className={
-                        collector.status === "active"
-                          ? "rounded-full bg-[#dcfce7] px-3 py-1 text-xs font-semibold text-[#166534]"
-                          : "rounded-full bg-[#f1f5f9] px-3 py-1 text-xs font-semibold text-[#64748b]"
-                      }
-                    >
-                      {collector.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-[#657386]">
-                    {collector.createdAt}
-                  </td>
-                </tr>
-              ))}
-              {collectors.length === 0 ? (
-                <tr className="border-t border-[#eef2f6]">
-                  <td className="px-5 py-6 text-[#657386]" colSpan={4}>
-                    No collectors found.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+          <CollectorsTable collectors={collectors} />
         </div>
         <PaginationControls basePath="/collectors" pageInfo={pageInfo} />
       </section>

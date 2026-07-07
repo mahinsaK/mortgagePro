@@ -1,8 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import {
+  deleteLoanAction,
+  updateLoanAction,
+} from "@/backend/actions/lending-actions";
 import type { LoanRow } from "@/backend/services/lending-service";
-import { QrCodeImage } from "@/frontend/components/ui/qr-code-image";
+import { LoanPaymentsPanel } from "@/frontend/components/loans/loan-payments-panel";
 
 export function LoansTable({ loans }: { loans: LoanRow[] }) {
   const [selectedLoan, setSelectedLoan] = useState<LoanRow | null>(null);
@@ -31,7 +35,14 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
                 onClick={() => setSelectedLoan(loan)}
               >
                 <td className="px-5 py-4">
-                  <QrCodeImage src={loan.qrCode} />
+                  <a
+                    className="inline-flex h-9 items-center rounded-md border border-[#cfd8e3] px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#f8fafc]"
+                    download={`${loan.id}-qr.png`}
+                    href={`/api/loans/${loan.id}/qr`}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    Download
+                  </a>
                 </td>
                 <td className="px-5 py-4 font-medium">{loan.id}</td>
                 <td className="px-5 py-4">{loan.borrowerName}</td>
@@ -63,7 +74,7 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
           onClick={() => setSelectedLoan(null)}
         >
           <section
-            className="w-full max-w-2xl rounded-lg bg-white shadow-xl"
+            className="max-h-[calc(100vh-48px)] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between border-b border-[#dfe5ec] px-6 py-5">
@@ -84,37 +95,157 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
               </button>
             </div>
 
-            <div className="grid gap-6 p-6 md:grid-cols-[140px_1fr]">
+            <div className="grid gap-6 p-6 md:grid-cols-[150px_1fr]">
               <div>
-                <QrCodeImage src={selectedLoan.qrCode} />
-                {selectedLoan.qrCode ? (
-                  <a
-                    className="mt-2 block text-center text-xs font-semibold text-[#1d4ed8] hover:underline"
-                    download={`${selectedLoan.id}-qr.png`}
-                    href={selectedLoan.qrCode}
+                <a
+                  className="flex h-10 items-center justify-center rounded-md border border-[#cfd8e3] px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#f8fafc]"
+                  download={`${selectedLoan.id}-qr.png`}
+                  href={`/api/loans/${selectedLoan.id}/qr`}
+                >
+                  Download QR
+                </a>
+                <form
+                  action={deleteLoanAction}
+                  className="mt-3"
+                  onSubmit={(event) => {
+                    if (!confirm("Delete this loan and its payments?")) {
+                      event.preventDefault();
+                    }
+                  }}
+                >
+                  <input name="loan_id" type="hidden" value={selectedLoan.id} />
+                  <button
+                    className="flex h-10 w-full items-center justify-center rounded-md border border-[#fecaca] px-3 text-xs font-semibold text-[#b91c1c] transition hover:bg-[#fef2f2]"
+                    type="submit"
                   >
-                    Download QR
-                  </a>
-                ) : null}
+                    Delete loan
+                  </button>
+                </form>
               </div>
-              <dl className="grid gap-4 sm:grid-cols-2">
-                <Detail label="Borrower" value={selectedLoan.borrowerName} />
-                <Detail label="Status" value={selectedLoan.status} />
-                <Detail label="Amount" value={selectedLoan.amount} />
-                <Detail
-                  label="Daily payment"
-                  value={selectedLoan.dailyPayment}
-                />
-                <Detail label="Interest rate" value={selectedLoan.interestRate} />
-                <Detail label="Start date" value={selectedLoan.startDate} />
-                <Detail label="End date" value={selectedLoan.endDate} />
-                <Detail label="Borrower ID" value={selectedLoan.borrowerId} />
-              </dl>
+              <div>
+                <dl className="grid gap-4 sm:grid-cols-2">
+                  <Detail label="Borrower" value={selectedLoan.borrowerName} />
+                  <Detail label="Status" value={selectedLoan.status} />
+                  <Detail label="Amount" value={selectedLoan.amount} />
+                  <Detail
+                    label="Daily payment"
+                    value={selectedLoan.dailyPayment}
+                  />
+                  <Detail label="Interest rate" value={selectedLoan.interestRate} />
+                  <Detail label="Start date" value={selectedLoan.startDate} />
+                  <Detail label="End date" value={selectedLoan.endDate} />
+                  <Detail label="Borrower ID" value={selectedLoan.borrowerId} />
+                </dl>
+
+                <LoanPaymentsPanel loanId={selectedLoan.id} />
+
+                <form
+                  action={updateLoanAction}
+                  className="mt-6 grid gap-4 border-t border-[#eef2f6] pt-5 sm:grid-cols-2"
+                >
+                  <input name="loan_id" type="hidden" value={selectedLoan.id} />
+                  <Field
+                    defaultValue={selectedLoan.amountValue}
+                    label="Amount"
+                    min="1"
+                    name="amount"
+                    required
+                    step="0.01"
+                    type="number"
+                  />
+                  <Field
+                    defaultValue={selectedLoan.interestRateValue}
+                    label="Interest"
+                    min="0"
+                    name="interest_rate"
+                    required
+                    step="0.01"
+                    type="number"
+                  />
+                  <Field
+                    defaultValue={selectedLoan.dailyPaymentValue}
+                    label="Daily payment"
+                    min="0"
+                    name="daily_payment"
+                    required
+                    step="0.01"
+                    type="number"
+                  />
+                  <label className="text-sm font-medium text-[#2d3745]">
+                    Status
+                    <select
+                      className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] bg-white px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+                      defaultValue={selectedLoan.status}
+                      name="status"
+                    >
+                      <option value="active">Active</option>
+                      <option value="completed">Completed</option>
+                      <option value="overdue">Overdue</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </label>
+                  <Field
+                    defaultValue={selectedLoan.startDateInput}
+                    label="Start date"
+                    name="start_date"
+                    required
+                    type="date"
+                  />
+                  <Field
+                    defaultValue={selectedLoan.endDateInput}
+                    label="End date"
+                    name="end_date"
+                    required
+                    type="date"
+                  />
+                  <div className="flex items-end sm:col-span-2">
+                    <button
+                      className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
+                      type="submit"
+                    >
+                      Update loan
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </section>
         </div>
       ) : null}
     </>
+  );
+}
+
+function Field({
+  defaultValue,
+  label,
+  min,
+  name,
+  required,
+  step,
+  type,
+}: {
+  defaultValue: string;
+  label: string;
+  min?: string;
+  name: string;
+  required?: boolean;
+  step?: string;
+  type: "date" | "number";
+}) {
+  return (
+    <label className="text-sm font-medium text-[#2d3745]">
+      {label}
+      <input
+        className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+        defaultValue={defaultValue}
+        min={min}
+        name={name}
+        required={required}
+        step={step}
+        type={type}
+      />
+    </label>
   );
 }
 

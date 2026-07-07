@@ -2,17 +2,26 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBorrowerProfileData } from "@/backend/services/lending-service";
 import { CreateLoanForm } from "@/frontend/components/loans/create-loan-form";
-import { QrCodeImage } from "@/frontend/components/ui/qr-code-image";
+import { PaginationControls } from "@/frontend/components/ui/pagination-controls";
 
 export const dynamic = "force-dynamic";
 
 export default async function BorrowerProfilePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ borrowerId: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
   const { borrowerId } = await params;
-  const { borrower, loans } = await getBorrowerProfileData(borrowerId);
+  const { page } = await searchParams;
+  const { borrower, loans, pageInfo } = await getBorrowerProfileData(
+    borrowerId,
+    {
+      page: Number(page) || 1,
+      pageSize: 8,
+    },
+  );
 
   if (!borrower) {
     notFound();
@@ -24,28 +33,31 @@ export default async function BorrowerProfilePage({
         <div>
           <p className="text-sm font-medium text-[#657386]">Borrower profile</p>
           <h1 className="mt-2 text-3xl font-semibold">{borrower.name}</h1>
-          <p className="mt-2 text-sm text-[#657386]">
-            {borrower.businessName || "No business name"} / {borrower.contactInfo}
-          </p>
+          <div className="mt-2 space-y-1 text-sm text-[#657386]">
+            <p>{borrower.businessName || "No business name"}</p>
+            <p>Contact: {borrower.contactInfo || "No contact number"}</p>
+            <p>Address: {borrower.addressInfo || "No address"}</p>
+          </div>
         </div>
-        <Link
-          className="rounded-md border border-[#cfd8e3] px-4 py-2 text-sm font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
-          href="/borrowers"
-        >
-          Back
-        </Link>
+        <div className="flex flex-wrap justify-end gap-2">
+          <CreateLoanForm borrowerId={borrower.id} />
+          <Link
+            className="flex h-10 items-center rounded-md border border-[#cfd8e3] px-4 text-sm font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
+            href="/borrowers"
+          >
+            Back
+          </Link>
+        </div>
       </div>
 
       <div className="mb-6 grid gap-4 md:grid-cols-3">
-        <SummaryCard label="Total loans" value={String(borrower.loanCount)} />
+        <SummaryCard label="Total loans" value={String(borrower.loanCount ?? 0)} />
         <SummaryCard
           label="Active loans"
-          value={String(borrower.activeLoanCount)}
+          value={String(borrower.activeLoanCount ?? 0)}
         />
         <SummaryCard label="Status" value={borrower.status} />
       </div>
-
-      <CreateLoanForm borrowerId={borrower.id} />
 
       <section>
         <div className="mb-4">
@@ -59,16 +71,13 @@ export default async function BorrowerProfilePage({
             >
               <div className="flex gap-5">
                 <div className="shrink-0">
-                  <QrCodeImage src={loan.qrCode} />
-                  {loan.qrCode ? (
-                    <a
-                      className="mt-2 block text-center text-xs font-semibold text-[#1d4ed8] hover:underline"
-                      download={`${loan.id}-qr.png`}
-                      href={loan.qrCode}
-                    >
-                      Download
-                    </a>
-                  ) : null}
+                  <a
+                    className="flex h-10 items-center justify-center rounded-md border border-[#cfd8e3] px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#f8fafc]"
+                    download={`${loan.id}-qr.png`}
+                    href={`/api/loans/${loan.id}/qr`}
+                  >
+                    Download QR
+                  </a>
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -101,6 +110,10 @@ export default async function BorrowerProfilePage({
             </div>
           ) : null}
         </div>
+        <PaginationControls
+          basePath={`/borrowers/${borrower.id}`}
+          pageInfo={pageInfo}
+        />
       </section>
     </div>
   );

@@ -1,5 +1,4 @@
 import { Client, Databases, Permission, Query, Role, Users } from "node-appwrite";
-import QRCode from "qrcode";
 import { readFileSync } from "node:fs";
 
 const env = loadEnv([".env.local", ".env.example"]);
@@ -101,7 +100,7 @@ const schema = [
       datetimeAttr("end_date", true),
       enumAttr("status", ["active", "completed", "overdue", "cancelled"], true),
       stringAttr("qr_code", 12000, true),
-      stringAttr("search_text", 4000, false),
+      stringAttr("search_text", 2000, false),
       datetimeAttr("created_at", true),
     ],
     indexes: [
@@ -359,8 +358,6 @@ async function seedData() {
     created_at: now,
   });
 
-  const qrCode = await QRCode.toDataURL(loanId);
-
   await upsertDocument(config.collections.loans, loanId, {
     lender_id: lenderId,
     borrower_id: borrowerId,
@@ -370,7 +367,7 @@ async function seedData() {
     start_date: "2026-07-06T00:00:00.000Z",
     end_date: "2026-08-15T00:00:00.000Z",
     status: "active",
-    qr_code: qrCode,
+    qr_code: loanId,
     search_text: createLoanSearchText({
       borrowerName: "Avery Johnson",
       borrowerContact: JSON.stringify({
@@ -516,7 +513,7 @@ function createLoanSearchText({ borrowerName, borrowerContact }) {
     }
   }
 
-  return Array.from(tokens).join(" ").slice(0, 4000);
+  return Array.from(tokens).join(" ").slice(0, 2000);
 }
 
 function normalizeSearchText(value) {

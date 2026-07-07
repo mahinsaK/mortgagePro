@@ -6,6 +6,10 @@ import { Download } from "lucide-react";
 
 type CsvValue = string | number | boolean | null | undefined;
 type CsvRow = Record<string, CsvValue>;
+type ExportOption = {
+  label: string;
+  path: string;
+};
 
 export function CsvExportButton({
   filename,
@@ -30,11 +34,13 @@ export function CsvExportButton({
 
 export function DateRangeCsvExport({
   exportPath,
+  exportOptions,
   filenamePrefix,
   rows = [],
   dateKey,
 }: {
   exportPath?: string;
+  exportOptions?: ExportOption[];
   filenamePrefix: string;
   rows?: CsvRow[];
   dateKey?: string;
@@ -60,7 +66,10 @@ export function DateRangeCsvExport({
     [dateKey, endDate, rows, startDate],
   );
   const suffix = [startDate || "start", endDate || "end"].join("_to_");
-  const canExport = exportPath
+  const serverExportOptions = exportOptions ?? (
+    exportPath ? [{ label: "Export CSV", path: exportPath }] : []
+  );
+  const canExport = serverExportOptions.length > 0
     ? Boolean(startDate && endDate)
     : filteredRows.length > 0;
 
@@ -104,21 +113,38 @@ export function DateRangeCsvExport({
                 value={endDate}
               />
             </label>
-            <button
-              className="h-10 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
-              disabled={!canExport}
-              onClick={() => {
-                if (exportPath) {
-                  window.location.href = buildExportHref(exportPath, startDate, endDate);
-                  return;
-                }
-
-                downloadCsv(`${filenamePrefix}_${suffix}.csv`, filteredRows);
-              }}
-              type="button"
-            >
-              {exportPath ? "Export CSV" : `Export ${filteredRows.length} rows`}
-            </button>
+            {serverExportOptions.length > 0 ? (
+              <div className="grid gap-2">
+                {serverExportOptions.map((option) => (
+                  <button
+                    className="h-10 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
+                    disabled={!canExport}
+                    key={option.path}
+                    onClick={() => {
+                      window.location.href = buildExportHref(
+                        option.path,
+                        startDate,
+                        endDate,
+                      );
+                    }}
+                    type="button"
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <button
+                className="h-10 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
+                disabled={!canExport}
+                onClick={() => {
+                  downloadCsv(`${filenamePrefix}_${suffix}.csv`, filteredRows);
+                }}
+                type="button"
+              >
+                Export {filteredRows.length} rows
+              </button>
+            )}
           </div>
           <Popover.Arrow className="fill-white" />
         </Popover.Content>

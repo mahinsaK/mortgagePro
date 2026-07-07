@@ -115,6 +115,8 @@ How it works:
 
 - Retrieves payments only for one selected day.
 - No pagination is used because this is a daily detail page.
+- Collector filtering on this page is local/client-side after the selected day's payments are loaded.
+- The CSV export downloads the currently filtered rows.
 
 ## Dashboard today's collection query
 
@@ -163,3 +165,4 @@ How it works:
 - Route validates `start` and `end` query params.
 - Service retrieves lender-scoped payments in the range.
 - Route converts rows to CSV.
+- Route adds a `TOTAL` row using raw payment amount values.

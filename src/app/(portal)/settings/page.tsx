@@ -1,4 +1,8 @@
-import { updateLenderProfileAction } from "@/backend/actions/lending-actions";
+import {
+  updateLenderPasswordAction,
+  updateLenderProfileAction,
+} from "@/backend/actions/lending-actions";
+import { currencyOptions } from "@/backend/lib/currency";
 import { getPrimaryLender } from "@/backend/services/lender-service";
 
 export const dynamic = "force-dynamic";
@@ -51,12 +55,61 @@ export default async function SettingsPage() {
               <option value="inactive">Inactive</option>
             </select>
           </label>
+          <label className="text-sm font-medium text-[#2d3745]">
+            App currency
+            <select
+              className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] bg-white px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+              defaultValue={lender?.currency ?? "USD"}
+              name="currency"
+            >
+              {currencyOptions.map((currency) => (
+                <option key={currency.code} value={currency.code}>
+                  {currency.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="flex items-end">
             <button
               className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
               type="submit"
             >
               Save profile
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="mt-6 max-w-3xl rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm">
+        <div className="mb-5">
+          <p className="text-sm font-medium text-[#657386]">Security</p>
+          <h2 className="mt-1 text-lg font-semibold">Change password</h2>
+        </div>
+
+        <form
+          action={updateLenderPasswordAction}
+          className="grid gap-4 sm:grid-cols-2"
+        >
+          <Field
+            defaultValue=""
+            label="New password"
+            name="password"
+            required
+            type="password"
+          />
+          <Field
+            defaultValue=""
+            label="Confirm password"
+            name="confirm_password"
+            required
+            type="password"
+          />
+          <div className="sm:col-span-2 sm:max-w-xs">
+            <button
+              className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
+              type="submit"
+            >
+              Update password
             </button>
           </div>
         </form>
@@ -76,7 +129,7 @@ function Field({
   label: string;
   name: string;
   required?: boolean;
-  type?: "email" | "text";
+  type?: "email" | "password" | "text";
 }) {
   return (
     <label className="text-sm font-medium text-[#2d3745]">

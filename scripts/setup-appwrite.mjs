@@ -46,6 +46,7 @@ const schema = [
       stringAttr("email", 160, true),
       stringAttr("contact_info", 1000, false),
       enumAttr("status", ["active", "inactive"], true),
+      stringAttr("currency", 8, false, "USD"),
       datetimeAttr("created_at", true),
     ],
     indexes: [
@@ -332,6 +333,7 @@ async function seedData() {
       address: "100 Market Street, Austin, TX",
     }),
     status: "active",
+    currency: "USD",
     created_at: now,
   });
 

@@ -17,7 +17,7 @@ Manages lender profile information.
 
 The module files validate and prepare lender profile updates:
 
-- `toUpdateLenderProfileDto(input)` validates company name, email, phone, address, and status.
+- `toUpdateLenderProfileDto(input)` validates company name, email, phone, address, status, and currency.
 - `LenderController.updateProfile(input)` returns success or failure.
 - `LenderService.prepareProfileUpdate(dto)` creates the document-shaped update payload.
 
@@ -38,7 +38,7 @@ Query.limit(1)
 How it works:
 
 - Reads the first lender document.
-- Returns `{ id, companyName, email, contactInfo, status }`.
+- Returns `{ id, appwriteUserId, companyName, email, contactInfo, status, currency }`.
 - Returns `null` when no API key or lender document exists.
 
 Production note:
@@ -59,6 +59,20 @@ company_name
 email
 contact_info: JSON string with phone/address
 status
+currency
 ```
 
 After update, it revalidates `/settings` and `/dashboard/lender`.
+
+## Change lender password
+
+Path: `src/backend/actions/lending-actions.ts`
+
+Function: `updateLenderPasswordAction(formData)`
+
+How it works:
+
+- Reads the active lender profile.
+- Uses `lender.appwriteUserId` to call Appwrite Auth.
+- Calls `users.updatePassword({ userId, password })`.
+- Requires password confirmation and a minimum length of 8 characters.

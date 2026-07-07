@@ -1,12 +1,15 @@
 import { appwriteServerConfig } from "@/backend/appwrite/config";
 import { databases, Query } from "@/backend/appwrite/server-client";
+import { normalizeCurrency } from "@/backend/lib/currency";
 
 export type LenderProfile = {
   id: string;
+  appwriteUserId: string;
   companyName: string;
   email: string;
   contactInfo: string;
   status: string;
+  currency: string;
 };
 
 export async function getPrimaryLender(): Promise<LenderProfile | null> {
@@ -28,9 +31,11 @@ export async function getPrimaryLender(): Promise<LenderProfile | null> {
 
   return {
     id: lender.$id,
+    appwriteUserId: String(lender.appwrite_user_id ?? ""),
     companyName: String(lender.company_name ?? "MortgagePro"),
     email: String(lender.email ?? ""),
     contactInfo: String(lender.contact_info ?? ""),
     status: String(lender.status ?? "active"),
+    currency: normalizeCurrency(String(lender.currency ?? "")),
   };
 }

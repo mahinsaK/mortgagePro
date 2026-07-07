@@ -1,6 +1,6 @@
 import "server-only";
 
-import { Client, Databases, Query } from "node-appwrite";
+import { Client, Databases, Query, Users } from "node-appwrite";
 import { appwriteServerConfig } from "./config";
 
 const client = new Client()
@@ -9,4 +9,5 @@ const client = new Client()
   .setKey(appwriteServerConfig.apiKey);
 
 export const databases = new Databases(client);
+export const users = new Users(client);
 export { Query };

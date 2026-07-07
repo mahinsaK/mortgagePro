@@ -13,9 +13,11 @@ Paths:
 
 Shows lender overview data:
 
+- Total borrower count.
 - Active loan count.
 - Today's collection amount.
 - Searchable/paginated loan list.
+- Date-range CSV exports for payments and borrowers.
 
 ## DTO/controller/service layer
 
@@ -33,11 +35,12 @@ Path: `src/backend/services/dashboard-service.ts`
 
 Function: `getLenderDashboardData(options)`
 
-The service runs three main queries in parallel:
+The service runs four main queries in parallel:
 
 1. Dashboard loans list from `loans`.
-2. Active loan count from `loans`.
-3. Today's payment amounts from `payments`.
+2. Total borrower count from `borrowers`.
+3. Active loan count from `loans`.
+4. Today's payment amounts from `payments`.
 
 ## Dashboard loans list query
 
@@ -60,6 +63,18 @@ Query.equal("$id", borrowerIds)
 Query.limit(borrowerIds.length)
 Query.select(["$id", "name", "contact_info"])
 ```
+
+## Total borrowers query
+
+Collection: `borrowers`
+
+```txt
+Query.equal("lender_id", lender.id)
+Query.limit(1)
+Query.select(["$id"])
+```
+
+The dashboard card reads `totalBorrowers.total`.
 
 ## Active loans query
 
@@ -99,3 +114,14 @@ Dashboard search is submitted with:
 The backend normalizes the query and uses `Query.search("search_text", value)`.
 
 The `search_text` value is created when a loan is created. It contains searchable borrower name/contact/address fragments.
+
+## Dashboard CSV behavior
+
+Path: `src/frontend/components/dashboard/lender-dashboard-loans-panel.tsx`
+
+The dashboard export button opens a date-range popover with two server-backed exports:
+
+- `Export payments`: calls `src/app/api/exports/payments/route.ts`.
+- `Export borrowers`: calls `src/app/api/exports/borrowers/route.ts`.
+
+Both exports query Appwrite by lender and date range instead of filtering already-loaded dashboard rows.

@@ -7,6 +7,7 @@ export class LenderService {
       email: dto.email,
       contact_info: dto.contactInfo,
       status: dto.status,
+      currency: dto.currency,
     };
   }
 }

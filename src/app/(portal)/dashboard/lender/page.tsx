@@ -25,7 +25,7 @@ export default async function LenderDashboardPage({
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {dashboard.stats.map((stat, index) =>
-          index === 1 && stat.label ? (
+          stat.label === "Today's collection" ? (
             <Link
               className="block"
               href={`/payments/daily?date=${today}`}

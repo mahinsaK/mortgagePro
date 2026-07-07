@@ -1,3 +1,4 @@
+import { normalizeCurrency } from "../../lib/currency";
 import { contactInfo, optionalString, requiredString, status } from "../shared";
 
 export type UpdateLenderProfileDto = {
@@ -5,6 +6,7 @@ export type UpdateLenderProfileDto = {
   email: string;
   contactInfo: string;
   status: "active" | "inactive";
+  currency: string;
 };
 
 export function toUpdateLenderProfileDto(
@@ -18,5 +20,6 @@ export function toUpdateLenderProfileDto(
       address: optionalString(input.address),
     }),
     status: status(input.status),
+    currency: normalizeCurrency(optionalString(input.currency)),
   };
 }

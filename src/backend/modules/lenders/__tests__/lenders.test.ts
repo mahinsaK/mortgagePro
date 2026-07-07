@@ -9,6 +9,7 @@ describe("LenderController", () => {
       phone: "555",
       address: "Main Street",
       status: "active",
+      currency: "lkr",
     });
 
     expect(result.ok).toBe(true);
@@ -16,6 +17,7 @@ describe("LenderController", () => {
       company_name: "Northstar Lending",
       email: "team@northstar.com",
       status: "active",
+      currency: "LKR",
     });
   });
 });

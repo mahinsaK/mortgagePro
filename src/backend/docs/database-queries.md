@@ -10,6 +10,7 @@ Creates one server-side Appwrite client:
 
 ```ts
 export const databases = new Databases(client);
+export const users = new Users(client);
 export { Query };
 ```
 
@@ -32,13 +33,60 @@ Query.limit(1)
 How it works:
 
 - Reads the first lender document.
-- Returns a simple lender profile object.
+- Returns a simple lender profile object including display currency.
 - Returns `null` if there is no Appwrite API key or no lender document.
 
 Important:
 
 - This is temporary for development.
 - Production should query `lenders` by `appwrite_user_id` for the currently logged-in Appwrite user.
+
+## Dashboard CSV exports
+
+Path: `src/app/api/exports/payments/route.ts`
+
+Function: `GET(request)`
+
+Collection: `payments`
+
+Query through `getPaymentsExportData()`:
+
+```txt
+Query.equal("lender_id", lender.id)
+Query.orderDesc("date")
+Query.limit(5000)
+Query.select(["$id", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
+Query.greaterThanEqual("date", selectedStartIso)
+Query.lessThan("date", selectedEndTomorrowIso)
+```
+
+How it works:
+
+- Exports only payments for the active lender and selected date range.
+- Looks up borrower and collector names for only the returned payment rows.
+- Adds a `TOTAL` row using the raw numeric payment amount values.
+
+Path: `src/app/api/exports/borrowers/route.ts`
+
+Function: `GET(request)`
+
+Collection: `borrowers`
+
+Query through `getBorrowersExportData()`:
+
+```txt
+Query.equal("lender_id", lender.id)
+Query.orderDesc("created_at")
+Query.limit(5000)
+Query.select(["$id", "$createdAt", "name", "business_name", "contact_info", "status", "created_at"])
+Query.greaterThanEqual("created_at", selectedStartIso)
+Query.lessThan("created_at", selectedEndTomorrowIso)
+```
+
+How it works:
+
+- Exports only borrowers created by the active lender in the selected date range.
+- Retrieves contact fields needed for the report only.
 
 ## Dashboard data
 
@@ -78,6 +126,24 @@ Query.select(["$id", "name", "contact_info"])
 ```
 
 That second query is used only to show borrower name and phone/contact beside each loan.
+
+### Total borrower count
+
+Collection: `borrowers`
+
+Query:
+
+```txt
+Query.equal("lender_id", lender.id)
+Query.limit(1)
+Query.select(["$id"])
+```
+
+How it works:
+
+- Appwrite returns `total`.
+- The dashboard uses `totalBorrowers.total`.
+- It does not load all borrowers into memory.
 
 ### Active loan count
 
@@ -476,6 +542,9 @@ How it works:
 - Retrieves only payments for the selected day and active lender.
 - Does not use pagination because this screen is a single-day collection view.
 - Maps names using `mapPaymentDocuments()`.
+- The collector dropdown on the page is a local/client filter over the already-loaded day payments.
+- The daily CSV export uses the currently filtered rows and does not run a second database query.
+- Filtered CSV filenames include the collector name, for example `daily_collections_2026-07-07_Jordan_Lee.csv`.
 
 ## Create borrower
 

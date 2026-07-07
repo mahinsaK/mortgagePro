@@ -72,12 +72,15 @@ export function LenderDashboardLoansPanel({
           <div className="flex w-full flex-col justify-between">
             <div>
               <p className="text-sm font-medium text-[#657386]">Export</p>
-              <h2 className="mt-1 text-lg font-semibold">Payment data</h2>
+              <h2 className="mt-1 text-lg font-semibold">Reports</h2>
             </div>
             <DateRangeCsvExport
-              exportPath="/api/exports/payments"
+              exportOptions={[
+                { label: "Export payments", path: "/api/exports/payments" },
+                { label: "Export borrowers", path: "/api/exports/borrowers" },
+              ]}
               dateKey="date"
-              filenamePrefix="mortgagepro_payments"
+              filenamePrefix="mortgagepro_dashboard"
             />
           </div>
         </section>

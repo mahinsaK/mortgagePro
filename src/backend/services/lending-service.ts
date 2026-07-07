@@ -1,5 +1,6 @@
 import { appwriteServerConfig } from "@/backend/appwrite/config";
 import { databases, Query } from "@/backend/appwrite/server-client";
+import { formatMoney } from "@/backend/lib/currency";
 import { getPrimaryLender } from "./lender-service";
 
 export type BorrowerRow = {
@@ -52,6 +53,7 @@ export type PaymentRow = {
   borrowerName: string;
   collectorName: string;
   amount: string;
+  amountValue: number;
   method: string;
   date: string;
   rawDate: string;
@@ -201,7 +203,7 @@ export async function getBorrowerProfileData(
   ]);
 
   const loanRows = loans.documents.map((loan) =>
-    mapLoanDocument(loan, String(borrower.name ?? "Unknown borrower")),
+    mapLoanDocument(loan, String(borrower.name ?? "Unknown borrower"), lender.currency),
   );
 
   return {
@@ -273,6 +275,7 @@ export async function getLoansPageData(options: PaginationOptions = {}) {
       mapLoanDocument(
         loan,
         borrowerNames.get(String(loan.borrower_id)) ?? "Unknown borrower",
+        lender.currency,
       ),
     ),
   };
@@ -308,7 +311,7 @@ export async function getPaymentsPageData(options: PaginationOptions = {}) {
   return {
     lender,
     pageInfo: toPageInfo(payments.total, pagination),
-    payments: await mapPaymentDocuments(lender.id, payments.documents),
+    payments: await mapPaymentDocuments(lender.id, payments.documents, lender.currency),
   };
 }
 
@@ -353,7 +356,60 @@ export async function getPaymentsExportData(options: {
 
   return {
     lender,
-    payments: await mapPaymentDocuments(lender.id, payments.documents),
+    payments: await mapPaymentDocuments(lender.id, payments.documents, lender.currency),
+  };
+}
+
+export async function getBorrowersExportData(options: {
+  startDate?: string;
+  endDate?: string;
+} = {}) {
+  const lender = await getPrimaryLender();
+
+  if (!lender) {
+    return { lender: null, borrowers: [] as BorrowerRow[] };
+  }
+
+  const queries = [
+    Query.equal("lender_id", lender.id),
+    Query.orderDesc("created_at"),
+    Query.limit(MAX_LOOKUP_LIMIT),
+    Query.select([
+      "$id",
+      "$createdAt",
+      "name",
+      "business_name",
+      "contact_info",
+      "status",
+      "created_at",
+    ]),
+  ];
+
+  if (options.startDate) {
+    queries.push(Query.greaterThanEqual("created_at", getDateRange(options.startDate).start));
+  }
+
+  if (options.endDate) {
+    queries.push(Query.lessThan("created_at", getDateRange(options.endDate).end));
+  }
+
+  const borrowers = await databases.listDocuments({
+    databaseId: appwriteServerConfig.databaseId,
+    collectionId: appwriteServerConfig.collections.borrowers,
+    queries,
+  });
+
+  return {
+    lender,
+    borrowers: borrowers.documents.map((borrower) => ({
+      id: borrower.$id,
+      name: String(borrower.name ?? ""),
+      businessName: String(borrower.business_name ?? ""),
+      contactInfo: formatContactPhone(String(borrower.contact_info ?? "")),
+      addressInfo: formatContactAddress(String(borrower.contact_info ?? "")),
+      status: String(borrower.status ?? "active"),
+      createdAt: String(borrower.created_at ?? borrower.$createdAt ?? ""),
+    })),
   };
 }
 
@@ -436,7 +492,7 @@ export async function getDailyCollectionsData(date: string) {
   return {
     lender,
     selectedDate,
-    payments: await mapPaymentDocuments(lender.id, payments.documents),
+    payments: await mapPaymentDocuments(lender.id, payments.documents, lender.currency),
   };
 }
 
@@ -501,11 +557,11 @@ export async function getLoanPaymentDetails(
 
   return {
     loanId,
-    totalPaid: formatCurrency(totalPaid),
-    remaining: formatCurrency(Math.max(loanAmount - totalPaid, 0)),
+    totalPaid: formatMoney(totalPaid, lender.currency),
+    remaining: formatMoney(Math.max(loanAmount - totalPaid, 0), lender.currency),
     payments: payments.documents.map((payment) => ({
       id: payment.$id,
-      amount: formatCurrency(Number(payment.amount ?? 0)),
+      amount: formatMoney(Number(payment.amount ?? 0), lender.currency),
       collectorName:
         collectorNames.get(String(payment.collector_id)) ?? "Unknown collector",
       method: String(payment.method ?? "cash"),
@@ -517,6 +573,7 @@ export async function getLoanPaymentDetails(
 async function mapPaymentDocuments(
   lenderId: string,
   payments: Array<Record<string, unknown> & { $id: string }>,
+  currency: string,
 ) {
   const loanIds = uniqueStrings(
     payments.map((payment) => String(payment.loan_id ?? "")),
@@ -576,7 +633,8 @@ async function mapPaymentDocuments(
     borrowerName: loanBorrowers.get(String(payment.loan_id)) ?? "Unknown",
     collectorName:
       collectorNames.get(String(payment.collector_id)) ?? "Unknown collector",
-    amount: formatCurrency(Number(payment.amount ?? 0)),
+    amount: formatMoney(Number(payment.amount ?? 0), currency),
+    amountValue: Number(payment.amount ?? 0),
     method: String(payment.method ?? "cash"),
     date: formatDate(String(payment.date ?? payment.created_at)),
     rawDate: String(payment.date ?? payment.created_at ?? ""),
@@ -623,16 +681,17 @@ function listForLender(
 function mapLoanDocument(
   loan: Record<string, unknown> & { $id: string },
   borrowerName: string,
+  currency: string,
 ): LoanRow {
   return {
     id: loan.$id,
     borrowerId: String(loan.borrower_id ?? ""),
     borrowerName,
-    amount: formatCurrency(Number(loan.amount ?? 0)),
+    amount: formatMoney(Number(loan.amount ?? 0), currency),
     amountValue: String(loan.amount ?? 0),
     interestRate: `${Number(loan.interest_rate ?? 0).toFixed(2)}%`,
     interestRateValue: String(loan.interest_rate ?? 0),
-    dailyPayment: formatCurrency(Number(loan.daily_payment ?? 0)),
+    dailyPayment: formatMoney(Number(loan.daily_payment ?? 0), currency),
     dailyPaymentValue: String(loan.daily_payment ?? 0),
     startDate: formatDate(String(loan.start_date ?? "")),
     startDateInput: formatDateInput(String(loan.start_date ?? "")),
@@ -661,13 +720,6 @@ export async function loanBelongsToActiveLender(loanId: string) {
   });
 
   return loans.total > 0;
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
 }
 
 function formatDate(value: string) {

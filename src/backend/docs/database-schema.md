@@ -15,6 +15,7 @@ Attributes:
 - `email`: lender email.
 - `contact_info`: JSON string with phone/address.
 - `status`: `active` or `inactive`.
+- `currency`: lender display currency, such as `USD` or `LKR`.
 - `created_at`: creation date.
 
 Indexes:

@@ -36,7 +36,7 @@ export function HeaderActions({
   theme: "light" | "dark";
   onToggleTheme: () => void;
 }) {
-  const contactInfo = formatContactInfo(lender?.contactInfo ?? "");
+  const contactInfo = parseContactInfo(lender?.contactInfo ?? "");
 
   return (
     <Tooltip.Provider delayDuration={150}>
@@ -113,8 +113,12 @@ export function HeaderActions({
               <dl className="space-y-3 text-sm">
                 <ProfileDetail label="Email" value={lender?.email || "Not set"} />
                 <ProfileDetail
-                  label="Contact"
-                  value={contactInfo || "Not set"}
+                  label="Contact number"
+                  value={contactInfo.phone || "Not set"}
+                />
+                <ProfileDetail
+                  label="Address"
+                  value={contactInfo.address || "Not set"}
                 />
                 <ProfileDetail
                   label="Status"
@@ -136,16 +140,19 @@ export function HeaderActions({
   );
 }
 
-function formatContactInfo(value: string) {
+function parseContactInfo(value: string) {
   if (!value) {
-    return "";
+    return { phone: "", address: "" };
   }
 
   try {
     const parsed = JSON.parse(value) as Record<string, string>;
-    return [parsed.phone, parsed.address, parsed.area].filter(Boolean).join(" / ");
+    return {
+      phone: parsed.phone ?? "",
+      address: [parsed.address, parsed.area].filter(Boolean).join(" / "),
+    };
   } catch {
-    return value;
+    return { phone: value, address: "" };
   }
 }
 

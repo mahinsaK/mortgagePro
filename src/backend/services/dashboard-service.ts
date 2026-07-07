@@ -1,5 +1,6 @@
 import { appwriteServerConfig } from "@/backend/appwrite/config";
 import { databases, Query } from "@/backend/appwrite/server-client";
+import { formatMoney } from "@/backend/lib/currency";
 import { normalizeSearchText } from "@/backend/services/search-text-service";
 import { getPrimaryLender } from "./lender-service";
 
@@ -78,11 +79,20 @@ export async function getLenderDashboardData(
     loanQueries.splice(1, 0, Query.search("search_text", searchQuery));
   }
 
-  const [loans, activeLoans, todaysPayments] = await Promise.all([
+  const [loans, totalBorrowers, activeLoans, todaysPayments] = await Promise.all([
     databases.listDocuments({
       databaseId: appwriteServerConfig.databaseId,
       collectionId: appwriteServerConfig.collections.loans,
       queries: loanQueries,
+    }),
+    databases.listDocuments({
+      databaseId: appwriteServerConfig.databaseId,
+      collectionId: appwriteServerConfig.collections.borrowers,
+      queries: [
+        Query.equal("lender_id", lender.id),
+        Query.limit(1),
+        Query.select(["$id"]),
+      ],
     }),
     databases.listDocuments({
       databaseId: appwriteServerConfig.databaseId,
@@ -152,19 +162,19 @@ export async function getLenderDashboardData(
     pageInfo: toPageInfo(loans.total, pagination),
     stats: [
       {
+        label: "Total borrowers",
+        value: String(totalBorrowers.total),
+        change: "Registered profiles",
+      },
+      {
         label: "Active loans",
         value: String(activeLoans.total),
         change: "Currently running",
       },
       {
         label: "Today's collection",
-        value: formatCurrency(todaysCollection),
+        value: formatMoney(todaysCollection, lender.currency),
         change: "Collected today",
-      },
-      {
-        label: "",
-        value: "",
-        change: "",
       },
       {
         label: "",
@@ -184,8 +194,8 @@ export async function getLenderDashboardData(
         borrower: borrowerNames.get(borrowerId) ?? "Unknown borrower",
         borrowerContact: contact.display,
         borrowerPhone: contact.phone,
-        amount: formatCurrency(Number(loan.amount ?? 0)),
-        dailyPayment: formatCurrency(Number(loan.daily_payment ?? 0)),
+        amount: formatMoney(Number(loan.amount ?? 0), lender.currency),
+        dailyPayment: formatMoney(Number(loan.daily_payment ?? 0), lender.currency),
         status: String(loan.status ?? "active"),
         endDate: formatDate(String(loan.end_date ?? "")),
       };
@@ -195,18 +205,11 @@ export async function getLenderDashboardData(
 
 function emptyStats() {
   return [
+    { label: "Total borrowers", value: "0", change: "Registered profiles" },
     { label: "Active loans", value: "0", change: "Currently running" },
-    { label: "Today's collection", value: "$0.00", change: "Collected today" },
-    { label: "", value: "", change: "" },
+    { label: "Today's collection", value: formatMoney(0, "USD"), change: "Collected today" },
     { label: "", value: "", change: "" },
   ];
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
 }
 
 function formatDate(value: string) {

@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { appwriteServerConfig } from "@/backend/appwrite/config";
-import { databases, Query } from "@/backend/appwrite/server-client";
+import { databases, Query, users } from "@/backend/appwrite/server-client";
+import { normalizeCurrency } from "@/backend/lib/currency";
 import { getPrimaryLender } from "@/backend/services/lender-service";
 import { createLoanSearchText } from "@/backend/services/search-text-service";
 
@@ -325,11 +326,37 @@ export async function updateLenderProfileAction(formData: FormData) {
         address: readOptional(formData, "address"),
       }),
       status: readStatus(formData),
+      currency: normalizeCurrency(readOptional(formData, "currency")),
     },
   });
 
   revalidatePath("/settings");
   revalidatePath("/dashboard/lender");
+}
+
+export async function updateLenderPasswordAction(formData: FormData) {
+  const lender = await getRequiredLender();
+  const password = readRequired(formData, "password");
+  const confirmPassword = readRequired(formData, "confirm_password");
+
+  if (password.length < 8) {
+    throw new Error("Password must be at least 8 characters.");
+  }
+
+  if (password !== confirmPassword) {
+    throw new Error("Password and confirmation do not match.");
+  }
+
+  if (!lender.appwriteUserId) {
+    throw new Error("This lender profile is not linked to an Appwrite Auth user.");
+  }
+
+  await users.updatePassword({
+    userId: lender.appwriteUserId,
+    password,
+  });
+
+  revalidatePath("/settings");
 }
 
 async function getRequiredLender() {

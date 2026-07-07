@@ -9,6 +9,7 @@ import {
   ChevronRight,
   HandCoins,
   LayoutDashboard,
+  MessageSquareText,
   Users,
 } from "lucide-react";
 
@@ -18,6 +19,7 @@ const navItems = [
   { label: "Collectors", href: "/collectors", icon: HandCoins },
   { label: "Loans", href: "/loans", icon: Banknote },
   { label: "Payments", href: "/payments", icon: BarChart3 },
+  { label: "SMS", href: "/sms", icon: MessageSquareText },
 ];
 
 export function PortalSidebar({

@@ -35,6 +35,8 @@ src/backend
   Builds searchable text for loans from borrower name, phone, and address.
 - `src/backend/services/qr-code-service.ts`
   Generates QR code images for download from a loan ID.
+- `src/backend/modules/sms/service.ts`
+  Handles first-phase SMS validation, templates, and temporary send results.
 - `scripts/setup-appwrite.mjs`
   Creates Appwrite collections, attributes, indexes, seed data, and backfills loan search text.
 

@@ -22,3 +22,6 @@ export * from "./notifications/service";
 export * from "./payments/controller";
 export * from "./payments/dto";
 export * from "./payments/service";
+export * from "./sms/controller";
+export * from "./sms/dto";
+export * from "./sms/service";

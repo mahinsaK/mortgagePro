@@ -1,0 +1,81 @@
+import Link from "next/link";
+
+type PageInfo = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export function PaginationControls({
+  basePath,
+  pageInfo,
+  query = {},
+}: {
+  basePath: string;
+  pageInfo: PageInfo;
+  query?: Record<string, string | undefined>;
+}) {
+  const previousPage = Math.max(1, pageInfo.page - 1);
+  const nextPage = Math.min(pageInfo.totalPages, pageInfo.page + 1);
+  const start = pageInfo.total === 0 ? 0 : (pageInfo.page - 1) * pageInfo.pageSize + 1;
+  const end = Math.min(pageInfo.page * pageInfo.pageSize, pageInfo.total);
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#eef2f6] px-5 py-4 text-sm">
+      <p className="text-[#657386]">
+        Showing {start}-{end} of {pageInfo.total}
+      </p>
+      <div className="flex items-center gap-2">
+        {pageInfo.page > 1 ? (
+          <Link
+            className="rounded-md border border-[#cfd8e3] px-3 py-2 font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
+            href={pageHref(basePath, previousPage, query)}
+          >
+            Previous
+          </Link>
+        ) : (
+          <span className="cursor-not-allowed rounded-md border border-[#dfe5ec] px-3 py-2 font-medium text-[#9aa6b2]">
+            Previous
+          </span>
+        )}
+        <span className="px-2 font-medium text-[#2d3745]">
+          Page {pageInfo.page} of {pageInfo.totalPages}
+        </span>
+        {pageInfo.page < pageInfo.totalPages ? (
+          <Link
+            className="rounded-md border border-[#cfd8e3] px-3 py-2 font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
+            href={pageHref(basePath, nextPage, query)}
+          >
+            Next
+          </Link>
+        ) : (
+          <span className="cursor-not-allowed rounded-md border border-[#dfe5ec] px-3 py-2 font-medium text-[#9aa6b2]">
+            Next
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function pageHref(
+  basePath: string,
+  page: number,
+  query: Record<string, string | undefined>,
+) {
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(query)) {
+    if (value) {
+      params.set(key, value);
+    }
+  }
+
+  if (page > 1) {
+    params.set("page", String(page));
+  }
+
+  const search = params.toString();
+  return search ? `${basePath}?${search}` : basePath;
+}

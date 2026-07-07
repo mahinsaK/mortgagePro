@@ -1,0 +1,564 @@
+import { appwriteServerConfig } from "@/backend/appwrite/config";
+import { databases, Query } from "@/backend/appwrite/server-client";
+import { getPrimaryLender } from "./lender-service";
+
+export type BorrowerRow = {
+  id: string;
+  name: string;
+  businessName: string;
+  contactInfo: string;
+  status: string;
+  createdAt: string;
+  loanCount: number;
+  activeLoanCount: number;
+};
+
+export type LoanRow = {
+  id: string;
+  borrowerId: string;
+  borrowerName: string;
+  amount: string;
+  interestRate: string;
+  dailyPayment: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  qrCode: string;
+};
+
+export type BorrowerProfileData = {
+  borrower: BorrowerRow | null;
+  loans: LoanRow[];
+};
+
+export type CollectorRow = {
+  id: string;
+  name: string;
+  contactInfo: string;
+  status: string;
+  createdAt: string;
+};
+
+export type PaymentRow = {
+  id: string;
+  loanId: string;
+  borrowerName: string;
+  collectorName: string;
+  amount: string;
+  method: string;
+  date: string;
+  rawDate: string;
+};
+
+export type PageInfo = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+type PaginationOptions = {
+  page?: number;
+  pageSize?: number;
+};
+
+const DEFAULT_PAGE_SIZE = 10;
+const MAX_LOOKUP_LIMIT = 5000;
+
+export async function getBorrowersPageData(options: PaginationOptions = {}) {
+  const lender = await getPrimaryLender();
+  const pagination = normalizePagination(options);
+
+  if (!lender) {
+    return {
+      lender: null,
+      borrowers: [] as BorrowerRow[],
+      pageInfo: emptyPageInfo(pagination),
+    };
+  }
+
+  const borrowers = await listForLender(appwriteServerConfig.collections.borrowers, lender.id, {
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    orderBy: "created_at",
+  });
+  const borrowerIds = borrowers.documents.map((borrower) => borrower.$id);
+  const loans =
+    borrowerIds.length > 0
+      ? await listForLender(appwriteServerConfig.collections.loans, lender.id, {
+          extraQueries: [Query.equal("borrower_id", borrowerIds)],
+          limit: MAX_LOOKUP_LIMIT,
+        })
+      : { documents: [] };
+
+  const loanCounts = new Map<string, { total: number; active: number }>();
+  for (const loan of loans.documents) {
+    const borrowerId = String(loan.borrower_id ?? "");
+    const current = loanCounts.get(borrowerId) ?? { total: 0, active: 0 };
+    current.total += 1;
+    current.active += loan.status === "active" ? 1 : 0;
+    loanCounts.set(borrowerId, current);
+  }
+
+  return {
+    lender,
+    pageInfo: toPageInfo(borrowers.total, pagination),
+    borrowers: borrowers.documents.map((borrower) => {
+      const counts = loanCounts.get(borrower.$id) ?? { total: 0, active: 0 };
+
+      return {
+        id: borrower.$id,
+        name: String(borrower.name ?? ""),
+        businessName: String(borrower.business_name ?? ""),
+        contactInfo: formatContactInfo(String(borrower.contact_info ?? "")),
+        status: String(borrower.status ?? "active"),
+        createdAt: formatDate(String(borrower.created_at ?? borrower.$createdAt)),
+        loanCount: counts.total,
+        activeLoanCount: counts.active,
+      };
+    }),
+  };
+}
+
+export async function getBorrowerProfileData(
+  borrowerId: string,
+): Promise<BorrowerProfileData> {
+  const lender = await getPrimaryLender();
+
+  if (!lender) {
+    return { borrower: null, loans: [] };
+  }
+
+  const borrowers = await databases.listDocuments({
+    databaseId: appwriteServerConfig.databaseId,
+    collectionId: appwriteServerConfig.collections.borrowers,
+    queries: [
+      Query.equal("lender_id", lender.id),
+      Query.equal("$id", borrowerId),
+      Query.limit(1),
+    ],
+  });
+  const borrower = borrowers.documents[0];
+
+  if (!borrower) {
+    return { borrower: null, loans: [] };
+  }
+
+  const loans = await databases.listDocuments({
+      databaseId: appwriteServerConfig.databaseId,
+      collectionId: appwriteServerConfig.collections.loans,
+      queries: [
+        Query.equal("lender_id", lender.id),
+        Query.equal("borrower_id", borrowerId),
+        Query.limit(100),
+      ],
+  });
+
+  const loanRows = loans.documents.map((loan) =>
+    mapLoanDocument(loan, String(borrower.name ?? "Unknown borrower")),
+  );
+
+  return {
+    borrower: {
+      id: borrower.$id,
+      name: String(borrower.name ?? ""),
+      businessName: String(borrower.business_name ?? ""),
+      contactInfo: formatContactInfo(String(borrower.contact_info ?? "")),
+      status: String(borrower.status ?? "active"),
+      createdAt: formatDate(String(borrower.created_at ?? borrower.$createdAt)),
+      loanCount: loanRows.length,
+      activeLoanCount: loanRows.filter((loan) => loan.status === "active")
+        .length,
+    },
+    loans: loanRows,
+  };
+}
+
+export async function getLoansPageData(options: PaginationOptions = {}) {
+  const lender = await getPrimaryLender();
+  const pagination = normalizePagination(options);
+
+  if (!lender) {
+    return {
+      lender: null,
+      loans: [] as LoanRow[],
+      pageInfo: emptyPageInfo(pagination),
+    };
+  }
+
+  const loans = await listForLender(appwriteServerConfig.collections.loans, lender.id, {
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    orderBy: "created_at",
+  });
+  const borrowerIds = uniqueStrings(
+    loans.documents.map((loan) => String(loan.borrower_id ?? "")),
+  );
+  const borrowers =
+    borrowerIds.length > 0
+      ? await listForLender(appwriteServerConfig.collections.borrowers, lender.id, {
+          extraQueries: [Query.equal("$id", borrowerIds)],
+          limit: borrowerIds.length,
+        })
+      : { documents: [] };
+  const borrowerNames = new Map(
+    borrowers.documents.map((borrower) => [
+      borrower.$id,
+      String(borrower.name ?? "Unknown borrower"),
+    ]),
+  );
+
+  return {
+    lender,
+    pageInfo: toPageInfo(loans.total, pagination),
+    loans: loans.documents.map((loan) =>
+      mapLoanDocument(
+        loan,
+        borrowerNames.get(String(loan.borrower_id)) ?? "Unknown borrower",
+      ),
+    ),
+  };
+}
+
+export async function getPaymentsPageData(options: PaginationOptions = {}) {
+  const lender = await getPrimaryLender();
+  const pagination = normalizePagination(options);
+
+  if (!lender) {
+    return {
+      lender: null,
+      payments: [] as PaymentRow[],
+      pageInfo: emptyPageInfo(pagination),
+    };
+  }
+
+  const payments = await listForLender(appwriteServerConfig.collections.payments, lender.id, {
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    orderBy: "date",
+  });
+
+  return {
+    lender,
+    pageInfo: toPageInfo(payments.total, pagination),
+    payments: await mapPaymentDocuments(lender.id, payments.documents),
+  };
+}
+
+export async function getPaymentsExportData(options: {
+  startDate?: string;
+  endDate?: string;
+} = {}) {
+  const lender = await getPrimaryLender();
+
+  if (!lender) {
+    return { lender: null, payments: [] as PaymentRow[] };
+  }
+
+  const queries = [
+    Query.equal("lender_id", lender.id),
+    Query.orderDesc("date"),
+    Query.limit(MAX_LOOKUP_LIMIT),
+  ];
+
+  if (options.startDate) {
+    queries.push(Query.greaterThanEqual("date", getDateRange(options.startDate).start));
+  }
+
+  if (options.endDate) {
+    queries.push(Query.lessThan("date", getDateRange(options.endDate).end));
+  }
+
+  const payments = await databases.listDocuments({
+    databaseId: appwriteServerConfig.databaseId,
+    collectionId: appwriteServerConfig.collections.payments,
+    queries,
+  });
+
+  return {
+    lender,
+    payments: await mapPaymentDocuments(lender.id, payments.documents),
+  };
+}
+
+export async function getCollectorsPageData(options: PaginationOptions = {}) {
+  const lender = await getPrimaryLender();
+  const pagination = normalizePagination(options);
+
+  if (!lender) {
+    return {
+      lender: null,
+      collectors: [] as CollectorRow[],
+      summary: { total: 0, active: 0, inactive: 0 },
+      pageInfo: emptyPageInfo(pagination),
+    };
+  }
+
+  const [collectors, activeCollectors] = await Promise.all([
+    listForLender(appwriteServerConfig.collections.collectors, lender.id, {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      orderBy: "created_at",
+    }),
+    listForLender(appwriteServerConfig.collections.collectors, lender.id, {
+      extraQueries: [Query.equal("status", "active")],
+      limit: 1,
+    }),
+  ]);
+
+  return {
+    lender,
+    summary: {
+      total: collectors.total,
+      active: activeCollectors.total,
+      inactive: Math.max(collectors.total - activeCollectors.total, 0),
+    },
+    pageInfo: toPageInfo(collectors.total, pagination),
+    collectors: collectors.documents.map((collector) => ({
+      id: collector.$id,
+      name: String(collector.name ?? ""),
+      contactInfo: formatContactInfo(String(collector.contact_info ?? "")),
+      status: String(collector.status ?? "active"),
+      createdAt: formatDate(String(collector.created_at ?? collector.$createdAt)),
+    })),
+  };
+}
+
+export async function getDailyCollectionsData(date: string) {
+  const selectedDate = normalizeDateOnly(date);
+  const lender = await getPrimaryLender();
+
+  if (!lender) {
+    return { lender: null, selectedDate, payments: [] as PaymentRow[] };
+  }
+
+  const range = getDateRange(selectedDate);
+  const payments = await databases.listDocuments({
+    databaseId: appwriteServerConfig.databaseId,
+    collectionId: appwriteServerConfig.collections.payments,
+    queries: [
+      Query.equal("lender_id", lender.id),
+      Query.greaterThanEqual("date", range.start),
+      Query.lessThan("date", range.end),
+      Query.orderDesc("date"),
+      Query.limit(MAX_LOOKUP_LIMIT),
+    ],
+  });
+
+  return {
+    lender,
+    selectedDate,
+    payments: await mapPaymentDocuments(lender.id, payments.documents),
+  };
+}
+
+async function mapPaymentDocuments(
+  lenderId: string,
+  payments: Array<Record<string, unknown> & { $id: string }>,
+) {
+  const loanIds = uniqueStrings(
+    payments.map((payment) => String(payment.loan_id ?? "")),
+  );
+  const collectorIds = uniqueStrings(
+    payments.map((payment) => String(payment.collector_id ?? "")),
+  );
+  const [loans, collectors] = await Promise.all([
+    loanIds.length > 0
+      ? listForLender(appwriteServerConfig.collections.loans, lenderId, {
+          extraQueries: [Query.equal("$id", loanIds)],
+          limit: loanIds.length,
+        })
+      : Promise.resolve({ documents: [] }),
+    collectorIds.length > 0
+      ? listForLender(appwriteServerConfig.collections.collectors, lenderId, {
+          extraQueries: [Query.equal("$id", collectorIds)],
+          limit: collectorIds.length,
+        })
+      : Promise.resolve({ documents: [] }),
+  ]);
+  const borrowerIds = uniqueStrings(
+    loans.documents.map((loan) => String(loan.borrower_id ?? "")),
+  );
+  const borrowers =
+    borrowerIds.length > 0
+      ? await listForLender(appwriteServerConfig.collections.borrowers, lenderId, {
+          extraQueries: [Query.equal("$id", borrowerIds)],
+          limit: borrowerIds.length,
+        })
+      : { documents: [] };
+  const borrowerNames = new Map(
+    borrowers.documents.map((borrower) => [
+      borrower.$id,
+      String(borrower.name ?? "Unknown borrower"),
+    ]),
+  );
+  const collectorNames = new Map(
+    collectors.documents.map((collector) => [
+      collector.$id,
+      String(collector.name ?? "Unknown collector"),
+    ]),
+  );
+  const loanBorrowers = new Map(
+    loans.documents.map((loan) => [
+      loan.$id,
+      borrowerNames.get(String(loan.borrower_id)) ?? "Unknown borrower",
+    ]),
+  );
+
+  return payments.map((payment) => ({
+    id: payment.$id,
+    loanId: String(payment.loan_id ?? ""),
+    borrowerName: loanBorrowers.get(String(payment.loan_id)) ?? "Unknown",
+    collectorName:
+      collectorNames.get(String(payment.collector_id)) ?? "Unknown collector",
+    amount: formatCurrency(Number(payment.amount ?? 0)),
+    method: String(payment.method ?? "cash"),
+    date: formatDate(String(payment.date ?? payment.created_at)),
+    rawDate: String(payment.date ?? payment.created_at ?? ""),
+  }));
+}
+
+function listForLender(
+  collectionId: string,
+  lenderId: string,
+  options: PaginationOptions & {
+    extraQueries?: string[];
+    limit?: number;
+    orderBy?: string;
+  } = {},
+) {
+  const queries = [
+    Query.equal("lender_id", lenderId),
+    ...(options.extraQueries ?? []),
+  ];
+
+  if (options.orderBy) {
+    queries.push(Query.orderDesc(options.orderBy));
+  }
+
+  if (options.page && options.pageSize) {
+    queries.push(Query.limit(options.pageSize));
+    queries.push(Query.offset((options.page - 1) * options.pageSize));
+  } else {
+    queries.push(Query.limit(options.limit ?? DEFAULT_PAGE_SIZE));
+  }
+
+  return databases.listDocuments({
+    databaseId: appwriteServerConfig.databaseId,
+    collectionId,
+    queries,
+  });
+}
+
+function mapLoanDocument(
+  loan: Record<string, unknown> & { $id: string },
+  borrowerName: string,
+): LoanRow {
+  return {
+    id: loan.$id,
+    borrowerId: String(loan.borrower_id ?? ""),
+    borrowerName,
+    amount: formatCurrency(Number(loan.amount ?? 0)),
+    interestRate: `${Number(loan.interest_rate ?? 0).toFixed(2)}%`,
+    dailyPayment: formatCurrency(Number(loan.daily_payment ?? 0)),
+    startDate: formatDate(String(loan.start_date ?? "")),
+    endDate: formatDate(String(loan.end_date ?? "")),
+    status: String(loan.status ?? "active"),
+    qrCode: String(loan.qr_code ?? ""),
+  };
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatContactInfo(value: string) {
+  if (!value) {
+    return "";
+  }
+
+  try {
+    const parsed = JSON.parse(value) as Record<string, string>;
+    return [parsed.phone, parsed.address, parsed.area].filter(Boolean).join(" / ");
+  } catch {
+    return value;
+  }
+}
+
+function normalizeDateOnly(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return toDateInputValue(new Date());
+  }
+
+  return toDateInputValue(date);
+}
+
+function normalizePagination(options: PaginationOptions) {
+  const page = Math.max(1, Math.floor(Number(options.page ?? 1)) || 1);
+  const pageSize = Math.min(
+    50,
+    Math.max(1, Math.floor(Number(options.pageSize ?? DEFAULT_PAGE_SIZE)) || DEFAULT_PAGE_SIZE),
+  );
+
+  return { page, pageSize };
+}
+
+function toPageInfo(total: number, pagination: { page: number; pageSize: number }) {
+  return {
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    total,
+    totalPages: Math.max(1, Math.ceil(total / pagination.pageSize)),
+  };
+}
+
+function emptyPageInfo(pagination: { page: number; pageSize: number }) {
+  return {
+    ...pagination,
+    total: 0,
+    totalPages: 1,
+  };
+}
+
+function uniqueStrings(values: string[]) {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function getDateRange(dateOnly: string) {
+  const startDate = new Date(`${dateOnly}T00:00:00`);
+  const endDate = new Date(startDate);
+
+  endDate.setDate(startDate.getDate() + 1);
+
+  return {
+    start: startDate.toISOString(),
+    end: endDate.toISOString(),
+  };
+}
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}

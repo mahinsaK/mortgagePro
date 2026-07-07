@@ -167,15 +167,6 @@ export function LenderDashboardLoansPanel({
               </button>
             </div>
             <div className="p-6">
-              <div className="mb-5">
-                <a
-                  className="inline-flex h-10 items-center rounded-md border border-[#cfd8e3] px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#f8fafc]"
-                  download={`${selectedLoan.id}-qr.png`}
-                  href={`/api/loans/${selectedLoan.id}/qr`}
-                >
-                  Download QR
-                </a>
-              </div>
               <dl className="grid gap-4 sm:grid-cols-2">
                 <Detail label="Borrower" value={selectedLoan.borrower} />
                 <Detail
@@ -190,6 +181,15 @@ export function LenderDashboardLoansPanel({
                 />
                 <Detail label="End date" value={selectedLoan.endDate} />
               </dl>
+              <div className="mt-5">
+                <a
+                  className="inline-flex h-10 items-center rounded-md border border-[#cfd8e3] px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#f8fafc]"
+                  download={`${selectedLoan.id}-qr.png`}
+                  href={`/api/loans/${selectedLoan.id}/qr`}
+                >
+                  Download QR
+                </a>
+              </div>
               <LoanPaymentsPanel loanId={selectedLoan.id} />
             </div>
           </section>

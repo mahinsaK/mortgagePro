@@ -1,5 +1,6 @@
 "use client";
 
+import { EllipsisVertical } from "lucide-react";
 import { useState } from "react";
 import {
   deleteLoanAction,
@@ -10,6 +11,20 @@ import { LoanPaymentsPanel } from "@/frontend/components/loans/loan-payments-pan
 
 export function LoansTable({ loans }: { loans: LoanRow[] }) {
   const [selectedLoan, setSelectedLoan] = useState<LoanRow | null>(null);
+  const [isActionsOpen, setIsActionsOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  function openLoan(loan: LoanRow) {
+    setSelectedLoan(loan);
+    setIsActionsOpen(false);
+    setIsEditing(false);
+  }
+
+  function closeLoan() {
+    setSelectedLoan(null);
+    setIsActionsOpen(false);
+    setIsEditing(false);
+  }
 
   return (
     <>
@@ -32,7 +47,7 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
               <tr
                 className="cursor-pointer border-t border-[#eef2f6] transition hover:bg-[#f8fafc]"
                 key={loan.id}
-                onClick={() => setSelectedLoan(loan)}
+                onClick={() => openLoan(loan)}
               >
                 <td className="px-5 py-4">
                   <a
@@ -71,7 +86,7 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
       {selectedLoan ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-          onClick={() => setSelectedLoan(null)}
+          onClick={closeLoan}
         >
           <section
             className="max-h-[calc(100vh-48px)] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl"
@@ -86,59 +101,90 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
                   {selectedLoan.id}
                 </h2>
               </div>
-              <button
-                className="rounded-md border border-[#cfd8e3] px-3 py-2 text-sm font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
-                onClick={() => setSelectedLoan(null)}
-                type="button"
-              >
-                Close
-              </button>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <button
+                    aria-expanded={isActionsOpen}
+                    aria-label="Loan actions"
+                    className="flex size-10 items-center justify-center rounded-md border border-[#cfd8e3] text-[#2d3745] transition hover:bg-[#f8fafc]"
+                    onClick={() => setIsActionsOpen((isOpen) => !isOpen)}
+                    type="button"
+                  >
+                    <EllipsisVertical aria-hidden="true" size={18} />
+                  </button>
+                  {isActionsOpen ? (
+                    <div className="absolute right-0 top-11 z-10 w-40 rounded-md border border-[#dfe5ec] bg-white p-1 text-sm shadow-lg">
+                      <button
+                        className="flex h-9 w-full items-center rounded px-3 text-left font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
+                        onClick={() => {
+                          setIsEditing(true);
+                          setIsActionsOpen(false);
+                        }}
+                        type="button"
+                      >
+                        Update loan
+                      </button>
+                      <form
+                        action={deleteLoanAction}
+                        onSubmit={(event) => {
+                          if (!confirm("Delete this loan and its payments?")) {
+                            event.preventDefault();
+                          }
+                        }}
+                      >
+                        <input
+                          name="loan_id"
+                          type="hidden"
+                          value={selectedLoan.id}
+                        />
+                        <button
+                          className="flex h-9 w-full items-center rounded px-3 text-left font-medium text-[#b91c1c] transition hover:bg-[#fef2f2]"
+                          type="submit"
+                        >
+                          Delete loan
+                        </button>
+                      </form>
+                    </div>
+                  ) : null}
+                </div>
+                <button
+                  className="rounded-md border border-[#cfd8e3] px-3 py-2 text-sm font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
+                  onClick={closeLoan}
+                  type="button"
+                >
+                  Close
+                </button>
+              </div>
             </div>
 
-            <div className="grid gap-6 p-6 md:grid-cols-[150px_1fr]">
-              <div>
+            <div className="p-6">
+              <dl className="grid gap-4 sm:grid-cols-2">
+                <Detail label="Borrower" value={selectedLoan.borrowerName} />
+                <Detail label="Status" value={selectedLoan.status} />
+                <Detail label="Amount" value={selectedLoan.amount} />
+                <Detail
+                  label="Daily payment"
+                  value={selectedLoan.dailyPayment}
+                />
+                <Detail label="Interest rate" value={selectedLoan.interestRate} />
+                <Detail label="Start date" value={selectedLoan.startDate} />
+                <Detail label="End date" value={selectedLoan.endDate} />
+                <Detail label="Borrower ID" value={selectedLoan.borrowerId} />
+              </dl>
+
+              <div className="mt-5">
                 <a
-                  className="flex h-10 items-center justify-center rounded-md border border-[#cfd8e3] px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#f8fafc]"
+                  className="inline-flex h-10 items-center justify-center rounded-md border border-[#cfd8e3] px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#f8fafc]"
                   download={`${selectedLoan.id}-qr.png`}
                   href={`/api/loans/${selectedLoan.id}/qr`}
                 >
                   Download QR
                 </a>
-                <form
-                  action={deleteLoanAction}
-                  className="mt-3"
-                  onSubmit={(event) => {
-                    if (!confirm("Delete this loan and its payments?")) {
-                      event.preventDefault();
-                    }
-                  }}
-                >
-                  <input name="loan_id" type="hidden" value={selectedLoan.id} />
-                  <button
-                    className="flex h-10 w-full items-center justify-center rounded-md border border-[#fecaca] px-3 text-xs font-semibold text-[#b91c1c] transition hover:bg-[#fef2f2]"
-                    type="submit"
-                  >
-                    Delete loan
-                  </button>
-                </form>
               </div>
-              <div>
-                <dl className="grid gap-4 sm:grid-cols-2">
-                  <Detail label="Borrower" value={selectedLoan.borrowerName} />
-                  <Detail label="Status" value={selectedLoan.status} />
-                  <Detail label="Amount" value={selectedLoan.amount} />
-                  <Detail
-                    label="Daily payment"
-                    value={selectedLoan.dailyPayment}
-                  />
-                  <Detail label="Interest rate" value={selectedLoan.interestRate} />
-                  <Detail label="Start date" value={selectedLoan.startDate} />
-                  <Detail label="End date" value={selectedLoan.endDate} />
-                  <Detail label="Borrower ID" value={selectedLoan.borrowerId} />
-                </dl>
 
-                <LoanPaymentsPanel loanId={selectedLoan.id} />
+              <LoanPaymentsPanel loanId={selectedLoan.id} />
 
+              {isEditing ? (
                 <form
                   action={updateLoanAction}
                   className="mt-6 grid gap-4 border-t border-[#eef2f6] pt-5 sm:grid-cols-2"
@@ -207,7 +253,7 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
                     </button>
                   </div>
                 </form>
-              </div>
+              ) : null}
             </div>
           </section>
         </div>

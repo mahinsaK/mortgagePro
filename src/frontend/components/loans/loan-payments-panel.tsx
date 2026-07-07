@@ -64,30 +64,38 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
             <Summary label="Remaining" value={details.remaining} />
           </div>
 
-          <div className="overflow-x-auto rounded-lg border border-[#eef2f6]">
-            <table className="w-full min-w-[620px] border-collapse text-left text-sm">
+          <div className="overflow-hidden rounded-lg border border-[#eef2f6]">
+            <table className="w-full table-fixed border-collapse text-left text-sm">
               <thead className="bg-[#f8fafc] text-[#657386]">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">Payment</th>
-                  <th className="px-4 py-3 font-semibold">Collector</th>
-                  <th className="px-4 py-3 font-semibold">Amount</th>
-                  <th className="px-4 py-3 font-semibold">Method</th>
-                  <th className="px-4 py-3 font-semibold">Date</th>
+                  <th className="px-3 py-3 font-semibold">Payment</th>
+                  <th className="px-3 py-3 font-semibold">Collector</th>
+                  <th className="px-3 py-3 font-semibold">Amount</th>
+                  <th className="px-3 py-3 font-semibold">Method</th>
+                  <th className="px-3 py-3 font-semibold">Date</th>
                 </tr>
               </thead>
               <tbody>
                 {details.payments.map((payment) => (
                   <tr className="border-t border-[#eef2f6]" key={payment.id}>
-                    <td className="px-4 py-3 font-medium">{payment.id}</td>
-                    <td className="px-4 py-3">{payment.collectorName}</td>
-                    <td className="px-4 py-3">{payment.amount}</td>
-                    <td className="px-4 py-3 text-[#657386]">{payment.method}</td>
-                    <td className="px-4 py-3 text-[#657386]">{payment.date}</td>
+                    <td className="break-all px-3 py-3 font-medium">
+                      {payment.id}
+                    </td>
+                    <td className="break-words px-3 py-3">
+                      {payment.collectorName}
+                    </td>
+                    <td className="break-words px-3 py-3">{payment.amount}</td>
+                    <td className="break-words px-3 py-3 text-[#657386]">
+                      {payment.method}
+                    </td>
+                    <td className="break-words px-3 py-3 text-[#657386]">
+                      {payment.date}
+                    </td>
                   </tr>
                 ))}
                 {details.payments.length === 0 ? (
                   <tr className="border-t border-[#eef2f6]">
-                    <td className="px-4 py-4 text-[#657386]" colSpan={5}>
+                    <td className="px-3 py-4 text-[#657386]" colSpan={5}>
                       No payments found for this loan.
                     </td>
                   </tr>

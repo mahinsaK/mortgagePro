@@ -2,25 +2,51 @@ import type { SendSmsDto } from "./dto";
 
 export type SmsSendResult = {
   lenderId: string;
-  provider: "temporary";
+  provider: string;
   providerMessageId: string;
   to: string;
   message: string;
   purpose: SendSmsDto["purpose"];
-  status: "queued";
+  status: "queued" | "sent";
   queuedAt: string;
 };
 
+export type SmsProviderInput = {
+  to: string;
+  message: string;
+  purpose: SendSmsDto["purpose"];
+  lenderId: string;
+};
+
+export type SmsProviderResult = {
+  provider: string;
+  providerMessageId: string;
+  status: "queued" | "sent";
+};
+
+export type SmsProvider = {
+  send(input: SmsProviderInput): Promise<SmsProviderResult>;
+};
+
 export class SmsService {
+  constructor(private readonly smsProvider: SmsProvider = new TemporarySmsProvider()) {}
+
   async send(dto: SendSmsDto): Promise<SmsSendResult> {
+    const providerResult = await this.smsProvider.send({
+      lenderId: dto.lenderId,
+      message: dto.message,
+      purpose: dto.purpose,
+      to: dto.phoneNumber,
+    });
+
     return {
       lenderId: dto.lenderId,
-      provider: "temporary",
-      providerMessageId: createProviderMessageId(),
+      provider: providerResult.provider,
+      providerMessageId: providerResult.providerMessageId,
       to: dto.phoneNumber,
       message: dto.message,
       purpose: dto.purpose,
-      status: "queued",
+      status: providerResult.status,
       queuedAt: new Date().toISOString(),
     };
   }
@@ -40,6 +66,12 @@ export class SmsService {
   }
 }
 
-function createProviderMessageId() {
-  return `temporary_sms_${crypto.randomUUID().replaceAll("-", "").slice(0, 18)}`;
+class TemporarySmsProvider implements SmsProvider {
+  async send(): Promise<SmsProviderResult> {
+    return {
+      provider: "temporary",
+      providerMessageId: `temporary_sms_${crypto.randomUUID().replaceAll("-", "").slice(0, 18)}`,
+      status: "queued",
+    };
+  }
 }

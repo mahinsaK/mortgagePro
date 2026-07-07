@@ -852,6 +852,53 @@ How it works:
 - Updates the active lender profile.
 - Stores phone/address as JSON in `contact_info`.
 
+## SMS borrower search
+
+Path: `src/backend/services/sms-recipient-service.ts`
+
+Function: `searchBorrowerSmsRecipients(query)`
+
+Collection: `borrowers`
+
+Query:
+
+```txt
+Query.equal("lender_id", lender.id)
+Query.search("search_text", normalizedQuery)
+Query.limit(8)
+Query.select(["$id", "name", "business_name", "contact_info"])
+```
+
+How it works:
+
+- Runs only after the lender types a search and clicks Search.
+- Retrieves only matching borrowers under the active lender.
+- Reads only the fields needed to show a recipient result and send SMS.
+- Uses `borrowers.search_text` with `idx_borrower_search_text`, avoiding a full borrower list read in the browser.
+
+## SMS all borrowers send
+
+Path: `src/backend/services/sms-recipient-service.ts`
+
+Function: `getAllBorrowerSmsRecipients()`
+
+Collection: `borrowers`
+
+Query:
+
+```txt
+Query.equal("lender_id", lender.id)
+Query.limit(5000)
+Query.select(["$id", "name", "business_name", "contact_info"])
+```
+
+How it works:
+
+- Runs only when the lender clicks `Send all borrowers`.
+- Retrieves lender-owned borrower phone/contact data on the server.
+- Does not list all borrowers on the SMS page.
+- The SMS action sends provider requests in batches of 20.
+
 ## Appwrite setup and seed queries
 
 Path: `scripts/setup-appwrite.mjs`
@@ -879,6 +926,7 @@ Backfill query:
 Borrowers:
 Query.equal("lender_id", lenderId)
 Query.limit(5000)
+Query.select(["$id", "name", "contact_info", "search_text"])
 
 Loans:
 Query.equal("lender_id", lenderId)
@@ -888,5 +936,6 @@ Query.limit(5000)
 How it works:
 
 - Loads seed lender borrowers and loans.
+- Rebuilds `borrowers.search_text` from borrower name/contact.
 - Rebuilds `loans.search_text` from borrower name/contact.
-- Updates only loans where the value changed.
+- Updates only documents where the value changed.

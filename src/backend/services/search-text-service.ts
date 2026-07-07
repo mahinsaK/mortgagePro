@@ -5,6 +5,19 @@ export function createLoanSearchText({
   borrowerName: string;
   borrowerContact: string;
 }) {
+  return createBorrowerSearchText({
+    borrowerName,
+    borrowerContact,
+  });
+}
+
+export function createBorrowerSearchText({
+  borrowerName,
+  borrowerContact,
+}: {
+  borrowerName: string;
+  borrowerContact: string;
+}) {
   const contactValues = parseContactValues(borrowerContact);
   const baseText = [borrowerName, ...contactValues].join(" ");
   const normalizedWords = normalizeSearchText(baseText).split(" ").filter(Boolean);

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SmsController } from "../controller";
+import { SmsService, type SmsProvider } from "../service";
 
 describe("SmsController", () => {
   it("normalizes phone numbers and queues manual SMS messages", async () => {
@@ -47,5 +48,29 @@ describe("SmsController", () => {
         companyName: "Northstar",
       }),
     ).toContain("has been completed");
+  });
+
+  it("can use an injected SMS provider", async () => {
+    const provider: SmsProvider = {
+      async send(input) {
+        return {
+          provider: "test-provider",
+          providerMessageId: `test-${input.to}`,
+          status: "sent",
+        };
+      },
+    };
+    const result = await new SmsController(new SmsService(provider)).send({
+      lenderId: "lender_1",
+      phoneNumber: "94771234567",
+      message: "Hello",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toMatchObject({
+      provider: "test-provider",
+      providerMessageId: "test-94771234567",
+      status: "sent",
+    });
   });
 });

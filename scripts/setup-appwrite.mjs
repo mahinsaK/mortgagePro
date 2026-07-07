@@ -62,6 +62,7 @@ const schema = [
       stringAttr("name", 160, true),
       stringAttr("business_name", 160, false),
       stringAttr("contact_info", 1000, false),
+      stringAttr("search_text", 2000, false),
       enumAttr("status", ["active", "inactive"], true),
       datetimeAttr("created_at", true),
     ],
@@ -69,6 +70,7 @@ const schema = [
       keyIndex("idx_borrower_lender_id", ["lender_id"]),
       keyIndex("idx_borrower_status", ["status"]),
       keyIndex("idx_borrower_lender_created", ["lender_id", "created_at"]),
+      fulltextIndex("idx_borrower_search_text", ["search_text"]),
     ],
   },
   {
@@ -345,6 +347,13 @@ async function seedData() {
       phone: "+1 555 0101",
       address: "22 Cedar Road, Austin, TX",
     }),
+    search_text: createBorrowerSearchText({
+      borrowerName: "Avery Johnson",
+      borrowerContact: JSON.stringify({
+        phone: "+1 555 0101",
+        address: "22 Cedar Road, Austin, TX",
+      }),
+    }),
     status: "active",
     created_at: now,
   });
@@ -390,6 +399,7 @@ async function seedData() {
     created_at: now,
   });
 
+  await backfillBorrowerSearchText(lenderId);
   await backfillLoanSearchText(lenderId);
 
   return {
@@ -459,6 +469,37 @@ function fulltextIndex(key, attributes) {
   return { key, type: "fulltext", attributes };
 }
 
+async function backfillBorrowerSearchText(lenderId) {
+  const borrowers = await databases.listDocuments({
+    databaseId: config.databaseId,
+    collectionId: config.collections.borrowers,
+    queries: [
+      Query.equal("lender_id", lenderId),
+      Query.limit(5000),
+      Query.select(["$id", "name", "contact_info", "search_text"]),
+    ],
+  });
+
+  for (const borrower of borrowers.documents) {
+    const searchText = createBorrowerSearchText({
+      borrowerName: String(borrower.name ?? ""),
+      borrowerContact: String(borrower.contact_info ?? ""),
+    });
+
+    if (borrower.search_text === searchText) {
+      continue;
+    }
+
+    await databases.updateDocument({
+      databaseId: config.databaseId,
+      collectionId: config.collections.borrowers,
+      documentId: borrower.$id,
+      data: { search_text: searchText },
+    });
+    console.log(`Updated borrower search text: ${borrower.$id}`);
+  }
+}
+
 async function backfillLoanSearchText(lenderId) {
   const [borrowers, loans] = await Promise.all([
     databases.listDocuments({
@@ -503,6 +544,10 @@ async function backfillLoanSearchText(lenderId) {
 }
 
 function createLoanSearchText({ borrowerName, borrowerContact }) {
+  return createBorrowerSearchText({ borrowerName, borrowerContact });
+}
+
+function createBorrowerSearchText({ borrowerName, borrowerContact }) {
   const contactValues = parseContactValues(borrowerContact);
   const baseText = [borrowerName, ...contactValues].join(" ");
   const normalizedWords = normalizeSearchText(baseText).split(" ").filter(Boolean);

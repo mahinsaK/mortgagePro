@@ -36,6 +36,7 @@ lender_id: active lender ID
 name
 business_name
 contact_info: JSON string with phone/address
+search_text: generated searchable text for SMS borrower search
 status: active
 created_at
 ```
@@ -52,6 +53,7 @@ How it works:
 
 - Verifies the borrower belongs to the active lender.
 - Updates borrower name, business name, phone, address, and status.
+- Rebuilds `borrowers.search_text`.
 - Rebuilds `loans.search_text` for every loan owned by this lender and this borrower.
 
 This fixes stale dashboard search results when borrower details change.

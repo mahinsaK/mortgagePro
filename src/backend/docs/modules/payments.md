@@ -7,6 +7,7 @@ Paths:
 - `src/backend/modules/payments/service.ts`
 - `src/backend/modules/payments/__tests__/payments.test.ts`
 - `src/backend/services/lending-service.ts`
+- `src/backend/services/payment-recording-service.ts`
 - `src/backend/services/payment-validation-service.ts`
 - `src/app/api/exports/payments/route.ts`
 
@@ -21,8 +22,23 @@ The module files validate and prepare payment payloads:
 - `toRecordPaymentDto(input)` validates lender ID, loan ID, loan lender ID, collector ID, collector lender ID, date, amount, and method.
 - `PaymentController.record(input)` returns success or failure.
 - `PaymentService.prepareRecord(dto)` rejects a collector when `loanLenderId !== collectorLenderId`.
+- `PaymentService.calculateLoanTotals(input)` calculates stored `total_paid`, `remaining_amount`, and status.
 
 These files do not call Appwrite directly.
+
+## Record payment and update loan totals
+
+Path: `src/backend/services/payment-recording-service.ts`
+
+Function: `recordLoanPayment(input)`
+
+How it works:
+
+- Verifies the loan belongs to the active lender.
+- Verifies the collector belongs to the active lender.
+- Creates one payment document.
+- Updates the loan document with `total_paid`, `remaining_amount`, and `status`.
+- Marks the loan `completed` when remaining balance reaches zero.
 
 ## Collector loan ownership validation
 

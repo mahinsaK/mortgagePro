@@ -23,6 +23,7 @@ The module files validate and prepare loan payloads:
 - It rejects an end date that is not after the start date.
 - `LoanController.create(input)` requires QR payload data and returns success or failure.
 - `LoanService.prepareCreate(dto, qrCode)` creates the document-shaped payload.
+- New loans start with `total_paid: 0` and `remaining_amount: amount`.
 
 These files do not call Appwrite directly.
 
@@ -56,6 +57,8 @@ borrower_id
 amount
 interest_rate
 daily_payment
+total_paid: 0
+remaining_amount: amount
 start_date
 end_date
 status: active
@@ -74,6 +77,7 @@ How it works:
 
 - Verifies the loan belongs to the active lender.
 - Updates amount, interest rate, daily payment, dates, and status.
+- Recalculates `remaining_amount` from the stored `total_paid`.
 
 ## Delete loan flow
 
@@ -98,7 +102,7 @@ Query:
 ```txt
 Query.equal("lender_id", lender.id)
 Query.orderDesc("created_at")
-Query.select(["$id", "borrower_id", "amount", "interest_rate", "daily_payment", "start_date", "end_date", "status"])
+Query.select(["$id", "borrower_id", "amount", "interest_rate", "daily_payment", "total_paid", "remaining_amount", "start_date", "end_date", "status"])
 Query.limit(pageSize)
 Query.offset((page - 1) * pageSize)
 ```
@@ -123,7 +127,7 @@ How it works:
 - The dashboard and loans page do not load payment rows by default.
 - When `View payments` is clicked, the client calls `/api/loans/{loanId}/payments`.
 - The backend verifies `lender_id` and `loan_id`.
-- The response includes payment rows, `totalPaid`, and `remaining`.
+- The response includes payment rows, stored `totalPaid`, and stored `remaining`.
 
 ## Borrower profile loans query
 
@@ -138,7 +142,7 @@ Query.equal("lender_id", lender.id)
 Query.equal("borrower_id", borrowerId)
 Query.limit(8)
 Query.offset((page - 1) * 8)
-Query.select(["$id", "borrower_id", "amount", "interest_rate", "daily_payment", "start_date", "end_date", "status"])
+Query.select(["$id", "borrower_id", "amount", "interest_rate", "daily_payment", "total_paid", "remaining_amount", "start_date", "end_date", "status"])
 ```
 
 This profile query is paginated separately from the main loans page so one borrower profile does not load too many loan cards at once.
@@ -157,7 +161,7 @@ Query.search("search_text", normalizedQuery)
 Query.orderDesc("created_at")
 Query.limit(15)
 Query.offset((page - 1) * 15)
-Query.select(["$id", "borrower_id", "amount", "daily_payment", "status", "end_date"])
+Query.select(["$id", "borrower_id", "amount", "total_paid", "remaining_amount", "daily_payment", "status", "end_date"])
 ```
 
 This is how the search bar finds loans by borrower name/contact/address without loading all loans.

@@ -17,6 +17,8 @@ describe("LoanController", () => {
     expect(result.ok).toBe(true);
     expect(result.data).toMatchObject({
       amount: 1000,
+      total_paid: 0,
+      remaining_amount: 1000,
       status: "active",
       qr_code: "data:image/png;base64,qr",
     });

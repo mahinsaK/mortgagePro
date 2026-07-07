@@ -106,7 +106,7 @@ Query.search("search_text", normalizedQuery) // only when q exists
 Query.orderDesc("created_at")
 Query.limit(pageSize)
 Query.offset((page - 1) * pageSize)
-Query.select(["$id", "borrower_id", "amount", "daily_payment", "status", "end_date"])
+Query.select(["$id", "borrower_id", "amount", "total_paid", "remaining_amount", "daily_payment", "status", "end_date"])
 ```
 
 How it works:
@@ -249,7 +249,7 @@ Query.equal("lender_id", lender.id)
 Query.equal("borrower_id", borrowerId)
 Query.limit(8)
 Query.offset((page - 1) * 8)
-Query.select(["$id", "borrower_id", "amount", "interest_rate", "daily_payment", "start_date", "end_date", "status"])
+Query.select(["$id", "borrower_id", "amount", "interest_rate", "daily_payment", "total_paid", "remaining_amount", "start_date", "end_date", "status"])
 ```
 
 How it works:
@@ -289,7 +289,7 @@ Query through `listForLender()`:
 ```txt
 Query.equal("lender_id", lender.id)
 Query.orderDesc("created_at")
-Query.select(["$id", "borrower_id", "amount", "interest_rate", "daily_payment", "start_date", "end_date", "status"])
+Query.select(["$id", "borrower_id", "amount", "interest_rate", "daily_payment", "total_paid", "remaining_amount", "start_date", "end_date", "status"])
 Query.limit(pageSize)
 Query.offset((page - 1) * pageSize)
 ```
@@ -402,13 +402,13 @@ Collection: `loans`
 Query.equal("lender_id", lender.id)
 Query.equal("$id", loanId)
 Query.limit(1)
-Query.select(["$id", "amount"])
+Query.select(["$id", "amount", "total_paid", "remaining_amount"])
 ```
 
 How it works:
 
 - Confirms the loan belongs to the active lender.
-- Retrieves only the loan amount so remaining balance can be calculated.
+- Retrieves the loan amount and stored totals for the payment summary.
 - Returns 404 if another lender's loan ID is requested.
 
 ### Loan payments query
@@ -428,7 +428,7 @@ How it works:
 - Runs only when the user clicks `View payments` in a loan details popup.
 - Retrieves payments only for the selected lender-owned loan.
 - Sums returned payment amounts for `Total paid`.
-- Calculates `Remaining` as `loan.amount - totalPaid`.
+- Reads `totalPaid` and `remaining` from the loan document totals.
 
 Collector name lookup:
 
@@ -685,6 +685,8 @@ databases.createDocument({
   amount,
   interest_rate,
   daily_payment,
+  total_paid: 0,
+  remaining_amount: amount,
   start_date,
   end_date,
   status: "active",
@@ -714,7 +716,7 @@ Collection: loans
 Query.equal("lender_id", lender.id)
 Query.equal("$id", loanId)
 Query.limit(1)
-Query.select(["$id", "borrower_id"])
+Query.select(["$id", "borrower_id", "total_paid"])
 ```
 
 Write:
@@ -725,6 +727,7 @@ databases.updateDocument({
   amount,
   interest_rate,
   daily_payment,
+  remaining_amount,
   start_date,
   end_date,
   status
@@ -734,7 +737,7 @@ databases.updateDocument({
 How it works:
 
 - Confirms the loan belongs to the active lender.
-- Updates only loan fields.
+- Updates loan fields and recalculates `remaining_amount` from stored `total_paid`.
 - Borrower search text does not need to change because borrower fields are unchanged.
 
 ## Delete loan
@@ -757,6 +760,44 @@ Query.equal("loan_id", loanId)
 Query.limit(5000)
 Query.select(["$id"])
 ```
+
+## Record payment and update loan totals
+
+Path: `src/backend/services/payment-recording-service.ts`
+
+Function: `recordLoanPayment(input)`
+
+Loan ownership query:
+
+```txt
+Query.equal("lender_id", lender.id)
+Query.equal("$id", loanId)
+Query.limit(1)
+Query.select(["$id", "amount", "total_paid", "status"])
+```
+
+Collector ownership query:
+
+```txt
+Query.equal("lender_id", lender.id)
+Query.equal("$id", collectorId)
+Query.limit(1)
+Query.select(["$id"])
+```
+
+Writes:
+
+```txt
+payments: create payment document
+loans: update total_paid, remaining_amount, status
+```
+
+How it works:
+
+- Confirms both loan and collector belong to the active lender.
+- Creates the payment document.
+- Uses `PaymentService.calculateLoanTotals(...)`.
+- Updates the loan totals and marks the loan completed when the remaining balance is zero.
 
 ## Create collector
 

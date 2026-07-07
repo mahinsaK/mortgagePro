@@ -95,6 +95,8 @@ export default async function BorrowerProfilePage({
                   </div>
 
                   <dl className="mt-5 grid gap-4 sm:grid-cols-2">
+                    <Detail label="Total paid" value={loan.totalPaid} />
+                    <Detail label="Remaining" value={loan.remainingAmount} />
                     <Detail label="Daily payment" value={loan.dailyPayment} />
                     <Detail label="Interest" value={loan.interestRate} />
                     <Detail label="Start date" value={loan.startDate} />

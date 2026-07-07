@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { appwriteServerConfig } from "@/backend/appwrite/config";
 import { databases, Query, users } from "@/backend/appwrite/server-client";
 import { normalizeCurrency } from "@/backend/lib/currency";
+import { PaymentService } from "@/backend/modules/payments/service";
 import { getPrimaryLender } from "@/backend/services/lender-service";
 import { createLoanSearchText } from "@/backend/services/search-text-service";
 
@@ -149,6 +150,7 @@ export async function createLoanForBorrowerAction(formData: FormData) {
 
   const loanId = createDocumentId("loan");
   const now = new Date().toISOString();
+  const amount = readNumber(formData, "amount");
 
   await databases.createDocument({
     databaseId: appwriteServerConfig.databaseId,
@@ -157,9 +159,11 @@ export async function createLoanForBorrowerAction(formData: FormData) {
     data: {
       lender_id: lender.id,
       borrower_id: borrowerId,
-      amount: readNumber(formData, "amount"),
+      amount,
       interest_rate: readNumber(formData, "interest_rate"),
       daily_payment: readNumber(formData, "daily_payment"),
+      total_paid: 0,
+      remaining_amount: amount,
       start_date: readDate(formData, "start_date"),
       end_date: readDate(formData, "end_date"),
       status: "active",
@@ -183,20 +187,31 @@ export async function updateLoanAction(formData: FormData) {
   const loan = await getOwnedDocument(appwriteServerConfig.collections.loans, lender.id, loanId, [
     "$id",
     "borrower_id",
+    "total_paid",
   ]);
   const borrowerId = String(loan.borrower_id ?? "");
+  const amount = readNumber(formData, "amount");
+  const totalPaid = Number(loan.total_paid ?? 0);
+  const requestedStatus = readLoanStatus(formData);
+  const totals = new PaymentService().calculateLoanTotals({
+    loanAmount: amount,
+    currentTotalPaid: totalPaid,
+    paymentAmount: 0,
+    currentStatus: requestedStatus,
+  });
 
   await databases.updateDocument({
     databaseId: appwriteServerConfig.databaseId,
     collectionId: appwriteServerConfig.collections.loans,
     documentId: loanId,
     data: {
-      amount: readNumber(formData, "amount"),
+      amount,
       interest_rate: readNumber(formData, "interest_rate"),
       daily_payment: readNumber(formData, "daily_payment"),
+      remaining_amount: totals.remainingAmount,
       start_date: readDate(formData, "start_date"),
       end_date: readDate(formData, "end_date"),
-      status: readLoanStatus(formData),
+      status: totals.status,
     },
   });
 

@@ -97,6 +97,8 @@ const schema = [
       floatAttr("amount", true, 0),
       floatAttr("interest_rate", true, 0),
       floatAttr("daily_payment", true, 0),
+      floatAttr("total_paid", false, 0, undefined, 0),
+      floatAttr("remaining_amount", false, 0, undefined, 0),
       datetimeAttr("start_date", true),
       datetimeAttr("end_date", true),
       enumAttr("status", ["active", "completed", "overdue", "cancelled"], true),
@@ -366,6 +368,8 @@ async function seedData() {
     amount: 5000,
     interest_rate: 12.5,
     daily_payment: 125,
+    total_paid: 125,
+    remaining_amount: 4875,
     start_date: "2026-07-06T00:00:00.000Z",
     end_date: "2026-08-15T00:00:00.000Z",
     status: "active",
@@ -391,6 +395,7 @@ async function seedData() {
   });
 
   await backfillLoanSearchText(lenderId);
+  await backfillLoanPaymentTotals(lenderId);
 
   return {
     lenderId,
@@ -499,6 +504,60 @@ async function backfillLoanSearchText(lenderId) {
       data: { search_text: searchText },
     });
     console.log(`Updated loan search text: ${loan.$id}`);
+  }
+}
+
+async function backfillLoanPaymentTotals(lenderId) {
+  const [loans, payments] = await Promise.all([
+    databases.listDocuments({
+      databaseId: config.databaseId,
+      collectionId: config.collections.loans,
+      queries: [
+        Query.equal("lender_id", lenderId),
+        Query.limit(5000),
+        Query.select(["$id", "amount", "total_paid", "remaining_amount"]),
+      ],
+    }),
+    databases.listDocuments({
+      databaseId: config.databaseId,
+      collectionId: config.collections.payments,
+      queries: [
+        Query.equal("lender_id", lenderId),
+        Query.limit(5000),
+        Query.select(["loan_id", "amount"]),
+      ],
+    }),
+  ]);
+  const totalsByLoanId = new Map();
+
+  for (const payment of payments.documents) {
+    const loanId = String(payment.loan_id ?? "");
+    const currentTotal = totalsByLoanId.get(loanId) ?? 0;
+
+    totalsByLoanId.set(loanId, currentTotal + Number(payment.amount ?? 0));
+  }
+
+  for (const loan of loans.documents) {
+    const totalPaid = totalsByLoanId.get(loan.$id) ?? 0;
+    const remainingAmount = Math.max(Number(loan.amount ?? 0) - totalPaid, 0);
+
+    if (
+      Number(loan.total_paid ?? 0) === totalPaid &&
+      Number(loan.remaining_amount ?? 0) === remainingAmount
+    ) {
+      continue;
+    }
+
+    await databases.updateDocument({
+      databaseId: config.databaseId,
+      collectionId: config.collections.loans,
+      documentId: loan.$id,
+      data: {
+        total_paid: totalPaid,
+        remaining_amount: remainingAmount,
+      },
+    });
+    console.log(`Updated loan payment totals: ${loan.$id}`);
   }
 }
 

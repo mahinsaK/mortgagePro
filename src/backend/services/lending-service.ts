@@ -21,6 +21,8 @@ export type LoanRow = {
   borrowerName: string;
   amount: string;
   amountValue: string;
+  totalPaid: string;
+  remainingAmount: string;
   interestRate: string;
   interestRateValue: string;
   dailyPayment: string;
@@ -183,6 +185,8 @@ export async function getBorrowerProfileData(
           "amount",
           "interest_rate",
           "daily_payment",
+          "total_paid",
+          "remaining_amount",
           "start_date",
           "end_date",
           "status",
@@ -245,6 +249,8 @@ export async function getLoansPageData(options: PaginationOptions = {}) {
       "amount",
       "interest_rate",
       "daily_payment",
+      "total_paid",
+      "remaining_amount",
       "start_date",
       "end_date",
       "status",
@@ -512,7 +518,7 @@ export async function getLoanPaymentDetails(
       Query.equal("lender_id", lender.id),
       Query.equal("$id", loanId),
       Query.limit(1),
-      Query.select(["$id", "amount"]),
+      Query.select(["$id", "amount", "total_paid", "remaining_amount"]),
     ],
   });
   const loan = loans.documents[0];
@@ -549,16 +555,16 @@ export async function getLoanPaymentDetails(
       String(collector.name ?? "Unknown collector"),
     ]),
   );
-  const totalPaid = payments.documents.reduce(
-    (total, payment) => total + Number(payment.amount ?? 0),
-    0,
-  );
   const loanAmount = Number(loan.amount ?? 0);
+  const totalPaid = Number(loan.total_paid ?? 0);
+  const remainingAmount = Number(
+    loan.remaining_amount ?? Math.max(loanAmount - totalPaid, 0),
+  );
 
   return {
     loanId,
     totalPaid: formatMoney(totalPaid, lender.currency),
-    remaining: formatMoney(Math.max(loanAmount - totalPaid, 0), lender.currency),
+    remaining: formatMoney(remainingAmount, lender.currency),
     payments: payments.documents.map((payment) => ({
       id: payment.$id,
       amount: formatMoney(Number(payment.amount ?? 0), lender.currency),
@@ -683,12 +689,20 @@ function mapLoanDocument(
   borrowerName: string,
   currency: string,
 ): LoanRow {
+  const loanAmount = Number(loan.amount ?? 0);
+  const totalPaid = Number(loan.total_paid ?? 0);
+  const remainingAmount = Number(
+    loan.remaining_amount ?? Math.max(loanAmount - totalPaid, 0),
+  );
+
   return {
     id: loan.$id,
     borrowerId: String(loan.borrower_id ?? ""),
     borrowerName,
-    amount: formatMoney(Number(loan.amount ?? 0), currency),
+    amount: formatMoney(loanAmount, currency),
     amountValue: String(loan.amount ?? 0),
+    totalPaid: formatMoney(totalPaid, currency),
+    remainingAmount: formatMoney(remainingAmount, currency),
     interestRate: `${Number(loan.interest_rate ?? 0).toFixed(2)}%`,
     interestRateValue: String(loan.interest_rate ?? 0),
     dailyPayment: formatMoney(Number(loan.daily_payment ?? 0), currency),

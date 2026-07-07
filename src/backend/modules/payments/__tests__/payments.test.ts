@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PaymentController } from "../controller";
+import { PaymentService } from "../service";
 
 describe("PaymentController", () => {
   it("rejects payment collection for another lender's loan", () => {
@@ -18,5 +19,35 @@ describe("PaymentController", () => {
     expect(result.error).toBe(
       "This collector cannot collect another lender's loan.",
     );
+  });
+
+  it("calculates stored loan payment totals", () => {
+    const totals = new PaymentService().calculateLoanTotals({
+      loanAmount: 1000,
+      currentTotalPaid: 250,
+      paymentAmount: 300,
+      currentStatus: "active",
+    });
+
+    expect(totals).toEqual({
+      totalPaid: 550,
+      remainingAmount: 450,
+      status: "active",
+    });
+  });
+
+  it("marks the loan completed when payment covers the balance", () => {
+    const totals = new PaymentService().calculateLoanTotals({
+      loanAmount: 1000,
+      currentTotalPaid: 900,
+      paymentAmount: 150,
+      currentStatus: "active",
+    });
+
+    expect(totals).toEqual({
+      totalPaid: 1050,
+      remainingAmount: 0,
+      status: "completed",
+    });
   });
 });

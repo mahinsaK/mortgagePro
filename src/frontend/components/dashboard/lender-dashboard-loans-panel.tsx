@@ -12,6 +12,8 @@ type DashboardLoan = {
   borrowerContact: string;
   borrowerPhone: string;
   amount: string;
+  totalPaid: string;
+  remainingAmount: string;
   dailyPayment: string;
   status: string;
   endDate: string;
@@ -94,12 +96,14 @@ export function LenderDashboardLoansPanel({
           </p>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[840px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[980px] border-collapse text-left text-sm">
             <thead className="bg-[#f8fafc] text-[#657386]">
               <tr>
                 <th className="px-5 py-3 font-semibold">Borrower</th>
                 <th className="px-5 py-3 font-semibold">Contact</th>
                 <th className="px-5 py-3 font-semibold">Amount</th>
+                <th className="px-5 py-3 font-semibold">Total paid</th>
+                <th className="px-5 py-3 font-semibold">Remaining</th>
                 <th className="px-5 py-3 font-semibold">Daily payment</th>
                 <th className="px-5 py-3 font-semibold">Stage</th>
                 <th className="px-5 py-3 font-semibold">End date</th>
@@ -117,6 +121,8 @@ export function LenderDashboardLoansPanel({
                     {loan.borrowerContact || "No contact"}
                   </td>
                   <td className="px-5 py-4">{loan.amount}</td>
+                  <td className="px-5 py-4">{loan.totalPaid}</td>
+                  <td className="px-5 py-4">{loan.remainingAmount}</td>
                   <td className="px-5 py-4">{loan.dailyPayment}</td>
                   <td className="px-5 py-4">
                     <span className="rounded-full bg-[#e0ecff] px-3 py-1 text-xs font-semibold text-[#1d4ed8]">
@@ -128,7 +134,7 @@ export function LenderDashboardLoansPanel({
               ))}
               {loans.length === 0 ? (
                 <tr className="border-t border-[#eef2f6]">
-                  <td className="px-5 py-6 text-[#657386]" colSpan={6}>
+                  <td className="px-5 py-6 text-[#657386]" colSpan={8}>
                     No loans match that search.
                   </td>
                 </tr>
@@ -178,6 +184,11 @@ export function LenderDashboardLoansPanel({
                 />
                 <Detail label="Status" value={selectedLoan.status} />
                 <Detail label="Amount" value={selectedLoan.amount} />
+                <Detail label="Total paid" value={selectedLoan.totalPaid} />
+                <Detail
+                  label="Remaining"
+                  value={selectedLoan.remainingAmount}
+                />
                 <Detail
                   label="Daily payment"
                   value={selectedLoan.dailyPayment}

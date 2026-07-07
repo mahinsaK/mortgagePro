@@ -72,6 +72,8 @@ Attributes:
 - `amount`: loan amount.
 - `interest_rate`: interest rate.
 - `daily_payment`: planned daily payment amount.
+- `total_paid`: stored total amount paid against the loan.
+- `remaining_amount`: stored remaining balance for the loan.
 - `start_date`: loan start date.
 - `end_date`: loan end date.
 - `status`: `active`, `completed`, `overdue`, or `cancelled`.

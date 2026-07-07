@@ -16,6 +16,8 @@ export type DashboardLoan = {
   borrowerContact: string;
   borrowerPhone: string;
   amount: string;
+  totalPaid: string;
+  remainingAmount: string;
   dailyPayment: string;
   status: string;
   endDate: string;
@@ -69,6 +71,8 @@ export async function getLenderDashboardData(
       "$id",
       "borrower_id",
       "amount",
+      "total_paid",
+      "remaining_amount",
       "daily_payment",
       "status",
       "end_date",
@@ -146,7 +150,7 @@ export async function getLenderDashboardData(
       return [
         borrower.$id,
         {
-          display: formatContactInfo(contact),
+          display: contact.phone,
           phone: contact.phone,
         },
       ];
@@ -195,6 +199,14 @@ export async function getLenderDashboardData(
         borrowerContact: contact.display,
         borrowerPhone: contact.phone,
         amount: formatMoney(Number(loan.amount ?? 0), lender.currency),
+        totalPaid: formatMoney(Number(loan.total_paid ?? 0), lender.currency),
+        remainingAmount: formatMoney(
+          Number(
+            loan.remaining_amount ??
+              Math.max(Number(loan.amount ?? 0) - Number(loan.total_paid ?? 0), 0),
+          ),
+          lender.currency,
+        ),
         dailyPayment: formatMoney(Number(loan.daily_payment ?? 0), lender.currency),
         status: String(loan.status ?? "active"),
         endDate: formatDate(String(loan.end_date ?? "")),
@@ -241,14 +253,6 @@ function parseContactInfo(value: string) {
   } catch {
     return { phone: value, address: "", area: "" };
   }
-}
-
-function formatContactInfo(contact: {
-  phone: string;
-  address: string;
-  area: string;
-}) {
-  return [contact.phone, contact.address, contact.area].filter(Boolean).join(" / ");
 }
 
 function normalizePagination(options: DashboardOptions) {

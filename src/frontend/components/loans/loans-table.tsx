@@ -29,13 +29,15 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
   return (
     <>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[980px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[1120px] border-collapse text-left text-sm">
           <thead className="bg-[#f8fafc] text-[#657386]">
             <tr>
               <th className="px-5 py-3 font-semibold">QR</th>
               <th className="px-5 py-3 font-semibold">Loan</th>
               <th className="px-5 py-3 font-semibold">Borrower</th>
               <th className="px-5 py-3 font-semibold">Amount</th>
+              <th className="px-5 py-3 font-semibold">Total paid</th>
+              <th className="px-5 py-3 font-semibold">Remaining</th>
               <th className="px-5 py-3 font-semibold">Daily payment</th>
               <th className="px-5 py-3 font-semibold">Interest</th>
               <th className="px-5 py-3 font-semibold">Status</th>
@@ -62,6 +64,8 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
                 <td className="px-5 py-4 font-medium">{loan.id}</td>
                 <td className="px-5 py-4">{loan.borrowerName}</td>
                 <td className="px-5 py-4">{loan.amount}</td>
+                <td className="px-5 py-4">{loan.totalPaid}</td>
+                <td className="px-5 py-4">{loan.remainingAmount}</td>
                 <td className="px-5 py-4">{loan.dailyPayment}</td>
                 <td className="px-5 py-4">{loan.interestRate}</td>
                 <td className="px-5 py-4">
@@ -74,7 +78,7 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
             ))}
             {loans.length === 0 ? (
               <tr className="border-t border-[#eef2f6]">
-                <td className="px-5 py-6 text-[#657386]" colSpan={8}>
+                <td className="px-5 py-6 text-[#657386]" colSpan={10}>
                   No loans found.
                 </td>
               </tr>
@@ -162,6 +166,11 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
                 <Detail label="Borrower" value={selectedLoan.borrowerName} />
                 <Detail label="Status" value={selectedLoan.status} />
                 <Detail label="Amount" value={selectedLoan.amount} />
+                <Detail label="Total paid" value={selectedLoan.totalPaid} />
+                <Detail
+                  label="Remaining"
+                  value={selectedLoan.remainingAmount}
+                />
                 <Detail
                   label="Daily payment"
                   value={selectedLoan.dailyPayment}

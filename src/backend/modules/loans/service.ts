@@ -8,6 +8,8 @@ export class LoanService {
       amount: dto.amount,
       interest_rate: dto.interestRate,
       daily_payment: dto.dailyPayment,
+      total_paid: 0,
+      remaining_amount: dto.amount,
       start_date: dto.startDate,
       end_date: dto.endDate,
       status: "active",

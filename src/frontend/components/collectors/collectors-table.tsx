@@ -133,6 +133,13 @@ function EditCollectorDialog({ collector }: { collector: CollectorRow }) {
               name="phone"
             />
             <Field defaultValue={collector.areaInfo} label="Area" name="area" />
+            <Field
+              defaultValue=""
+              label="New password"
+              name="password"
+              placeholder="Leave blank to keep current"
+              type="password"
+            />
             <label className="text-sm font-medium text-[#2d3745]">
               Status
               <select
@@ -163,12 +170,16 @@ function Field({
   defaultValue,
   label,
   name,
+  placeholder,
   required,
+  type = "text",
 }: {
   defaultValue: string;
   label: string;
   name: string;
+  placeholder?: string;
   required?: boolean;
+  type?: "password" | "text";
 }) {
   return (
     <label className="text-sm font-medium text-[#2d3745]">
@@ -177,7 +188,9 @@ function Field({
         className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
         defaultValue={defaultValue}
         name={name}
+        placeholder={placeholder}
         required={required}
+        type={type}
       />
     </label>
   );

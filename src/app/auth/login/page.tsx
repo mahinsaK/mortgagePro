@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { KeyRound, ShieldCheck } from "lucide-react";
+import { KeyRound, QrCode, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
 import { loginAction } from "@/backend/actions/auth-actions";
 import { getPrimaryLender } from "@/backend/services/lender-service";
@@ -20,7 +20,14 @@ export default async function LoginPage({
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#eef2f6] px-5 py-10">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#eef2f6] px-5 py-10">
+      <Link
+        className="flex h-12 w-full max-w-md items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white shadow-sm md:hidden"
+        href="/collector/login"
+      >
+        <QrCode aria-hidden="true" size={18} />
+        Scan QR code
+      </Link>
       <section className="grid w-full max-w-5xl overflow-hidden rounded-lg border border-[#d9e0e8] bg-white shadow-sm md:grid-cols-[1fr_430px]">
         <div className="flex min-h-[560px] flex-col justify-between bg-[#102235] p-8 text-white md:p-10">
           <div>

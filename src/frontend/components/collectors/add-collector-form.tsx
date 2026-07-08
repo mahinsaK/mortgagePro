@@ -47,6 +47,13 @@ export function AddCollectorForm() {
               <Field label="Name" name="name" placeholder="Jordan Lee" required />
               <Field label="Phone" name="phone" placeholder="+1 555 0102" />
               <Field label="Area" name="area" placeholder="Austin North" />
+              <Field
+                label="Collector password"
+                name="password"
+                placeholder="Minimum 8 characters"
+                required
+                type="password"
+              />
               <label className="text-sm font-medium text-[#2d3745]">
                 Status
                 <select
@@ -78,11 +85,13 @@ function Field({
   name,
   placeholder,
   required,
+  type = "text",
 }: {
   label: string;
   name: string;
   placeholder: string;
   required?: boolean;
+  type?: "password" | "text";
 }) {
   return (
     <label className="text-sm font-medium text-[#2d3745]">
@@ -92,6 +101,7 @@ function Field({
         name={name}
         placeholder={placeholder}
         required={required}
+        type={type}
       />
     </label>
   );

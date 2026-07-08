@@ -6,6 +6,7 @@ import { appwriteServerConfig } from "@/backend/appwrite/config";
 import { databases, Query, users } from "@/backend/appwrite/server-client";
 import { normalizeCurrency } from "@/backend/lib/currency";
 import { PaymentService } from "@/backend/modules/payments/service";
+import { hashCollectorPassword } from "@/backend/services/collector-auth-service";
 import { getPrimaryLender } from "@/backend/services/lender-service";
 import {
   createBorrowerSearchText,
@@ -278,6 +279,11 @@ export async function createCollectorAction(formData: FormData) {
   const lender = await getRequiredLender();
   const collectorId = createDocumentId("collector");
   const now = new Date().toISOString();
+  const password = readRequired(formData, "password");
+
+  if (password.length < 8) {
+    throw new Error("Collector password must be at least 8 characters.");
+  }
 
   await databases.createDocument({
     databaseId: appwriteServerConfig.databaseId,
@@ -290,6 +296,7 @@ export async function createCollectorAction(formData: FormData) {
         phone: readOptional(formData, "phone"),
         area: readOptional(formData, "area"),
       }),
+      password_hash: hashCollectorPassword(password),
       status: readStatus(formData),
       created_at: now,
     },
@@ -304,19 +311,29 @@ export async function updateCollectorAction(formData: FormData) {
   await getOwnedDocument(appwriteServerConfig.collections.collectors, lender.id, collectorId, [
     "$id",
   ]);
+  const password = readOptional(formData, "password");
+  const data: Record<string, unknown> = {
+    name: readRequired(formData, "name"),
+    contact_info: JSON.stringify({
+      phone: readOptional(formData, "phone"),
+      area: readOptional(formData, "area"),
+    }),
+    status: readStatus(formData),
+  };
+
+  if (password) {
+    if (password.length < 8) {
+      throw new Error("Collector password must be at least 8 characters.");
+    }
+
+    data.password_hash = hashCollectorPassword(password);
+  }
 
   await databases.updateDocument({
     databaseId: appwriteServerConfig.databaseId,
     collectionId: appwriteServerConfig.collections.collectors,
     documentId: collectorId,
-    data: {
-      name: readRequired(formData, "name"),
-      contact_info: JSON.stringify({
-        phone: readOptional(formData, "phone"),
-        area: readOptional(formData, "area"),
-      }),
-      status: readStatus(formData),
-    },
+    data,
   });
 
   revalidatePath("/collectors");

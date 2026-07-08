@@ -1,3 +1,4 @@
+import { scryptSync } from "node:crypto";
 import { Client, Databases, Permission, Query, Role, Users } from "node-appwrite";
 import { readFileSync } from "node:fs";
 
@@ -85,11 +86,13 @@ const schema = [
       stringAttr("lender_id", 64, true),
       stringAttr("name", 160, true),
       stringAttr("contact_info", 1000, false),
+      stringAttr("password_hash", 256, false),
       enumAttr("status", ["active", "inactive"], true),
       datetimeAttr("created_at", true),
     ],
     indexes: [
       keyIndex("idx_collector_lender_id", ["lender_id"]),
+      keyIndex("idx_collector_name", ["name"]),
       keyIndex("idx_collector_status", ["status"]),
       keyIndex("idx_collector_lender_status", ["lender_id", "status"]),
       keyIndex("idx_collector_lender_created", ["lender_id", "created_at"]),
@@ -370,6 +373,7 @@ async function seedData() {
       phone: "+1 555 0102",
       area: "Austin North",
     }),
+    password_hash: hashSeedPassword("CollectorPass123!"),
     status: "active",
     created_at: now,
   });
@@ -514,6 +518,13 @@ async function deleteAttributeIfExists(collectionId, key) {
 
 function stringAttr(key, size, required, xdefault) {
   return { type: "string", key, size, required, xdefault };
+}
+
+function hashSeedPassword(password) {
+  const salt = "seedcollectorpasswordsalt";
+  const hash = scryptSync(password, salt, 64).toString("hex");
+
+  return `${salt}:${hash}`;
 }
 
 function floatAttr(key, required, min, max, xdefault) {

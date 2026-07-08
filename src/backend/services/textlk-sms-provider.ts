@@ -27,21 +27,23 @@ export class TextlkSmsProvider implements SmsProvider {
     }
 
     const response = await fetch(this.config.apiUrl, {
-      body: toRequestBody({
-        message: input.message,
-        recipient: input.to,
-        senderId: this.config.senderId,
-      }),
+      body: JSON.stringify(
+        toRequestBody({
+          message: input.message,
+          recipient: input.to,
+          senderId: this.config.senderId,
+        }),
+      ),
       headers: {
         Accept: "application/json",
         Authorization: `Bearer ${this.config.apiToken}`,
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/json",
       },
       method: "POST",
     });
     const responseBody = await parseResponse(response);
 
-    if (!response.ok) {
+    if (!response.ok || isProviderError(responseBody)) {
       throw new Error(getProviderError(responseBody, response.status));
     }
 
@@ -53,19 +55,21 @@ export class TextlkSmsProvider implements SmsProvider {
   }
 }
 
+function isProviderError(responseBody: Record<string, unknown>) {
+  return String(responseBody.status ?? "").toLowerCase() === "error";
+}
+
 function toRequestBody(input: {
   recipient: string;
   senderId: string;
   message: string;
 }) {
-  const body = new URLSearchParams();
-
-  body.set("recipient", input.recipient);
-  body.set("sender_id", input.senderId);
-  body.set("type", "plain");
-  body.set("message", input.message);
-
-  return body;
+  return {
+    recipient: input.recipient,
+    sender_id: input.senderId,
+    type: "plain",
+    message: input.message,
+  };
 }
 
 async function parseResponse(response: Response) {

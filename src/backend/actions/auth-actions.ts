@@ -53,7 +53,7 @@ export async function loginAction(formData: FormData) {
     );
   }
 
-  await setAuthSessionSecret(session.secret, session.expire);
+  await createAndStoreServerSession(session.userId);
   redirect("/dashboard/lender");
 }
 
@@ -113,11 +113,7 @@ export async function registerLenderAction(formData: FormData) {
       },
     });
 
-    const session = await createAccountClient().createEmailPasswordSession({
-      email: result.data.email,
-      password,
-    });
-    await setAuthSessionSecret(session.secret, session.expire);
+    await createAndStoreServerSession(user.$id);
   } catch (error) {
     redirectWithAuthStatus(
       "/auth/register",
@@ -128,6 +124,16 @@ export async function registerLenderAction(formData: FormData) {
 
   revalidatePath("/dashboard/lender");
   redirect("/dashboard/lender");
+}
+
+async function createAndStoreServerSession(userId: string) {
+  const session = await users.createSession({ userId });
+
+  if (!session.secret) {
+    throw new Error("Could not create an Appwrite server session.");
+  }
+
+  await setAuthSessionSecret(session.secret, session.expire);
 }
 
 export async function requestPasswordResetAction(formData: FormData) {

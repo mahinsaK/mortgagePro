@@ -7,12 +7,20 @@ import { databases, Query, users } from "@/backend/appwrite/server-client";
 import { normalizeCurrency } from "@/backend/lib/currency";
 import { PaymentService } from "@/backend/modules/payments/service";
 import { getPrimaryLender } from "@/backend/services/lender-service";
-import { createLoanSearchText } from "@/backend/services/search-text-service";
+import {
+  createBorrowerSearchText,
+  createLoanSearchText,
+} from "@/backend/services/search-text-service";
 
 export async function createBorrowerAction(formData: FormData) {
   const lender = await getRequiredLender();
   const borrowerId = createDocumentId("borrower");
   const now = new Date().toISOString();
+  const name = readRequired(formData, "name");
+  const contactInfo = JSON.stringify({
+    phone: readOptional(formData, "phone"),
+    address: readOptional(formData, "address"),
+  });
 
   await databases.createDocument({
     databaseId: appwriteServerConfig.databaseId,
@@ -20,11 +28,12 @@ export async function createBorrowerAction(formData: FormData) {
     documentId: borrowerId,
     data: {
       lender_id: lender.id,
-      name: readRequired(formData, "name"),
+      name,
       business_name: readOptional(formData, "business_name"),
-      contact_info: JSON.stringify({
-        phone: readOptional(formData, "phone"),
-        address: readOptional(formData, "address"),
+      contact_info: contactInfo,
+      search_text: createBorrowerSearchText({
+        borrowerName: name,
+        borrowerContact: contactInfo,
       }),
       status: "active",
       created_at: now,
@@ -55,6 +64,10 @@ export async function updateBorrowerAction(formData: FormData) {
       name,
       business_name: readOptional(formData, "business_name"),
       contact_info: contactInfo,
+      search_text: createBorrowerSearchText({
+        borrowerName: name,
+        borrowerContact: contactInfo,
+      }),
       status: readStatus(formData),
     },
   });

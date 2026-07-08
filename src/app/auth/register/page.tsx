@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { registerLenderAction } from "@/backend/actions/auth-actions";
+import { RegisterLenderForm } from "@/frontend/components/auth/register-lender-form";
 
 export default async function RegisterPage({
   searchParams,
@@ -34,69 +35,11 @@ export default async function RegisterPage({
           </p>
         </div>
 
-        <form action={registerLenderAction} className="space-y-6">
-          <AuthStatus message={message} status={status} />
-          <div>
-            <h2 className="text-sm font-semibold text-[#15191f]">
-              Business information
-            </h2>
-            <div className="mt-4 grid gap-5 sm:grid-cols-2">
-              <Field
-                label="Company name"
-                name="companyName"
-                placeholder="Northstar Lending"
-              />
-              <Field
-                label="Contact phone"
-                name="phone"
-                placeholder="+1 555 0100"
-              />
-              <label className="sm:col-span-2 text-sm font-medium text-[#2d3745]">
-                Business address
-                <textarea
-                  className="mt-2 min-h-24 w-full rounded-md border border-[#cfd8e3] px-4 py-3 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
-                  name="address"
-                  placeholder="Street, city, region"
-                />
-              </label>
-            </div>
-          </div>
-
-          <div>
-            <h2 className="text-sm font-semibold text-[#15191f]">
-              Account access
-            </h2>
-            <div className="mt-4 grid gap-5 sm:grid-cols-2">
-              <Field
-                className="sm:col-span-2"
-                label="Business email"
-                name="email"
-                placeholder="owner@company.com"
-                type="email"
-              />
-              <Field
-                label="Password"
-                name="password"
-                placeholder="Create password"
-                type="password"
-              />
-              <Field
-                label="Confirm password"
-                name="confirmPassword"
-                placeholder="Confirm password"
-                type="password"
-              />
-            </div>
-          </div>
-
-          <button
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8]"
-            type="submit"
-          >
-            Register lender
-            <ArrowRight aria-hidden="true" size={17} />
-          </button>
-        </form>
+        <RegisterLenderForm
+          action={registerLenderAction}
+          message={message}
+          status={status}
+        />
 
         <p className="mt-6 text-center text-sm text-[#657386]">
           Already registered?{" "}
@@ -109,58 +52,5 @@ export default async function RegisterPage({
         </p>
       </section>
     </main>
-  );
-}
-
-function AuthStatus({
-  message,
-  status,
-}: {
-  message?: string;
-  status?: string;
-}) {
-  if (!message) {
-    return null;
-  }
-
-  const isError = status === "error";
-
-  return (
-    <p
-      className={`rounded-md border px-3 py-2 text-sm font-medium ${
-        isError
-          ? "border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]"
-          : "border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]"
-      }`}
-    >
-      {message}
-    </p>
-  );
-}
-
-function Field({
-  className = "",
-  label,
-  name,
-  placeholder,
-  type = "text",
-}: {
-  className?: string;
-  label: string;
-  name: string;
-  placeholder: string;
-  type?: "email" | "password" | "text";
-}) {
-  return (
-    <label className={`${className} block text-sm font-medium text-[#2d3745]`}>
-      {label}
-      <input
-        className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
-        name={name}
-        placeholder={placeholder}
-        required
-        type={type}
-      />
-    </label>
   );
 }

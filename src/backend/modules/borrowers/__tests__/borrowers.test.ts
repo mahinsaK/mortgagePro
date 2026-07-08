@@ -15,6 +15,8 @@ describe("BorrowerController", () => {
     expect(result.data).toMatchObject({
       lender_id: "lender_1",
       name: "Avery Johnson",
+      contact: "555",
+      address: "Cedar Road",
       status: "active",
     });
   });

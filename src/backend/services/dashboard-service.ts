@@ -43,6 +43,7 @@ type DashboardOptions = {
 
 const DEFAULT_PAGE_SIZE = 15;
 const MAX_DAILY_PAYMENT_LIMIT = 5000;
+const BORROWER_SEARCH_FALLBACK_LIMIT = 500;
 
 export async function getLenderDashboardData(
   options: DashboardOptions = {},
@@ -83,7 +84,7 @@ export async function getLenderDashboardData(
     loanQueries.splice(1, 0, Query.search("search_text", searchQuery));
   }
 
-  const [loans, totalBorrowers, activeLoans, todaysPayments] = await Promise.all([
+  const [initialLoans, totalBorrowers, activeLoans, todaysPayments] = await Promise.all([
     databases.listDocuments({
       databaseId: appwriteServerConfig.databaseId,
       collectionId: appwriteServerConfig.collections.loans,
@@ -120,6 +121,10 @@ export async function getLenderDashboardData(
       ],
     }),
   ]);
+  const loans =
+    searchQuery && initialLoans.total === 0
+      ? await findLoansByBorrowerSearch(lender.id, searchQuery, pagination)
+      : initialLoans;
   const borrowerIds = uniqueStrings(
     loans.documents.map((loan) => String(loan.borrower_id ?? "")),
   );
@@ -132,7 +137,7 @@ export async function getLenderDashboardData(
             Query.equal("lender_id", lender.id),
             Query.equal("$id", borrowerIds),
             Query.limit(borrowerIds.length),
-            Query.select(["$id", "name", "contact_info"]),
+            Query.select(["$id", "name", "contact", "address"]),
           ],
         })
       : { documents: [] };
@@ -144,17 +149,13 @@ export async function getLenderDashboardData(
     ]),
   );
   const borrowerContacts = new Map(
-    borrowers.documents.map((borrower) => {
-      const contact = parseContactInfo(String(borrower.contact_info ?? ""));
-
-      return [
-        borrower.$id,
-        {
-          display: contact.phone,
-          phone: contact.phone,
-        },
-      ];
-    }),
+    borrowers.documents.map((borrower) => [
+      borrower.$id,
+      {
+        display: String(borrower.contact ?? ""),
+        phone: String(borrower.contact ?? ""),
+      },
+    ]),
   );
   const todaysCollection = todaysPayments.documents.reduce(
     (total, payment) => total + Number(payment.amount ?? 0),
@@ -215,6 +216,56 @@ export async function getLenderDashboardData(
   };
 }
 
+async function findLoansByBorrowerSearch(
+  lenderId: string,
+  searchQuery: string,
+  pagination: { page: number; pageSize: number },
+) {
+  const borrowers = await databases.listDocuments({
+    databaseId: appwriteServerConfig.databaseId,
+    collectionId: appwriteServerConfig.collections.borrowers,
+    queries: [
+      Query.equal("lender_id", lenderId),
+      Query.or([
+        Query.search("name", searchQuery),
+        Query.search("address", searchQuery),
+        Query.search("contact", searchQuery),
+      ]),
+      Query.limit(BORROWER_SEARCH_FALLBACK_LIMIT),
+      Query.select(["$id"]),
+    ],
+  });
+  const borrowerIds = uniqueStrings(
+    borrowers.documents.map((borrower) => borrower.$id),
+  );
+
+  if (borrowerIds.length === 0) {
+    return { documents: [], total: 0 };
+  }
+
+  return databases.listDocuments({
+    databaseId: appwriteServerConfig.databaseId,
+    collectionId: appwriteServerConfig.collections.loans,
+    queries: [
+      Query.equal("lender_id", lenderId),
+      Query.equal("borrower_id", borrowerIds),
+      Query.orderDesc("created_at"),
+      Query.limit(pagination.pageSize),
+      Query.offset((pagination.page - 1) * pagination.pageSize),
+      Query.select([
+        "$id",
+        "borrower_id",
+        "amount",
+        "total_paid",
+        "remaining_amount",
+        "daily_payment",
+        "status",
+        "end_date",
+      ]),
+    ],
+  });
+}
+
 function emptyStats() {
   return [
     { label: "Total borrowers", value: "0", change: "Registered profiles" },
@@ -236,23 +287,6 @@ function formatDate(value: string) {
     day: "2-digit",
     year: "numeric",
   }).format(date);
-}
-
-function parseContactInfo(value: string) {
-  if (!value) {
-    return { phone: "", address: "", area: "" };
-  }
-
-  try {
-    const parsed = JSON.parse(value) as Record<string, string>;
-    return {
-      phone: parsed.phone ?? "",
-      address: parsed.address ?? "",
-      area: parsed.area ?? "",
-    };
-  } catch {
-    return { phone: value, address: "", area: "" };
-  }
 }
 
 function normalizePagination(options: DashboardOptions) {

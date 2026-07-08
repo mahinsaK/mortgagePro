@@ -122,7 +122,7 @@ Query through `getBorrowersExportData()`:
 Query.equal("lender_id", lender.id)
 Query.orderDesc("created_at")
 Query.limit(5000)
-Query.select(["$id", "$createdAt", "name", "business_name", "contact_info", "status", "created_at"])
+Query.select(["$id", "$createdAt", "name", "business_name", "contact", "address", "status", "created_at"])
 Query.greaterThanEqual("created_at", selectedStartIso)
 Query.lessThan("created_at", selectedEndTomorrowIso)
 ```
@@ -156,7 +156,8 @@ Query.select(["$id", "borrower_id", "amount", "total_paid", "remaining_amount", 
 How it works:
 
 - Retrieves only loans that belong to the active lender.
-- Uses database fulltext search when the user searches.
+- Uses loan `search_text` fulltext search first when the user searches.
+- If that search returns no matches, searches borrower `name`, `address`, and `contact`, then lists loans for matching borrower IDs.
 - Retrieves one page only, default 15 loans.
 - Retrieves only the fields needed for the dashboard table.
 
@@ -166,7 +167,7 @@ After this, it fetches matching borrowers by the returned `borrower_id` values:
 Query.equal("lender_id", lender.id)
 Query.equal("$id", borrowerIds)
 Query.limit(borrowerIds.length)
-Query.select(["$id", "name", "contact_info"])
+Query.select(["$id", "name", "contact", "address"])
 ```
 
 That second query is used only to show borrower name and phone/contact beside each loan.
@@ -246,7 +247,7 @@ Query through `listForLender()`:
 ```txt
 Query.equal("lender_id", lender.id)
 Query.orderDesc("created_at")
-Query.select(["$id", "$createdAt", "name", "business_name", "contact_info", "status", "created_at"])
+Query.select(["$id", "$createdAt", "name", "business_name", "contact", "address", "status", "created_at"])
 Query.limit(pageSize)
 Query.offset((page - 1) * pageSize)
 ```
@@ -274,7 +275,7 @@ Query:
 Query.equal("lender_id", lender.id)
 Query.equal("$id", borrowerId)
 Query.limit(1)
-Query.select(["$id", "$createdAt", "name", "business_name", "contact_info", "status", "created_at"])
+Query.select(["$id", "$createdAt", "name", "business_name", "contact", "address", "status", "created_at"])
 ```
 
 How it works:
@@ -605,7 +606,9 @@ databases.createDocument({
   lender_id: lender.id,
   name,
   business_name,
-  contact_info,
+  contact,
+  address,
+  search_text,
   status: "active",
   created_at
 })
@@ -614,7 +617,8 @@ databases.createDocument({
 How it works:
 
 - Creates a borrower under the active lender.
-- Stores phone/address as JSON in `contact_info`.
+- Stores phone/contact number in `contact` and address in `address`.
+- Builds borrower `search_text` from name, contact, and address.
 - Redirects to the new borrower profile.
 
 ## Update borrower
@@ -640,7 +644,9 @@ databases.updateDocument({
   documentId: borrowerId,
   name,
   business_name,
-  contact_info,
+  contact,
+  address,
+  search_text,
   status
 })
 ```
@@ -708,7 +714,7 @@ Query:
 Query.equal("lender_id", lender.id)
 Query.equal("$id", borrowerId)
 Query.limit(1)
-Query.select(["$id", "name", "contact_info"])
+Query.select(["$id", "name", "contact", "address"])
 ```
 
 How it works:
@@ -949,9 +955,13 @@ Query:
 
 ```txt
 Query.equal("lender_id", lender.id)
-Query.search("search_text", normalizedQuery)
+Query.or([
+  Query.search("name", normalizedQuery),
+  Query.search("business_name", normalizedQuery),
+  Query.search("contact", normalizedQuery)
+])
 Query.limit(8)
-Query.select(["$id", "name", "business_name", "contact_info"])
+Query.select(["$id", "name", "business_name", "contact"])
 ```
 
 How it works:
@@ -959,7 +969,7 @@ How it works:
 - Runs only after the lender types a search and clicks Search.
 - Retrieves only matching borrowers under the active lender.
 - Reads only the fields needed to show a recipient result and send SMS.
-- Uses `borrowers.search_text` with `idx_borrower_search_text`, avoiding a full borrower list read in the browser.
+- Uses indexed borrower fields, avoiding a full borrower list read in the browser.
 
 ## SMS all borrowers send
 
@@ -974,7 +984,7 @@ Query:
 ```txt
 Query.equal("lender_id", lender.id)
 Query.limit(5000)
-Query.select(["$id", "name", "business_name", "contact_info"])
+Query.select(["$id", "name", "business_name", "contact"])
 ```
 
 How it works:
@@ -1011,7 +1021,7 @@ Backfill query:
 Borrowers:
 Query.equal("lender_id", lenderId)
 Query.limit(5000)
-Query.select(["$id", "name", "contact_info", "search_text"])
+Query.select(["$id", "name", "contact", "address", "search_text"])
 
 Loans:
 Query.equal("lender_id", lenderId)
@@ -1021,6 +1031,6 @@ Query.limit(5000)
 How it works:
 
 - Loads seed lender borrowers and loans.
-- Rebuilds `borrowers.search_text` from borrower name/contact.
-- Rebuilds `loans.search_text` from borrower name/contact.
+- Rebuilds `borrowers.search_text` from borrower name, contact, and address.
+- Rebuilds `loans.search_text` from borrower name, contact, and address.
 - Updates only documents where the value changed.

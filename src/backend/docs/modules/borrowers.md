@@ -35,7 +35,8 @@ Writes to the `borrowers` collection:
 lender_id: active lender ID
 name
 business_name
-contact_info: JSON string with phone/address
+contact: phone/contact number
+address
 search_text: generated searchable text for SMS borrower search
 status: active
 created_at
@@ -82,7 +83,7 @@ Query:
 ```txt
 Query.equal("lender_id", lender.id)
 Query.orderDesc("created_at")
-Query.select(["$id", "$createdAt", "name", "business_name", "contact_info", "status", "created_at"])
+Query.select(["$id", "$createdAt", "name", "business_name", "contact", "address", "status", "created_at"])
 Query.limit(pageSize)
 Query.offset((page - 1) * pageSize)
 ```
@@ -105,7 +106,7 @@ Borrower query:
 Query.equal("lender_id", lender.id)
 Query.equal("$id", borrowerId)
 Query.limit(1)
-Query.select(["$id", "$createdAt", "name", "business_name", "contact_info", "status", "created_at"])
+Query.select(["$id", "$createdAt", "name", "business_name", "contact", "address", "status", "created_at"])
 ```
 
 Loan query:

@@ -32,7 +32,8 @@ Attributes:
 - `lender_id`: owning lender document ID.
 - `name`: borrower name.
 - `business_name`: optional business name.
-- `contact_info`: JSON string with phone/address.
+- `contact`: borrower phone/contact number.
+- `address`: borrower address.
 - `search_text`: indexed helper text for borrower-name/contact/address search.
 - `status`: `active` or `inactive`.
 - `created_at`: creation date.
@@ -42,7 +43,11 @@ Indexes:
 - `idx_borrower_lender_id`: helps list borrowers for one lender.
 - `idx_borrower_status`: helps filter by status.
 - `idx_borrower_lender_created`: helps list one lender's borrowers ordered by creation date.
-- `idx_borrower_search_text`: fulltext index used by SMS borrower search.
+- `idx_borrower_name`: fulltext index for borrower name search.
+- `idx_borrower_business_name`: fulltext index for borrower business name search.
+- `idx_borrower_contact`: fulltext index for borrower contact search.
+- `idx_borrower_address`: fulltext index for borrower address search.
+- `idx_borrower_search_text`: fulltext index for generated borrower search text.
 
 ## Collectors
 
@@ -120,9 +125,9 @@ Indexes:
 
 Appwrite fulltext search works on a field in the same collection. The dashboard searches loans by borrower name, phone, and address, but those values live in Borrowers.
 
-To avoid loading all loans and filtering in memory, loan creation stores a generated `search_text` value inside the loan document. It is created from the borrower name/contact/address at loan creation time and indexed with `idx_loan_search_text`.
+To avoid loading all loans and filtering in memory, loan creation stores a generated `search_text` value inside the loan document. It is created from the borrower name, contact, and address at loan creation time and indexed with `idx_loan_search_text`.
 
-The SMS page also searches borrowers directly by name/contact/address. To avoid loading all borrowers into the browser, borrower create/update stores the same generated helper text in `borrowers.search_text`, indexed with `idx_borrower_search_text`.
+The SMS page searches borrowers directly by indexed borrower fields: name, business name, and contact. Borrower `search_text` is still kept for compatibility and broader generated search text.
 
 Source:
 

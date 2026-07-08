@@ -1,25 +1,29 @@
 export function createLoanSearchText({
   borrowerName,
   borrowerContact,
+  borrowerAddress,
 }: {
   borrowerName: string;
   borrowerContact: string;
+  borrowerAddress: string;
 }) {
   return createBorrowerSearchText({
     borrowerName,
     borrowerContact,
+    borrowerAddress,
   });
 }
 
 export function createBorrowerSearchText({
   borrowerName,
   borrowerContact,
+  borrowerAddress,
 }: {
   borrowerName: string;
   borrowerContact: string;
+  borrowerAddress: string;
 }) {
-  const contactValues = parseContactValues(borrowerContact);
-  const baseText = [borrowerName, ...contactValues].join(" ");
+  const baseText = [borrowerName, borrowerContact, borrowerAddress].join(" ");
   const normalizedWords = normalizeSearchText(baseText).split(" ").filter(Boolean);
   const digitWords = baseText.match(/\d+/g) ?? [];
   const tokens = new Set<string>(normalizedWords);
@@ -35,21 +39,6 @@ export function createBorrowerSearchText({
 
 export function normalizeSearchText(value: string) {
   return value.toLowerCase().replaceAll(/[^a-z0-9]+/g, " ").trim();
-}
-
-function parseContactValues(value: string) {
-  if (!value) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(value) as Record<string, unknown>;
-    return Object.values(parsed)
-      .map((entry) => String(entry ?? ""))
-      .filter(Boolean);
-  } catch {
-    return [value];
-  }
 }
 
 function searchFragments(value: string) {

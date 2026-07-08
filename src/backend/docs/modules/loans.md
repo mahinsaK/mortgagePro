@@ -40,7 +40,7 @@ Collection: borrowers
 Query.equal("lender_id", lender.id)
 Query.equal("$id", borrowerId)
 Query.limit(1)
-Query.select(["$id", "name", "contact_info"])
+Query.select(["$id", "name", "contact", "address"])
 ```
 
 Step 2: generate data.

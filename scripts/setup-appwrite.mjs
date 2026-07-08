@@ -61,7 +61,8 @@ const schema = [
       stringAttr("lender_id", 64, true),
       stringAttr("name", 160, true),
       stringAttr("business_name", 160, false),
-      stringAttr("contact_info", 1000, false),
+      stringAttr("contact", 160, false),
+      stringAttr("address", 500, false),
       stringAttr("search_text", 2000, false),
       enumAttr("status", ["active", "inactive"], true),
       datetimeAttr("created_at", true),
@@ -70,6 +71,10 @@ const schema = [
       keyIndex("idx_borrower_lender_id", ["lender_id"]),
       keyIndex("idx_borrower_status", ["status"]),
       keyIndex("idx_borrower_lender_created", ["lender_id", "created_at"]),
+      fulltextIndex("idx_borrower_name", ["name"]),
+      fulltextIndex("idx_borrower_business_name", ["business_name"]),
+      fulltextIndex("idx_borrower_contact", ["contact"]),
+      fulltextIndex("idx_borrower_address", ["address"]),
       fulltextIndex("idx_borrower_search_text", ["search_text"]),
     ],
   },
@@ -157,6 +162,8 @@ async function main() {
       await ensureIndex(collection.id, index);
     }
   }
+
+  await migrateBorrowerContactFields();
 
   console.log("Seeding sample data...");
   const seed = await seedData();
@@ -345,16 +352,12 @@ async function seedData() {
     lender_id: lenderId,
     name: "Avery Johnson",
     business_name: "Johnson Market",
-    contact_info: JSON.stringify({
-      phone: "+1 555 0101",
-      address: "22 Cedar Road, Austin, TX",
-    }),
+    contact: "+1 555 0101",
+    address: "22 Cedar Road, Austin, TX",
     search_text: createBorrowerSearchText({
       borrowerName: "Avery Johnson",
-      borrowerContact: JSON.stringify({
-        phone: "+1 555 0101",
-        address: "22 Cedar Road, Austin, TX",
-      }),
+      borrowerContact: "+1 555 0101",
+      borrowerAddress: "22 Cedar Road, Austin, TX",
     }),
     status: "active",
     created_at: now,
@@ -385,10 +388,8 @@ async function seedData() {
     qr_code: loanId,
     search_text: createLoanSearchText({
       borrowerName: "Avery Johnson",
-      borrowerContact: JSON.stringify({
-        phone: "+1 555 0101",
-        address: "22 Cedar Road, Austin, TX",
-      }),
+      borrowerContact: "+1 555 0101",
+      borrowerAddress: "22 Cedar Road, Austin, TX",
     }),
     created_at: now,
   });
@@ -450,6 +451,67 @@ async function upsertDocument(collectionId, documentId, data) {
   }
 }
 
+async function migrateBorrowerContactFields() {
+  if (!(await hasAttribute(config.collections.borrowers, "contact_info"))) {
+    return;
+  }
+
+  const borrowers = await databases.listDocuments({
+    databaseId: config.databaseId,
+    collectionId: config.collections.borrowers,
+    queries: [
+      Query.limit(5000),
+      Query.select(["$id", "contact_info", "contact", "address"]),
+    ],
+  });
+
+  for (const borrower of borrowers.documents) {
+    const parsed = parseBorrowerContactInfo(String(borrower.contact_info ?? ""));
+    const contact = String(borrower.contact ?? "") || parsed.contact;
+    const address = String(borrower.address ?? "") || parsed.address;
+
+    await databases.updateDocument({
+      databaseId: config.databaseId,
+      collectionId: config.collections.borrowers,
+      documentId: borrower.$id,
+      data: { contact, address },
+    });
+    console.log(`Migrated borrower contact fields: ${borrower.$id}`);
+  }
+
+  await deleteAttributeIfExists(config.collections.borrowers, "contact_info");
+}
+
+async function hasAttribute(collectionId, key) {
+  try {
+    await databases.getAttribute({
+      databaseId: config.databaseId,
+      collectionId,
+      key,
+    });
+    return true;
+  } catch (error) {
+    if (isMissing(error)) {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
+async function deleteAttributeIfExists(collectionId, key) {
+  if (!(await hasAttribute(collectionId, key))) {
+    return;
+  }
+
+  await databases.deleteAttribute({
+    databaseId: config.databaseId,
+    collectionId,
+    key,
+  });
+  console.log(`Deleted attribute: ${collectionId}.${key}`);
+}
+
 function stringAttr(key, size, required, xdefault) {
   return { type: "string", key, size, required, xdefault };
 }
@@ -481,14 +543,15 @@ async function backfillBorrowerSearchText(lenderId) {
     queries: [
       Query.equal("lender_id", lenderId),
       Query.limit(5000),
-      Query.select(["$id", "name", "contact_info", "search_text"]),
+      Query.select(["$id", "name", "contact", "address", "search_text"]),
     ],
   });
 
   for (const borrower of borrowers.documents) {
     const searchText = createBorrowerSearchText({
       borrowerName: String(borrower.name ?? ""),
-      borrowerContact: String(borrower.contact_info ?? ""),
+      borrowerContact: String(borrower.contact ?? ""),
+      borrowerAddress: String(borrower.address ?? ""),
     });
 
     if (borrower.search_text === searchText) {
@@ -531,7 +594,8 @@ async function backfillLoanSearchText(lenderId) {
 
     const searchText = createLoanSearchText({
       borrowerName: String(borrower.name ?? ""),
-      borrowerContact: String(borrower.contact_info ?? ""),
+      borrowerContact: String(borrower.contact ?? ""),
+      borrowerAddress: String(borrower.address ?? ""),
     });
 
     if (loan.search_text === searchText) {
@@ -602,13 +666,16 @@ async function backfillLoanPaymentTotals(lenderId) {
   }
 }
 
-function createLoanSearchText({ borrowerName, borrowerContact }) {
-  return createBorrowerSearchText({ borrowerName, borrowerContact });
+function createLoanSearchText({ borrowerName, borrowerContact, borrowerAddress }) {
+  return createBorrowerSearchText({ borrowerName, borrowerContact, borrowerAddress });
 }
 
-function createBorrowerSearchText({ borrowerName, borrowerContact }) {
-  const contactValues = parseContactValues(borrowerContact);
-  const baseText = [borrowerName, ...contactValues].join(" ");
+function createBorrowerSearchText({
+  borrowerName,
+  borrowerContact,
+  borrowerAddress,
+}) {
+  const baseText = [borrowerName, borrowerContact, borrowerAddress].join(" ");
   const normalizedWords = normalizeSearchText(baseText).split(" ").filter(Boolean);
   const digitWords = baseText.match(/\d+/g) ?? [];
   const tokens = new Set(normalizedWords);
@@ -624,20 +691,6 @@ function createBorrowerSearchText({ borrowerName, borrowerContact }) {
 
 function normalizeSearchText(value) {
   return value.toLowerCase().replaceAll(/[^a-z0-9]+/g, " ").trim();
-}
-
-function parseContactValues(value) {
-  if (!value) {
-    return [];
-  }
-
-  try {
-    return Object.values(JSON.parse(value))
-      .map((entry) => String(entry ?? ""))
-      .filter(Boolean);
-  } catch {
-    return [value];
-  }
 }
 
 function searchFragments(value) {
@@ -657,6 +710,22 @@ function searchFragments(value) {
 
 function isMissing(error) {
   return error?.code === 404;
+}
+
+function parseBorrowerContactInfo(value) {
+  if (!value) {
+    return { contact: "", address: "" };
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    return {
+      contact: String(parsed.phone ?? ""),
+      address: String(parsed.address ?? ""),
+    };
+  } catch {
+    return { contact: value, address: "" };
+  }
 }
 
 function sleep(ms) {

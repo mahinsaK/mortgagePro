@@ -6,7 +6,8 @@ export class BorrowerService {
       lender_id: dto.lenderId,
       name: dto.name,
       business_name: dto.businessName,
-      contact_info: dto.contactInfo,
+      contact: dto.contact,
+      address: dto.address,
       status: dto.status,
       created_at: new Date().toISOString(),
     };

@@ -52,8 +52,23 @@ Query.search("search_text", normalizedQuery) // only when q exists
 Query.orderDesc("created_at")
 Query.limit(pageSize)
 Query.offset((page - 1) * pageSize)
-Query.select(["$id", "borrower_id", "amount", "daily_payment", "status", "end_date"])
+Query.select(["$id", "borrower_id", "amount", "total_paid", "remaining_amount", "daily_payment", "status", "end_date"])
 ```
+
+If a dashboard search returns zero loan matches from `loans.search_text`, the service searches borrowers for the same lender:
+
+```txt
+Query.equal("lender_id", lender.id)
+Query.or([
+  Query.search("name", normalizedQuery),
+  Query.search("address", normalizedQuery),
+  Query.search("contact", normalizedQuery)
+])
+Query.limit(500)
+Query.select(["$id"])
+```
+
+Then it lists loans for those borrower IDs using `Query.equal("borrower_id", borrowerIds)`.
 
 Then it loads borrower names/contact for the returned loan rows:
 
@@ -61,7 +76,7 @@ Then it loads borrower names/contact for the returned loan rows:
 Query.equal("lender_id", lender.id)
 Query.equal("$id", borrowerIds)
 Query.limit(borrowerIds.length)
-Query.select(["$id", "name", "contact_info"])
+Query.select(["$id", "name", "contact", "address"])
 ```
 
 ## Total borrowers query
@@ -111,7 +126,7 @@ Dashboard search is submitted with:
 /dashboard/lender?q=searchValue
 ```
 
-The backend normalizes the query and uses `Query.search("search_text", value)`.
+The backend normalizes the query and first uses `Query.search("search_text", value)` on loans. If that finds nothing, it falls back to borrower `name`, `address`, and `contact`.
 
 The `search_text` value is created when a loan is created. It contains searchable borrower name/contact/address fragments.
 

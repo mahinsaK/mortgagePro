@@ -5,10 +5,8 @@ describe("search-text-service", () => {
   it("indexes borrower name, address, phone, and middle fragments", () => {
     const searchText = createLoanSearchText({
       borrowerName: "Avery Johnson",
-      borrowerContact: JSON.stringify({
-        phone: "+1 555 0101",
-        address: "22 Cedar Road",
-      }),
+      borrowerContact: "+1 555 0101",
+      borrowerAddress: "22 Cedar Road",
     });
 
     expect(searchText).toContain("avery");

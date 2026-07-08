@@ -70,15 +70,19 @@ Query:
 
 ```txt
 Query.equal("lender_id", lender.id)
-Query.search("search_text", normalizedQuery)
+Query.or([
+  Query.search("name", normalizedQuery),
+  Query.search("business_name", normalizedQuery),
+  Query.search("contact", normalizedQuery)
+])
 Query.limit(8)
-Query.select(["$id", "name", "business_name", "contact_info"])
+Query.select(["$id", "name", "business_name", "contact"])
 ```
 
 How it works:
 
 - The SMS page does not load all borrowers.
-- The lender types borrower name/contact/address and clicks Search.
+- The lender types borrower name, business name, or contact and clicks Search.
 - The API returns only matching borrower recipients for the active lender.
 - The browser keeps selected borrowers in a temporary array until `Send selected`.
 - `Send all borrowers` does not use the browser array. It asks the backend for all borrower phone numbers under the active lender when clicked.

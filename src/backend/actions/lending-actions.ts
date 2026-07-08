@@ -17,10 +17,8 @@ export async function createBorrowerAction(formData: FormData) {
   const borrowerId = createDocumentId("borrower");
   const now = new Date().toISOString();
   const name = readRequired(formData, "name");
-  const contactInfo = JSON.stringify({
-    phone: readOptional(formData, "phone"),
-    address: readOptional(formData, "address"),
-  });
+  const contact = readOptional(formData, "phone");
+  const address = readOptional(formData, "address");
 
   await databases.createDocument({
     databaseId: appwriteServerConfig.databaseId,
@@ -30,10 +28,12 @@ export async function createBorrowerAction(formData: FormData) {
       lender_id: lender.id,
       name,
       business_name: readOptional(formData, "business_name"),
-      contact_info: contactInfo,
+      contact,
+      address,
       search_text: createBorrowerSearchText({
         borrowerName: name,
-        borrowerContact: contactInfo,
+        borrowerContact: contact,
+        borrowerAddress: address,
       }),
       status: "active",
       created_at: now,
@@ -50,10 +50,8 @@ export async function updateBorrowerAction(formData: FormData) {
   await getOwnedDocument(appwriteServerConfig.collections.borrowers, lender.id, borrowerId, [
     "$id",
   ]);
-  const contactInfo = JSON.stringify({
-    phone: readOptional(formData, "phone"),
-    address: readOptional(formData, "address"),
-  });
+  const contact = readOptional(formData, "phone");
+  const address = readOptional(formData, "address");
   const name = readRequired(formData, "name");
 
   await databases.updateDocument({
@@ -63,15 +61,17 @@ export async function updateBorrowerAction(formData: FormData) {
     data: {
       name,
       business_name: readOptional(formData, "business_name"),
-      contact_info: contactInfo,
+      contact,
+      address,
       search_text: createBorrowerSearchText({
         borrowerName: name,
-        borrowerContact: contactInfo,
+        borrowerContact: contact,
+        borrowerAddress: address,
       }),
       status: readStatus(formData),
     },
   });
-  await refreshBorrowerLoanSearchText(lender.id, borrowerId, name, contactInfo);
+  await refreshBorrowerLoanSearchText(lender.id, borrowerId, name, contact, address);
 
   revalidatePath("/borrowers");
   revalidatePath(`/borrowers/${borrowerId}`);
@@ -152,7 +152,7 @@ export async function createLoanForBorrowerAction(formData: FormData) {
       Query.equal("lender_id", lender.id),
       Query.equal("$id", borrowerId),
       Query.limit(1),
-      Query.select(["$id", "name", "contact_info"]),
+      Query.select(["$id", "name", "contact", "address"]),
     ],
   });
   const borrower = borrowers.documents[0];
@@ -183,7 +183,8 @@ export async function createLoanForBorrowerAction(formData: FormData) {
       qr_code: loanId,
       search_text: createLoanSearchText({
         borrowerName: String(borrower.name ?? ""),
-        borrowerContact: String(borrower.contact_info ?? ""),
+        borrowerContact: String(borrower.contact ?? ""),
+        borrowerAddress: String(borrower.address ?? ""),
       }),
       created_at: now,
     },
@@ -427,6 +428,7 @@ async function refreshBorrowerLoanSearchText(
   borrowerId: string,
   borrowerName: string,
   borrowerContact: string,
+  borrowerAddress: string,
 ) {
   const loans = await databases.listDocuments({
     databaseId: appwriteServerConfig.databaseId,
@@ -441,6 +443,7 @@ async function refreshBorrowerLoanSearchText(
   const searchText = createLoanSearchText({
     borrowerName,
     borrowerContact,
+    borrowerAddress,
   });
 
   await Promise.all(

@@ -28,9 +28,13 @@ export async function searchBorrowerSmsRecipients(
     collectionId: appwriteServerConfig.collections.borrowers,
     queries: [
       Query.equal("lender_id", lender.id),
-      Query.search("search_text", normalizedQuery),
+      Query.or([
+        Query.search("name", normalizedQuery),
+        Query.search("business_name", normalizedQuery),
+        Query.search("contact", normalizedQuery),
+      ]),
       Query.limit(SEARCH_LIMIT),
-      Query.select(["$id", "name", "business_name", "contact_info"]),
+      Query.select(["$id", "name", "business_name", "contact"]),
     ],
   });
 
@@ -52,7 +56,7 @@ export async function getAllBorrowerSmsRecipients(): Promise<SmsRecipient[]> {
     queries: [
       Query.equal("lender_id", lender.id),
       Query.limit(ALL_BORROWERS_LIMIT),
-      Query.select(["$id", "name", "business_name", "contact_info"]),
+      Query.select(["$id", "name", "business_name", "contact"]),
     ],
   });
 
@@ -68,19 +72,6 @@ function mapBorrowerToRecipient(
     id: borrower.$id,
     name: String(borrower.name ?? ""),
     businessName: String(borrower.business_name ?? ""),
-    phoneNumber: parsePhoneNumber(String(borrower.contact_info ?? "")),
+    phoneNumber: String(borrower.contact ?? ""),
   };
-}
-
-function parsePhoneNumber(value: string) {
-  if (!value) {
-    return "";
-  }
-
-  try {
-    const parsed = JSON.parse(value) as Record<string, string>;
-    return parsed.phone ?? "";
-  } catch {
-    return value;
-  }
 }

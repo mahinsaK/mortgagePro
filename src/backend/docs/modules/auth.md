@@ -6,6 +6,8 @@ Paths:
 - `src/backend/modules/auth/controller.ts`
 - `src/backend/modules/auth/service.ts`
 - `src/backend/modules/auth/__tests__/auth.test.ts`
+- `src/backend/actions/auth-actions.ts`
+- `src/backend/services/auth-session-service.ts`
 
 ## Purpose
 
@@ -13,7 +15,7 @@ Validates and prepares login, lender registration, and password reset input.
 
 ## Current behavior
 
-This module does not call Appwrite directly yet. It shapes data for the future auth flow.
+The pure module files validate and shape auth input. The server actions call Appwrite and handle browser redirects/cookies.
 
 The current Appwrite Auth seed user is created by:
 
@@ -43,6 +45,36 @@ The current Appwrite Auth seed user is created by:
 
 ## Database queries
 
-No runtime database query is used by this module yet.
+Login:
 
-Future production flow should use Appwrite Auth for login/register, then create or fetch a matching document in the `lenders` collection by `appwrite_user_id`.
+```txt
+Account.createEmailPasswordSession(email, password)
+Query.equal("appwrite_user_id", session.userId)
+Query.equal("status", "active")
+```
+
+Registration:
+
+```txt
+Users.create(userId, email, password, companyName)
+databases.createDocument(lenders, ...)
+Account.createEmailPasswordSession(email, password)
+```
+
+Password reset:
+
+```txt
+Account.createRecovery(email, resetUrl)
+Account.updateRecovery(userId, secret, password)
+```
+
+Logout:
+
+```txt
+Account.deleteSession("current")
+```
+
+Session handling:
+
+- Stores the Appwrite session secret in an HTTP-only `mortgagepro_session` cookie.
+- `getPrimaryLender()` maps the current Appwrite user to `lenders.appwrite_user_id`.

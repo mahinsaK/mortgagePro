@@ -11,7 +11,8 @@ Creates one server-side Appwrite client:
 ```ts
 export const databases = new Databases(client);
 export const users = new Users(client);
-export { Query };
+export function createAccountClient(session?: string) { ... }
+export { ID, Query };
 ```
 
 All services import this client and use env values from `src/backend/appwrite/config.ts`.
@@ -27,19 +28,62 @@ Collection: `lenders`
 Query:
 
 ```txt
+Query.equal("appwrite_user_id", currentAppwriteUser.$id)
+Query.equal("status", "active")
 Query.limit(1)
 ```
 
 How it works:
 
-- Reads the first lender document.
+- Reads the current Appwrite user from the HTTP-only session cookie.
+- Finds the active lender document linked to that Appwrite user.
 - Returns a simple lender profile object including display currency.
-- Returns `null` if there is no Appwrite API key or no lender document.
+- Returns `null` if there is no Appwrite API key, no valid session, or no active linked lender document.
 
-Important:
+## Auth writes
 
-- This is temporary for development.
-- Production should query `lenders` by `appwrite_user_id` for the currently logged-in Appwrite user.
+Path: `src/backend/actions/auth-actions.ts`
+
+Login:
+
+```txt
+Account.createEmailPasswordSession(email, password)
+Query.equal("appwrite_user_id", session.userId)
+Query.equal("status", "active")
+```
+
+Stores the returned Appwrite session secret in an HTTP-only cookie.
+
+Registration:
+
+```txt
+Users.create(userId, email, password, companyName)
+databases.createDocument(lenders, {
+  appwrite_user_id,
+  company_name,
+  email,
+  contact_info,
+  status: "active",
+  currency: "USD",
+  created_at
+})
+Account.createEmailPasswordSession(email, password)
+```
+
+Password reset:
+
+```txt
+Account.createRecovery(email, resetUrl)
+Account.updateRecovery(userId, secret, password)
+```
+
+Logout:
+
+```txt
+Account.deleteSession("current")
+```
+
+Then clears the local HTTP-only session cookie.
 
 ## Dashboard CSV exports
 

@@ -32,18 +32,17 @@ Function: `getPrimaryLender()`
 Query:
 
 ```txt
+Query.equal("appwrite_user_id", currentAppwriteUser.$id)
+Query.equal("status", "active")
 Query.limit(1)
 ```
 
 How it works:
 
-- Reads the first lender document.
+- Reads the current Appwrite user from the HTTP-only session cookie.
+- Reads the active lender document linked by `appwrite_user_id`.
 - Returns `{ id, appwriteUserId, companyName, email, contactInfo, status, currency }`.
-- Returns `null` when no API key or lender document exists.
-
-Production note:
-
-- Replace this with a lookup by `appwrite_user_id` from the logged-in Appwrite Auth user.
+- Returns `null` when no API key, valid session, or active linked lender document exists.
 
 ## Update lender profile write
 

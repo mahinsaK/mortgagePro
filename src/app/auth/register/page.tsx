@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { ArrowRight, Building2 } from "lucide-react";
+import { registerLenderAction } from "@/backend/actions/auth-actions";
 
-export default function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ message?: string; status?: string }>;
+}) {
+  const { message, status } = await searchParams;
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#eef2f6] px-5 py-10">
       <section className="w-full max-w-3xl rounded-lg border border-[#d9e0e8] bg-white p-6 shadow-sm sm:p-8">
@@ -27,7 +34,8 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <form className="space-y-6">
+        <form action={registerLenderAction} className="space-y-6">
+          <AuthStatus message={message} status={status} />
           <div>
             <h2 className="text-sm font-semibold text-[#15191f]">
               Business information
@@ -81,13 +89,13 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <Link
+          <button
             className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8]"
-            href="/dashboard/lender"
+            type="submit"
           >
             Register lender
             <ArrowRight aria-hidden="true" size={17} />
-          </Link>
+          </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-[#657386]">
@@ -101,6 +109,32 @@ export default function RegisterPage() {
         </p>
       </section>
     </main>
+  );
+}
+
+function AuthStatus({
+  message,
+  status,
+}: {
+  message?: string;
+  status?: string;
+}) {
+  if (!message) {
+    return null;
+  }
+
+  const isError = status === "error";
+
+  return (
+    <p
+      className={`rounded-md border px-3 py-2 text-sm font-medium ${
+        isError
+          ? "border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]"
+          : "border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]"
+      }`}
+    >
+      {message}
+    </p>
   );
 }
 
@@ -124,6 +158,7 @@ function Field({
         className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
         name={name}
         placeholder={placeholder}
+        required
         type={type}
       />
     </label>

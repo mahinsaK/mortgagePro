@@ -1,6 +1,7 @@
 import { appwriteServerConfig } from "@/backend/appwrite/config";
 import { databases, Query } from "@/backend/appwrite/server-client";
 import { normalizeCurrency } from "@/backend/lib/currency";
+import { getCurrentAppwriteUser } from "@/backend/services/auth-session-service";
 
 export type LenderProfile = {
   id: string;
@@ -17,10 +18,20 @@ export async function getPrimaryLender(): Promise<LenderProfile | null> {
     return null;
   }
 
+  const user = await getCurrentAppwriteUser();
+
+  if (!user) {
+    return null;
+  }
+
   const lenders = await databases.listDocuments({
     databaseId: appwriteServerConfig.databaseId,
     collectionId: appwriteServerConfig.collections.lenders,
-    queries: [Query.limit(1)],
+    queries: [
+      Query.equal("appwrite_user_id", user.$id),
+      Query.equal("status", "active"),
+      Query.limit(1),
+    ],
   });
 
   const lender = lenders.documents[0];

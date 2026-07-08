@@ -1,7 +1,23 @@
 import Link from "next/link";
 import { MailCheck } from "lucide-react";
+import {
+  completePasswordResetAction,
+  requestPasswordResetAction,
+} from "@/backend/actions/auth-actions";
 
-export default function PasswordResetPage() {
+export default async function PasswordResetPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    message?: string;
+    secret?: string;
+    status?: string;
+    userId?: string;
+  }>;
+}) {
+  const { message, secret, status, userId } = await searchParams;
+  const isCompletingReset = Boolean(userId && secret);
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#eef2f6] px-5 py-10">
       <section className="w-full max-w-md rounded-lg border border-[#d9e0e8] bg-white p-6 shadow-sm sm:p-8">
@@ -22,26 +38,51 @@ export default function PasswordResetPage() {
           Reset your password
         </h1>
         <p className="mt-3 text-sm leading-6 text-[#657386]">
-          Enter the email used for your lender account. The Appwrite reset email
-          will connect to this screen when authentication is wired.
+          {isCompletingReset
+            ? "Choose a new password for your lender account."
+            : "Enter the email used for your lender account. We will send a reset link if the account exists."}
         </p>
 
-        <form className="mt-8 space-y-5">
-          <label className="block">
-            <span className="text-sm font-medium text-[#2d3745]">Email</span>
-            <input
-              className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
+        <form
+          action={
+            isCompletingReset
+              ? completePasswordResetAction
+              : requestPasswordResetAction
+          }
+          className="mt-8 space-y-5"
+        >
+          <AuthStatus message={message} status={status} />
+          {isCompletingReset ? (
+            <>
+              <input name="userId" type="hidden" value={userId} />
+              <input name="secret" type="hidden" value={secret} />
+              <Field
+                label="New password"
+                name="password"
+                placeholder="Create password"
+                type="password"
+              />
+              <Field
+                label="Confirm password"
+                name="confirmPassword"
+                placeholder="Confirm password"
+                type="password"
+              />
+            </>
+          ) : (
+            <Field
+              label="Email"
               name="email"
               placeholder="owner@company.com"
               type="email"
             />
-          </label>
+          )}
 
           <button
             className="flex h-12 w-full items-center justify-center rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8]"
-            type="button"
+            type="submit"
           >
-            Send reset link
+            {isCompletingReset ? "Update password" : "Send reset link"}
           </button>
         </form>
 
@@ -56,5 +97,56 @@ export default function PasswordResetPage() {
         </p>
       </section>
     </main>
+  );
+}
+
+function Field({
+  label,
+  name,
+  placeholder,
+  type,
+}: {
+  label: string;
+  name: string;
+  placeholder: string;
+  type: "email" | "password";
+}) {
+  return (
+    <label className="block">
+      <span className="text-sm font-medium text-[#2d3745]">{label}</span>
+      <input
+        className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
+        name={name}
+        placeholder={placeholder}
+        required
+        type={type}
+      />
+    </label>
+  );
+}
+
+function AuthStatus({
+  message,
+  status,
+}: {
+  message?: string;
+  status?: string;
+}) {
+  if (!message) {
+    return null;
+  }
+
+  const isError = status === "error";
+
+  return (
+    <p
+      className={`rounded-md border px-3 py-2 text-sm font-medium ${
+        isError
+          ? "border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]"
+          : "border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]"
+      }`}
+    >
+      {message}
+    </p>
   );
 }

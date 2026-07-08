@@ -22,7 +22,9 @@ src/backend
 - `src/backend/appwrite/config.ts`
   Reads Appwrite endpoint, project, database, collection IDs, and API key from env.
 - `src/backend/appwrite/server-client.ts`
-  Creates the server-side Appwrite `Databases` client and exports `Query`.
+  Creates server-side Appwrite clients and exports `Databases`, `Users`, `Account`, `ID`, and `Query` helpers.
+- `src/backend/actions/auth-actions.ts`
+  Handles login, lender registration, password reset, and logout form submissions.
 - `src/backend/actions/lending-actions.ts`
   Handles form writes: create borrower, create loan, create collector, update lender.
 - `src/backend/services/dashboard-service.ts`
@@ -30,7 +32,7 @@ src/backend
 - `src/backend/services/lending-service.ts`
   Reads borrowers, borrower profile, loans, payments, collectors, daily collections, and export data.
 - `src/backend/services/lender-service.ts`
-  Finds the active lender record.
+  Finds the active lender record from the current Appwrite session.
 - `src/backend/services/search-text-service.ts`
   Builds searchable text for borrowers and loans from borrower name, phone, and address.
 - `src/backend/services/qr-code-service.ts`
@@ -54,17 +56,17 @@ For form submissions:
 3. The action writes one document to Appwrite.
 4. The action revalidates affected pages.
 
+## Auth flow
+
+1. Login creates an Appwrite email/password session.
+2. The session secret is stored in an HTTP-only cookie.
+3. `getPrimaryLender()` reads the current Appwrite user from that cookie.
+4. The lender document is loaded with `Query.equal("appwrite_user_id", currentUser.$id)`.
+5. Portal routes redirect to `/auth/login` when no active lender session exists.
+
 ## Important security note
 
 Most lender-owned reads and writes are scoped with `lender_id`, so borrower, collector, loan, and payment data stays separated by lender.
-
-Right now `getPrimaryLender()` returns the first lender in Appwrite because full Appwrite Auth session mapping is not connected yet. Before production, this must be changed to:
-
-```txt
-current Appwrite user -> lenders.appwrite_user_id -> lender document
-```
-
-After that change, the existing `lender_id` filters will separate each lender account correctly.
 
 ## More docs
 

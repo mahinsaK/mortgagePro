@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { logoutAction } from "@/backend/actions/auth-actions";
 import {
   Banknote,
   BarChart3,
@@ -85,13 +86,15 @@ export function PortalSidebar({
       </nav>
 
       <div className="border-t border-[#dfe5ec] p-4">
-        <Link
+        <form action={logoutAction}>
+          <button
           className="flex h-10 items-center justify-center rounded-md border border-[#cfd8e3] text-sm font-medium text-[#2d3745] transition hover:border-[#94a3b8] hover:bg-[#f8fafc]"
-          href="/auth/login"
           title={collapsed ? "Sign out" : undefined}
+            type="submit"
         >
           {collapsed ? "Out" : "Sign out"}
-        </Link>
+          </button>
+        </form>
       </div>
     </aside>
   );

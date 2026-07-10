@@ -3,7 +3,7 @@ export const appwriteServerConfig = {
     process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT ??
     "https://cloud.appwrite.io/v1",
   projectId: process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? "",
-  apiKey: process.env.APPWRITE_API_KEY ?? process.env.API_KEY ?? "",
+  apiKey: process.env.APPWRITE_RUNTIME_API_KEY ?? "",
   databaseId: process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID ?? "",
   collections: {
     lenders: process.env.NEXT_PUBLIC_APPWRITE_LENDERS_COLLECTION_ID ?? "lenders",

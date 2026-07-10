@@ -2,12 +2,12 @@ import { randomBytes, scryptSync } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { Client, Databases, Query, Users } from "node-appwrite";
 
-const env = loadEnv([".env.local", ".env.example"]);
+const env = { ...loadEnv([".env.local", ".env.example"]), ...process.env };
 
 const config = {
   endpoint: requireEnv("NEXT_PUBLIC_APPWRITE_ENDPOINT"),
   projectId: requireEnv("NEXT_PUBLIC_APPWRITE_PROJECT_ID"),
-  apiKey: env.APPWRITE_API_KEY || env.API_KEY || "",
+  apiKey: env.APPWRITE_SETUP_API_KEY || "",
   databaseId: requireEnv("NEXT_PUBLIC_APPWRITE_DATABASE_ID"),
   collections: {
     lenders: requireEnv("NEXT_PUBLIC_APPWRITE_LENDERS_COLLECTION_ID"),
@@ -19,7 +19,7 @@ const config = {
 };
 
 if (!config.apiKey) {
-  throw new Error("APPWRITE_API_KEY or API_KEY is required for seeding.");
+  throw new Error("APPWRITE_SETUP_API_KEY is required for seeding.");
 }
 
 const client = new Client()

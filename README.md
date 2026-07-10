@@ -65,7 +65,8 @@ npm run dev
 
 The app expects these core variables in `.env.local`:
 
-- `APPWRITE_API_KEY`
+- `APPWRITE_RUNTIME_API_KEY` - server-only application key with user, session, and document runtime scopes.
+- `APPWRITE_SETUP_API_KEY` - local-only administration key used by setup, seed, and permission commands; do not add this key to Vercel.
 - `NEXT_PUBLIC_APPWRITE_ENDPOINT`
 - `NEXT_PUBLIC_APPWRITE_PROJECT_ID`
 - `NEXT_PUBLIC_APPWRITE_DATABASE_ID`
@@ -100,7 +101,19 @@ To load the sample lender flow separately, run:
 npm run appwrite:seed
 ```
 
-The setup creates the `lenders`, `borrowers`, `collectors`, `loans`, and `payments` collections, then seeds a demo loan workflow with QR code data.
+The setup creates or reconciles the `lenders`, `borrowers`, `collectors`, `loans`, and `payments` collections with empty client permissions and `documentSecurity` disabled, then seeds a demo loan workflow with QR code data. Database access is server-only.
+
+Inspect collection permission metadata without changing it:
+
+```bash
+npm run appwrite:permissions:check
+```
+
+Save the existing metadata locally, apply deny-by-default permissions, and verify the result:
+
+```bash
+npm run appwrite:permissions:apply
+```
 
 ## Available Scripts
 
@@ -111,6 +124,8 @@ The setup creates the `lenders`, `borrowers`, `collectors`, `loans`, and `paymen
 - `npm run test` - run the Vitest test suite.
 - `npm run appwrite:setup` - provision Appwrite collections and seed demo data.
 - `npm run appwrite:seed` - seed the demo Appwrite data only.
+- `npm run appwrite:permissions:check` - inspect collection permission metadata without changing it.
+- `npm run appwrite:permissions:apply` - back up, harden, and verify collection permissions.
 
 ## Technology Stack
 

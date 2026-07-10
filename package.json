@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test": "vitest run",
     "appwrite:setup": "node scripts/setup-appwrite.mjs",
-    "appwrite:seed": "node scripts/seed-appwrite-demo.mjs"
+    "appwrite:seed": "node scripts/seed-appwrite-demo.mjs",
+    "appwrite:permissions:check": "node scripts/manage-appwrite-permissions.mjs --check",
+    "appwrite:permissions:apply": "node scripts/manage-appwrite-permissions.mjs --apply"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.18",

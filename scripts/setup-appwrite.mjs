@@ -1,13 +1,13 @@
 import { scryptSync } from "node:crypto";
-import { Client, Databases, Permission, Query, Role, Users } from "node-appwrite";
+import { Client, Databases, Query, Users } from "node-appwrite";
 import { readFileSync } from "node:fs";
 
-const env = loadEnv([".env.local", ".env.example"]);
+const env = { ...loadEnv([".env.local", ".env.example"]), ...process.env };
 
 const config = {
   endpoint: requireEnv("NEXT_PUBLIC_APPWRITE_ENDPOINT"),
   projectId: requireEnv("NEXT_PUBLIC_APPWRITE_PROJECT_ID"),
-  apiKey: env.APPWRITE_API_KEY || env.API_KEY || "",
+  apiKey: env.APPWRITE_SETUP_API_KEY || "",
   databaseId: requireEnv("NEXT_PUBLIC_APPWRITE_DATABASE_ID"),
   collections: {
     lenders: requireEnv("NEXT_PUBLIC_APPWRITE_LENDERS_COLLECTION_ID"),
@@ -19,7 +19,7 @@ const config = {
 };
 
 if (!config.apiKey) {
-  throw new Error("APPWRITE_API_KEY or API_KEY is required for setup.");
+  throw new Error("APPWRITE_SETUP_API_KEY is required for setup.");
 }
 
 const client = new Client()
@@ -30,12 +30,7 @@ const client = new Client()
 const databases = new Databases(client);
 const users = new Users(client);
 
-const collectionPermissions = [
-  Permission.read(Role.users()),
-  Permission.create(Role.users()),
-  Permission.update(Role.users()),
-  Permission.delete(Role.users()),
-];
+const collectionPermissions = [];
 
 const schema = [
   {
@@ -195,11 +190,31 @@ async function ensureDatabase() {
 
 async function ensureCollection(collection) {
   try {
-    await databases.getCollection({
+    const existing = await databases.getCollection({
       databaseId: config.databaseId,
       collectionId: collection.id,
     });
-    console.log(`Collection exists: ${collection.id}`);
+
+    const needsHardening =
+      existing.$permissions.length > 0 ||
+      existing.documentSecurity !== false ||
+      existing.enabled !== true ||
+      existing.name !== collection.name;
+
+    if (needsHardening) {
+      await databases.updateCollection({
+        databaseId: config.databaseId,
+        collectionId: collection.id,
+        name: collection.name,
+        permissions: collectionPermissions,
+        documentSecurity: false,
+        enabled: true,
+        purge: true,
+      });
+      console.log(`Hardened collection permissions: ${collection.id}`);
+    } else {
+      console.log(`Collection permissions already hardened: ${collection.id}`);
+    }
   } catch (error) {
     if (!isMissing(error)) {
       throw error;

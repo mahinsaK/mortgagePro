@@ -32,6 +32,7 @@ coverage/
 
 # deployment
 .vercel/
+.security-backups/
 
 # logs
 npm-debug.log*

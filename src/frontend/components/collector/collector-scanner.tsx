@@ -1,5 +1,6 @@
 "use client";
 
+import QrScanner from "qr-scanner";
 import { useEffect, useRef, useState } from "react";
 
 type LoanPreview = {
@@ -23,81 +24,82 @@ export function CollectorScanner({
   status,
 }: CollectorScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const scannerRef = useRef<QrScanner | null>(null);
+  const isMountedRef = useRef(true);
   const [cameraMessage, setCameraMessage] = useState("");
   const [loanId, setLoanId] = useState("");
   const [loan, setLoan] = useState<LoanPreview | null>(null);
   const [lookupError, setLookupError] = useState("");
   const [isLookingUp, setIsLookingUp] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
 
   useEffect(() => {
-    let stream: MediaStream | null = null;
-    let interval: number | undefined;
-    let isMounted = true;
+    isMountedRef.current = true;
 
-    async function startCamera() {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        setCameraMessage("Camera is not available. Enter the loan ID manually.");
+    return () => {
+      isMountedRef.current = false;
+      scannerRef.current?.destroy();
+      scannerRef.current = null;
+    };
+  }, []);
+
+  function stopScanning() {
+    scannerRef.current?.destroy();
+    scannerRef.current = null;
+    setIsScanning(false);
+  }
+
+  async function startScanning() {
+    if (!videoRef.current || isLookingUp) {
+      return;
+    }
+
+    stopScanning();
+    setCameraMessage("");
+    setLookupError("");
+    setLoan(null);
+    setIsScanning(true);
+
+    const scanner = new QrScanner(
+      videoRef.current,
+      (scanResult) => {
+        const scannedLoanId = scanResult.data.trim();
+
+        if (!scannedLoanId || scannerRef.current !== scanner) {
+          return;
+        }
+
+        stopScanning();
+        setLoanId(scannedLoanId);
+        void lookupLoan(scannedLoanId);
+      },
+      {
+        highlightCodeOutline: true,
+        highlightScanRegion: true,
+        maxScansPerSecond: 10,
+        preferredCamera: "environment",
+        returnDetailedScanResult: true,
+      },
+    );
+
+    scannerRef.current = scanner;
+
+    try {
+      await scanner.start();
+    } catch (error) {
+      if (scannerRef.current !== scanner) {
         return;
       }
 
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-        });
+      scanner.destroy();
+      scannerRef.current = null;
 
-        if (!isMounted || !videoRef.current) {
-          return;
-        }
-
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-
-        const BarcodeDetectorClass = (
-          window as typeof window & {
-            BarcodeDetector?: new (options: {
-              formats: string[];
-            }) => {
-              detect(video: HTMLVideoElement): Promise<Array<{ rawValue: string }>>;
-            };
-          }
-        ).BarcodeDetector;
-
-        if (!BarcodeDetectorClass) {
-          setCameraMessage(
-            "Camera is on, but this browser cannot read QR codes automatically. Enter the loan ID manually.",
-          );
-          return;
-        }
-
-        const detector = new BarcodeDetectorClass({ formats: ["qr_code"] });
-        interval = window.setInterval(async () => {
-          if (!videoRef.current || isLookingUp || loan) {
-            return;
-          }
-
-          const codes = await detector.detect(videoRef.current);
-          const value = codes[0]?.rawValue?.trim();
-
-          if (value) {
-            setLoanId(value);
-            await lookupLoan(value);
-          }
-        }, 900);
-      } catch {
-        setCameraMessage("Camera permission was blocked. Enter the loan ID manually.");
+      if (isMountedRef.current) {
+        setIsScanning(false);
+        setCameraMessage(cameraErrorMessage(error));
       }
     }
-
-    void startCamera();
-
-    return () => {
-      isMounted = false;
-      if (interval) {
-        window.clearInterval(interval);
-      }
-      stream?.getTracks().forEach((track) => track.stop());
-    };
-  }, [isLookingUp, loan]);
+  }
 
   async function lookupLoan(value = loanId) {
     const requestedLoanId = value.trim();
@@ -107,6 +109,7 @@ export function CollectorScanner({
       return;
     }
 
+    stopScanning();
     setIsLookingUp(true);
     setLookupError("");
     setLoan(null);
@@ -138,8 +141,9 @@ export function CollectorScanner({
     <section className="rounded-lg border border-[#d9e0e8] bg-white p-4 shadow-sm">
       <StatusMessage message={lookupError || message} status={lookupError ? "error" : status} />
 
-      <div className="mt-4 overflow-hidden rounded-md bg-black">
+      <div className="relative mt-4 overflow-hidden rounded-md bg-black">
         <video
+          aria-label="QR code camera preview"
           className="aspect-[3/4] w-full object-cover"
           muted
           playsInline
@@ -151,6 +155,19 @@ export function CollectorScanner({
           {cameraMessage}
         </p>
       ) : null}
+
+      <button
+        className={`mt-4 h-11 w-full rounded-md px-4 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:bg-[#9aa6b2] ${
+          isScanning
+            ? "bg-[#b91c1c] hover:bg-[#991b1b]"
+            : "bg-[#2563eb] hover:bg-[#1d4ed8]"
+        }`}
+        disabled={isLookingUp}
+        onClick={isScanning ? stopScanning : () => void startScanning()}
+        type="button"
+      >
+        {isScanning ? "Stop scanning" : "Start scanning"}
+      </button>
 
       <div className="mt-4 flex gap-2">
         <input
@@ -241,4 +258,18 @@ function formatMoney(value: number) {
     currency: "USD",
     style: "currency",
   }).format(value);
+}
+
+function cameraErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (/permission|denied|notallowed/i.test(message)) {
+    return "Camera permission was blocked. Allow camera access and try again.";
+  }
+
+  if (/https|secure context/i.test(message)) {
+    return "Camera scanning requires a secure HTTPS connection.";
+  }
+
+  return "Unable to start the QR scanner. Check camera access and try again.";
 }

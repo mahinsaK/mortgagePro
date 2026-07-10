@@ -1,6 +1,9 @@
-import { appwriteServerConfig } from "@/backend/appwrite/config";
-import { databases, Query } from "@/backend/appwrite/server-client";
+import { Query } from "@/backend/appwrite/server-client";
 import { formatMoney } from "@/backend/lib/currency";
+import {
+  listTenantDocuments,
+  type TenantCollection,
+} from "./tenant-data-service";
 import { getPrimaryLender } from "./lender-service";
 
 export type BorrowerRow = {
@@ -102,7 +105,7 @@ export async function getBorrowersPageData(options: PaginationOptions = {}) {
     };
   }
 
-  const borrowers = await listForLender(appwriteServerConfig.collections.borrowers, lender.id, {
+  const borrowers = await listForLender("borrowers", lender.id, {
     page: pagination.page,
     pageSize: pagination.pageSize,
     orderBy: "created_at",
@@ -147,25 +150,20 @@ export async function getBorrowerProfileData(
     return { borrower: null, loans: [], pageInfo: emptyPageInfo(pagination) };
   }
 
-  const borrowers = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.borrowers,
-    queries: [
-      Query.equal("lender_id", lender.id),
-      Query.equal("$id", borrowerId),
-      Query.limit(1),
-      Query.select([
-        "$id",
-        "$createdAt",
-        "name",
-        "business_name",
-        "contact",
-        "address",
-        "status",
-        "created_at",
-      ]),
-    ],
-  });
+  const borrowers = await listTenantDocuments("borrowers", lender.id, [
+    Query.equal("$id", borrowerId),
+    Query.limit(1),
+    Query.select([
+      "$id",
+      "$createdAt",
+      "name",
+      "business_name",
+      "contact",
+      "address",
+      "status",
+      "created_at",
+    ]),
+  ]);
   const borrower = borrowers.documents[0];
 
   if (!borrower) {
@@ -173,39 +171,29 @@ export async function getBorrowerProfileData(
   }
 
   const [loans, activeLoans] = await Promise.all([
-    databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.loans,
-      queries: [
-        Query.equal("lender_id", lender.id),
-        Query.equal("borrower_id", borrowerId),
-        Query.limit(pagination.pageSize),
-        Query.offset((pagination.page - 1) * pagination.pageSize),
-        Query.select([
-          "$id",
-          "borrower_id",
-          "amount",
-          "interest_rate",
-          "daily_payment",
-          "total_paid",
-          "remaining_amount",
-          "start_date",
-          "end_date",
-          "status",
-        ]),
-      ],
-    }),
-    databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.loans,
-      queries: [
-        Query.equal("lender_id", lender.id),
-        Query.equal("borrower_id", borrowerId),
-        Query.equal("status", "active"),
-        Query.limit(1),
-        Query.select(["$id"]),
-      ],
-    }),
+    listTenantDocuments("loans", lender.id, [
+      Query.equal("borrower_id", borrowerId),
+      Query.limit(pagination.pageSize),
+      Query.offset((pagination.page - 1) * pagination.pageSize),
+      Query.select([
+        "$id",
+        "borrower_id",
+        "amount",
+        "interest_rate",
+        "daily_payment",
+        "total_paid",
+        "remaining_amount",
+        "start_date",
+        "end_date",
+        "status",
+      ]),
+    ]),
+    listTenantDocuments("loans", lender.id, [
+      Query.equal("borrower_id", borrowerId),
+      Query.equal("status", "active"),
+      Query.limit(1),
+      Query.select(["$id"]),
+    ]),
   ]);
 
   const loanRows = loans.documents.map((loan) =>
@@ -241,7 +229,7 @@ export async function getLoansPageData(options: PaginationOptions = {}) {
     };
   }
 
-  const loans = await listForLender(appwriteServerConfig.collections.loans, lender.id, {
+  const loans = await listForLender("loans", lender.id, {
     page: pagination.page,
     pageSize: pagination.pageSize,
     orderBy: "created_at",
@@ -263,7 +251,7 @@ export async function getLoansPageData(options: PaginationOptions = {}) {
   );
   const borrowers =
     borrowerIds.length > 0
-      ? await listForLender(appwriteServerConfig.collections.borrowers, lender.id, {
+      ? await listForLender("borrowers", lender.id, {
           extraQueries: [Query.equal("$id", borrowerIds)],
           limit: borrowerIds.length,
           select: ["$id", "name"],
@@ -301,7 +289,7 @@ export async function getPaymentsPageData(options: PaginationOptions = {}) {
     };
   }
 
-  const payments = await listForLender(appwriteServerConfig.collections.payments, lender.id, {
+  const payments = await listForLender("payments", lender.id, {
     page: pagination.page,
     pageSize: pagination.pageSize,
     orderBy: ["date", "$createdAt"],
@@ -334,7 +322,6 @@ export async function getPaymentsExportData(options: {
   }
 
   const queries = [
-    Query.equal("lender_id", lender.id),
     Query.orderDesc("date"),
     Query.orderDesc("$createdAt"),
     Query.limit(MAX_LOOKUP_LIMIT),
@@ -357,11 +344,7 @@ export async function getPaymentsExportData(options: {
     queries.push(Query.lessThan("date", getDateRange(options.endDate).end));
   }
 
-  const payments = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.payments,
-    queries,
-  });
+  const payments = await listTenantDocuments("payments", lender.id, queries);
 
   return {
     lender,
@@ -380,7 +363,6 @@ export async function getBorrowersExportData(options: {
   }
 
   const queries = [
-    Query.equal("lender_id", lender.id),
     Query.orderDesc("created_at"),
     Query.limit(MAX_LOOKUP_LIMIT),
     Query.select([
@@ -403,11 +385,7 @@ export async function getBorrowersExportData(options: {
     queries.push(Query.lessThan("created_at", getDateRange(options.endDate).end));
   }
 
-  const borrowers = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.borrowers,
-    queries,
-  });
+  const borrowers = await listTenantDocuments("borrowers", lender.id, queries);
 
   return {
     lender,
@@ -437,13 +415,13 @@ export async function getCollectorsPageData(options: PaginationOptions = {}) {
   }
 
   const [collectors, activeCollectors] = await Promise.all([
-    listForLender(appwriteServerConfig.collections.collectors, lender.id, {
+    listForLender("collectors", lender.id, {
       page: pagination.page,
       pageSize: pagination.pageSize,
       orderBy: "created_at",
       select: ["$id", "$createdAt", "name", "contact_info", "status", "created_at"],
     }),
-    listForLender(appwriteServerConfig.collections.collectors, lender.id, {
+    listForLender("collectors", lender.id, {
       extraQueries: [Query.equal("status", "active")],
       limit: 1,
       select: ["$id"],
@@ -478,27 +456,22 @@ export async function getDailyCollectionsData(date: string) {
   }
 
   const range = getDateRange(selectedDate);
-  const payments = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.payments,
-    queries: [
-      Query.equal("lender_id", lender.id),
-      Query.greaterThanEqual("date", range.start),
-      Query.lessThan("date", range.end),
-      Query.orderDesc("date"),
-      Query.orderDesc("$createdAt"),
-      Query.limit(MAX_LOOKUP_LIMIT),
-      Query.select([
-        "$id",
-        "loan_id",
-        "collector_id",
-        "amount",
-        "method",
-        "date",
-        "created_at",
-      ]),
-    ],
-  });
+  const payments = await listTenantDocuments("payments", lender.id, [
+    Query.greaterThanEqual("date", range.start),
+    Query.lessThan("date", range.end),
+    Query.orderDesc("date"),
+    Query.orderDesc("$createdAt"),
+    Query.limit(MAX_LOOKUP_LIMIT),
+    Query.select([
+      "$id",
+      "loan_id",
+      "collector_id",
+      "amount",
+      "method",
+      "date",
+      "created_at",
+    ]),
+  ]);
 
   return {
     lender,
@@ -516,40 +489,30 @@ export async function getLoanPaymentDetails(
     return null;
   }
 
-  const loans = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.loans,
-    queries: [
-      Query.equal("lender_id", lender.id),
-      Query.equal("$id", loanId),
-      Query.limit(1),
-      Query.select(["$id", "amount", "total_paid", "remaining_amount"]),
-    ],
-  });
+  const loans = await listTenantDocuments("loans", lender.id, [
+    Query.equal("$id", loanId),
+    Query.limit(1),
+    Query.select(["$id", "amount", "total_paid", "remaining_amount"]),
+  ]);
   const loan = loans.documents[0];
 
   if (!loan) {
     return null;
   }
 
-  const payments = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.payments,
-    queries: [
-      Query.equal("lender_id", lender.id),
-      Query.equal("loan_id", loanId),
-      Query.orderDesc("date"),
-      Query.orderDesc("$createdAt"),
-      Query.limit(MAX_LOOKUP_LIMIT),
-      Query.select(["$id", "collector_id", "amount", "method", "date"]),
-    ],
-  });
+  const payments = await listTenantDocuments("payments", lender.id, [
+    Query.equal("loan_id", loanId),
+    Query.orderDesc("date"),
+    Query.orderDesc("$createdAt"),
+    Query.limit(MAX_LOOKUP_LIMIT),
+    Query.select(["$id", "collector_id", "amount", "method", "date"]),
+  ]);
   const collectorIds = uniqueStrings(
     payments.documents.map((payment) => String(payment.collector_id ?? "")),
   );
   const collectors =
     collectorIds.length > 0
-      ? await listForLender(appwriteServerConfig.collections.collectors, lender.id, {
+      ? await listForLender("collectors", lender.id, {
           extraQueries: [Query.equal("$id", collectorIds)],
           limit: collectorIds.length,
           select: ["$id", "name"],
@@ -595,14 +558,14 @@ async function mapPaymentDocuments(
   );
   const [loans, collectors] = await Promise.all([
     loanIds.length > 0
-      ? listForLender(appwriteServerConfig.collections.loans, lenderId, {
+      ? listForLender("loans", lenderId, {
           extraQueries: [Query.equal("$id", loanIds)],
           limit: loanIds.length,
           select: ["$id", "borrower_id"],
         })
       : Promise.resolve({ documents: [] }),
     collectorIds.length > 0
-      ? listForLender(appwriteServerConfig.collections.collectors, lenderId, {
+      ? listForLender("collectors", lenderId, {
           extraQueries: [Query.equal("$id", collectorIds)],
           limit: collectorIds.length,
           select: ["$id", "name"],
@@ -614,7 +577,7 @@ async function mapPaymentDocuments(
   );
   const borrowers =
     borrowerIds.length > 0
-      ? await listForLender(appwriteServerConfig.collections.borrowers, lenderId, {
+      ? await listForLender("borrowers", lenderId, {
           extraQueries: [Query.equal("$id", borrowerIds)],
           limit: borrowerIds.length,
           select: ["$id", "name"],
@@ -654,7 +617,7 @@ async function mapPaymentDocuments(
 }
 
 function listForLender(
-  collectionId: string,
+  collection: TenantCollection,
   lenderId: string,
   options: PaginationOptions & {
     extraQueries?: string[];
@@ -664,7 +627,6 @@ function listForLender(
   } = {},
 ) {
   const queries = [
-    Query.equal("lender_id", lenderId),
     ...(options.extraQueries ?? []),
   ];
 
@@ -688,11 +650,7 @@ function listForLender(
     queries.push(Query.limit(options.limit ?? DEFAULT_PAGE_SIZE));
   }
 
-  return databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId,
-    queries,
-  });
+  return listTenantDocuments(collection, lenderId, queries);
 }
 
 function mapLoanDocument(
@@ -733,16 +691,11 @@ export async function loanBelongsToActiveLender(loanId: string) {
     return false;
   }
 
-  const loans = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.loans,
-    queries: [
-      Query.equal("lender_id", lender.id),
-      Query.equal("$id", loanId),
-      Query.limit(1),
-      Query.select(["$id"]),
-    ],
-  });
+  const loans = await listTenantDocuments("loans", lender.id, [
+    Query.equal("$id", loanId),
+    Query.limit(1),
+    Query.select(["$id"]),
+  ]);
 
   return loans.total > 0;
 }
@@ -781,19 +734,6 @@ function formatContactPhone(value: string) {
     return parsed.phone ?? "";
   } catch {
     return value;
-  }
-}
-
-function formatContactAddress(value: string) {
-  if (!value) {
-    return "";
-  }
-
-  try {
-    const parsed = JSON.parse(value) as Record<string, string>;
-    return [parsed.address, parsed.area].filter(Boolean).join(" / ");
-  } catch {
-    return "";
   }
 }
 

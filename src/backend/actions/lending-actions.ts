@@ -12,6 +12,13 @@ import {
   createBorrowerSearchText,
   createLoanSearchText,
 } from "@/backend/services/search-text-service";
+import {
+  createTenantDocument,
+  deleteTenantDocument,
+  listTenantDocuments,
+  requireTenantDocument,
+  updateTenantDocument,
+} from "@/backend/services/tenant-data-service";
 
 export async function createBorrowerAction(formData: FormData) {
   const lender = await getRequiredLender();
@@ -21,24 +28,18 @@ export async function createBorrowerAction(formData: FormData) {
   const contact = readOptional(formData, "phone");
   const address = readOptional(formData, "address");
 
-  await databases.createDocument({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.borrowers,
-    documentId: borrowerId,
-    data: {
-      lender_id: lender.id,
-      name,
-      business_name: readOptional(formData, "business_name"),
-      contact,
-      address,
-      search_text: createBorrowerSearchText({
-        borrowerName: name,
-        borrowerContact: contact,
-        borrowerAddress: address,
-      }),
-      status: "active",
-      created_at: now,
-    },
+  await createTenantDocument("borrowers", lender.id, borrowerId, {
+    name,
+    business_name: readOptional(formData, "business_name"),
+    contact,
+    address,
+    search_text: createBorrowerSearchText({
+      borrowerName: name,
+      borrowerContact: contact,
+      borrowerAddress: address,
+    }),
+    status: "active",
+    created_at: now,
   });
 
   revalidatePath("/borrowers");
@@ -48,29 +49,21 @@ export async function createBorrowerAction(formData: FormData) {
 export async function updateBorrowerAction(formData: FormData) {
   const lender = await getRequiredLender();
   const borrowerId = readRequired(formData, "borrower_id");
-  await getOwnedDocument(appwriteServerConfig.collections.borrowers, lender.id, borrowerId, [
-    "$id",
-  ]);
   const contact = readOptional(formData, "phone");
   const address = readOptional(formData, "address");
   const name = readRequired(formData, "name");
 
-  await databases.updateDocument({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.borrowers,
-    documentId: borrowerId,
-    data: {
-      name,
-      business_name: readOptional(formData, "business_name"),
-      contact,
-      address,
-      search_text: createBorrowerSearchText({
-        borrowerName: name,
-        borrowerContact: contact,
-        borrowerAddress: address,
-      }),
-      status: readStatus(formData),
-    },
+  await updateTenantDocument("borrowers", lender.id, borrowerId, {
+    name,
+    business_name: readOptional(formData, "business_name"),
+    contact,
+    address,
+    search_text: createBorrowerSearchText({
+      borrowerName: name,
+      borrowerContact: contact,
+      borrowerAddress: address,
+    }),
+    status: readStatus(formData),
   });
   await refreshBorrowerLoanSearchText(lender.id, borrowerId, name, contact, address);
 
@@ -83,58 +76,34 @@ export async function updateBorrowerAction(formData: FormData) {
 export async function deleteBorrowerAction(formData: FormData) {
   const lender = await getRequiredLender();
   const borrowerId = readRequired(formData, "borrower_id");
-  await getOwnedDocument(appwriteServerConfig.collections.borrowers, lender.id, borrowerId, [
-    "$id",
+  await requireTenantDocument("borrowers", lender.id, borrowerId);
+  const loans = await listTenantDocuments("loans", lender.id, [
+    Query.equal("borrower_id", borrowerId),
+    Query.limit(5000),
+    Query.select(["$id"]),
   ]);
-  const loans = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.loans,
-    queries: [
-      Query.equal("lender_id", lender.id),
-      Query.equal("borrower_id", borrowerId),
-      Query.limit(5000),
-      Query.select(["$id"]),
-    ],
-  });
   const loanIds = loans.documents.map((loan) => loan.$id);
 
   if (loanIds.length > 0) {
-    const payments = await databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.payments,
-      queries: [
-        Query.equal("lender_id", lender.id),
-        Query.equal("loan_id", loanIds),
-        Query.limit(5000),
-        Query.select(["$id"]),
-      ],
-    });
+    const payments = await listTenantDocuments("payments", lender.id, [
+      Query.equal("loan_id", loanIds),
+      Query.limit(5000),
+      Query.select(["$id"]),
+    ]);
 
     await Promise.all(
       payments.documents.map((payment) =>
-        databases.deleteDocument({
-          databaseId: appwriteServerConfig.databaseId,
-          collectionId: appwriteServerConfig.collections.payments,
-          documentId: payment.$id,
-        }),
+        deleteTenantDocument("payments", lender.id, payment.$id),
       ),
     );
     await Promise.all(
       loanIds.map((loanId) =>
-        databases.deleteDocument({
-          databaseId: appwriteServerConfig.databaseId,
-          collectionId: appwriteServerConfig.collections.loans,
-          documentId: loanId,
-        }),
+        deleteTenantDocument("loans", lender.id, loanId),
       ),
     );
   }
 
-  await databases.deleteDocument({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.borrowers,
-    documentId: borrowerId,
-  });
+  await deleteTenantDocument("borrowers", lender.id, borrowerId);
 
   revalidatePath("/borrowers");
   revalidatePath("/loans");
@@ -146,49 +115,34 @@ export async function deleteBorrowerAction(formData: FormData) {
 export async function createLoanForBorrowerAction(formData: FormData) {
   const lender = await getRequiredLender();
   const borrowerId = readRequired(formData, "borrower_id");
-  const borrowers = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.borrowers,
-    queries: [
-      Query.equal("lender_id", lender.id),
-      Query.equal("$id", borrowerId),
-      Query.limit(1),
-      Query.select(["$id", "name", "contact", "address"]),
-    ],
-  });
-  const borrower = borrowers.documents[0];
-
-  if (!borrower) {
-    throw new Error("This borrower does not belong to the active lender.");
-  }
+  const borrower = await requireTenantDocument("borrowers", lender.id, borrowerId, [
+    "$id",
+    "name",
+    "contact",
+    "address",
+  ]);
 
   const loanId = createDocumentId("loan");
   const now = new Date().toISOString();
   const amount = readNumber(formData, "amount");
 
-  await databases.createDocument({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.loans,
-    documentId: loanId,
-    data: {
-      lender_id: lender.id,
-      borrower_id: borrowerId,
-      amount,
-      interest_rate: readNumber(formData, "interest_rate"),
-      daily_payment: readNumber(formData, "daily_payment"),
-      total_paid: 0,
-      remaining_amount: amount,
-      start_date: readDate(formData, "start_date"),
-      end_date: readDate(formData, "end_date"),
-      status: "active",
-      qr_code: loanId,
-      search_text: createLoanSearchText({
-        borrowerName: String(borrower.name ?? ""),
-        borrowerContact: String(borrower.contact ?? ""),
-        borrowerAddress: String(borrower.address ?? ""),
-      }),
-      created_at: now,
-    },
+  await createTenantDocument("loans", lender.id, loanId, {
+    borrower_id: borrowerId,
+    amount,
+    interest_rate: readNumber(formData, "interest_rate"),
+    daily_payment: readNumber(formData, "daily_payment"),
+    total_paid: 0,
+    remaining_amount: amount,
+    start_date: readDate(formData, "start_date"),
+    end_date: readDate(formData, "end_date"),
+    status: "active",
+    qr_code: loanId,
+    search_text: createLoanSearchText({
+      borrowerName: String(borrower.name ?? ""),
+      borrowerContact: String(borrower.contact ?? ""),
+      borrowerAddress: String(borrower.address ?? ""),
+    }),
+    created_at: now,
   });
 
   revalidatePath(`/borrowers/${borrowerId}`);
@@ -199,7 +153,7 @@ export async function createLoanForBorrowerAction(formData: FormData) {
 export async function updateLoanAction(formData: FormData) {
   const lender = await getRequiredLender();
   const loanId = readRequired(formData, "loan_id");
-  const loan = await getOwnedDocument(appwriteServerConfig.collections.loans, lender.id, loanId, [
+  const loan = await requireTenantDocument("loans", lender.id, loanId, [
     "$id",
     "borrower_id",
     "total_paid",
@@ -215,19 +169,14 @@ export async function updateLoanAction(formData: FormData) {
     currentStatus: requestedStatus,
   });
 
-  await databases.updateDocument({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.loans,
-    documentId: loanId,
-    data: {
-      amount,
-      interest_rate: readNumber(formData, "interest_rate"),
-      daily_payment: readNumber(formData, "daily_payment"),
-      remaining_amount: totals.remainingAmount,
-      start_date: readDate(formData, "start_date"),
-      end_date: readDate(formData, "end_date"),
-      status: totals.status,
-    },
+  await updateTenantDocument("loans", lender.id, loanId, {
+    amount,
+    interest_rate: readNumber(formData, "interest_rate"),
+    daily_payment: readNumber(formData, "daily_payment"),
+    remaining_amount: totals.remainingAmount,
+    start_date: readDate(formData, "start_date"),
+    end_date: readDate(formData, "end_date"),
+    status: totals.status,
   });
 
   revalidatePath(`/borrowers/${borrowerId}`);
@@ -238,36 +187,23 @@ export async function updateLoanAction(formData: FormData) {
 export async function deleteLoanAction(formData: FormData) {
   const lender = await getRequiredLender();
   const loanId = readRequired(formData, "loan_id");
-  const loan = await getOwnedDocument(appwriteServerConfig.collections.loans, lender.id, loanId, [
+  const loan = await requireTenantDocument("loans", lender.id, loanId, [
     "$id",
     "borrower_id",
   ]);
   const borrowerId = String(loan.borrower_id ?? "");
-  const payments = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.payments,
-    queries: [
-      Query.equal("lender_id", lender.id),
-      Query.equal("loan_id", loanId),
-      Query.limit(5000),
-      Query.select(["$id"]),
-    ],
-  });
+  const payments = await listTenantDocuments("payments", lender.id, [
+    Query.equal("loan_id", loanId),
+    Query.limit(5000),
+    Query.select(["$id"]),
+  ]);
 
   await Promise.all(
     payments.documents.map((payment) =>
-      databases.deleteDocument({
-        databaseId: appwriteServerConfig.databaseId,
-        collectionId: appwriteServerConfig.collections.payments,
-        documentId: payment.$id,
-      }),
+      deleteTenantDocument("payments", lender.id, payment.$id),
     ),
   );
-  await databases.deleteDocument({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.loans,
-    documentId: loanId,
-  });
+  await deleteTenantDocument("loans", lender.id, loanId);
 
   revalidatePath(`/borrowers/${borrowerId}`);
   revalidatePath("/loans");
@@ -285,21 +221,15 @@ export async function createCollectorAction(formData: FormData) {
     throw new Error("Collector password must be at least 8 characters.");
   }
 
-  await databases.createDocument({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.collectors,
-    documentId: collectorId,
-    data: {
-      lender_id: lender.id,
-      name: readRequired(formData, "name"),
-      contact_info: JSON.stringify({
-        phone: readOptional(formData, "phone"),
-        area: readOptional(formData, "area"),
-      }),
-      password_hash: hashCollectorPassword(password),
-      status: readStatus(formData),
-      created_at: now,
-    },
+  await createTenantDocument("collectors", lender.id, collectorId, {
+    name: readRequired(formData, "name"),
+    contact_info: JSON.stringify({
+      phone: readOptional(formData, "phone"),
+      area: readOptional(formData, "area"),
+    }),
+    password_hash: hashCollectorPassword(password),
+    status: readStatus(formData),
+    created_at: now,
   });
 
   revalidatePath("/collectors");
@@ -308,9 +238,6 @@ export async function createCollectorAction(formData: FormData) {
 export async function updateCollectorAction(formData: FormData) {
   const lender = await getRequiredLender();
   const collectorId = readRequired(formData, "collector_id");
-  await getOwnedDocument(appwriteServerConfig.collections.collectors, lender.id, collectorId, [
-    "$id",
-  ]);
   const password = readOptional(formData, "password");
   const data: Record<string, unknown> = {
     name: readRequired(formData, "name"),
@@ -329,12 +256,7 @@ export async function updateCollectorAction(formData: FormData) {
     data.password_hash = hashCollectorPassword(password);
   }
 
-  await databases.updateDocument({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.collectors,
-    documentId: collectorId,
-    data,
-  });
+  await updateTenantDocument("collectors", lender.id, collectorId, data);
 
   revalidatePath("/collectors");
   revalidatePath("/payments");
@@ -343,15 +265,7 @@ export async function updateCollectorAction(formData: FormData) {
 export async function deleteCollectorAction(formData: FormData) {
   const lender = await getRequiredLender();
   const collectorId = readRequired(formData, "collector_id");
-  await getOwnedDocument(appwriteServerConfig.collections.collectors, lender.id, collectorId, [
-    "$id",
-  ]);
-
-  await databases.deleteDocument({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.collectors,
-    documentId: collectorId,
-  });
+  await deleteTenantDocument("collectors", lender.id, collectorId);
 
   revalidatePath("/collectors");
   revalidatePath("/payments");
@@ -415,31 +329,6 @@ async function getRequiredLender() {
   return lender;
 }
 
-async function getOwnedDocument(
-  collectionId: string,
-  lenderId: string,
-  documentId: string,
-  select: string[],
-) {
-  const documents = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId,
-    queries: [
-      Query.equal("lender_id", lenderId),
-      Query.equal("$id", documentId),
-      Query.limit(1),
-      Query.select(select),
-    ],
-  });
-  const document = documents.documents[0];
-
-  if (!document) {
-    throw new Error("This record does not belong to the active lender.");
-  }
-
-  return document;
-}
-
 async function refreshBorrowerLoanSearchText(
   lenderId: string,
   borrowerId: string,
@@ -447,16 +336,11 @@ async function refreshBorrowerLoanSearchText(
   borrowerContact: string,
   borrowerAddress: string,
 ) {
-  const loans = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.loans,
-    queries: [
-      Query.equal("lender_id", lenderId),
-      Query.equal("borrower_id", borrowerId),
-      Query.limit(5000),
-      Query.select(["$id", "search_text"]),
-    ],
-  });
+  const loans = await listTenantDocuments("loans", lenderId, [
+    Query.equal("borrower_id", borrowerId),
+    Query.limit(5000),
+    Query.select(["$id", "search_text"]),
+  ]);
   const searchText = createLoanSearchText({
     borrowerName,
     borrowerContact,
@@ -467,11 +351,8 @@ async function refreshBorrowerLoanSearchText(
     loans.documents
       .filter((loan) => loan.search_text !== searchText)
       .map((loan) =>
-        databases.updateDocument({
-          databaseId: appwriteServerConfig.databaseId,
-          collectionId: appwriteServerConfig.collections.loans,
-          documentId: loan.$id,
-          data: { search_text: searchText },
+        updateTenantDocument("loans", lenderId, loan.$id, {
+          search_text: searchText,
         }),
       ),
   );

@@ -1,6 +1,6 @@
-import { appwriteServerConfig } from "@/backend/appwrite/config";
-import { databases, Query } from "@/backend/appwrite/server-client";
+import { Query } from "@/backend/appwrite/server-client";
 import { normalizeSearchText } from "@/backend/services/search-text-service";
+import { listTenantDocuments } from "./tenant-data-service";
 import { getPrimaryLender } from "./lender-service";
 
 export type SmsRecipient = {
@@ -23,20 +23,15 @@ export async function searchBorrowerSmsRecipients(
     return [];
   }
 
-  const borrowers = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.borrowers,
-    queries: [
-      Query.equal("lender_id", lender.id),
-      Query.or([
-        Query.search("name", normalizedQuery),
-        Query.search("business_name", normalizedQuery),
-        Query.search("contact", normalizedQuery),
-      ]),
-      Query.limit(SEARCH_LIMIT),
-      Query.select(["$id", "name", "business_name", "contact"]),
-    ],
-  });
+  const borrowers = await listTenantDocuments("borrowers", lender.id, [
+    Query.or([
+      Query.search("name", normalizedQuery),
+      Query.search("business_name", normalizedQuery),
+      Query.search("contact", normalizedQuery),
+    ]),
+    Query.limit(SEARCH_LIMIT),
+    Query.select(["$id", "name", "business_name", "contact"]),
+  ]);
 
   return borrowers.documents
     .map((borrower) => mapBorrowerToRecipient(borrower))
@@ -50,15 +45,10 @@ export async function getAllBorrowerSmsRecipients(): Promise<SmsRecipient[]> {
     return [];
   }
 
-  const borrowers = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.borrowers,
-    queries: [
-      Query.equal("lender_id", lender.id),
-      Query.limit(ALL_BORROWERS_LIMIT),
-      Query.select(["$id", "name", "business_name", "contact"]),
-    ],
-  });
+  const borrowers = await listTenantDocuments("borrowers", lender.id, [
+    Query.limit(ALL_BORROWERS_LIMIT),
+    Query.select(["$id", "name", "business_name", "contact"]),
+  ]);
 
   return borrowers.documents
     .map((borrower) => mapBorrowerToRecipient(borrower))

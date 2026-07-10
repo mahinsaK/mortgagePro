@@ -12,6 +12,11 @@ import {
   setCollectorSession,
   verifyCollectorPassword,
 } from "@/backend/services/collector-auth-service";
+import {
+  createTenantDocument,
+  getTenantDocument,
+  updateTenantDocument,
+} from "@/backend/services/tenant-data-service";
 
 export async function collectorLoginAction(formData: FormData) {
   const name = readRequired(formData, "name");
@@ -65,35 +70,25 @@ export async function collectScannedPaymentAction(formData: FormData) {
   }
 
   const [loanResult, collectorResult] = await Promise.all([
-    databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.loans,
-      queries: [
-        Query.equal("$id", loanId),
-        Query.limit(1),
-        Query.select(["$id", "lender_id", "amount", "total_paid", "status"]),
-      ],
-    }),
-    databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.collectors,
-      queries: [
-        Query.equal("$id", session.collectorId),
-        Query.equal("lender_id", session.lenderId),
-        Query.equal("status", "active"),
-        Query.limit(1),
-        Query.select(["$id", "lender_id"]),
-      ],
-    }),
+    getTenantDocument("loans", session.lenderId, loanId, [
+      "$id",
+      "amount",
+      "total_paid",
+      "status",
+    ]),
+    getTenantDocument("collectors", session.lenderId, session.collectorId, [
+      "$id",
+      "status",
+    ]),
   ]);
-  const loan = loanResult.documents[0];
-  const collector = collectorResult.documents[0];
+  const loan = loanResult;
+  const collector = collectorResult;
 
   if (!loan) {
     redirectWithStatus("/collector/scan", "error", "That QR code is not a valid loan.");
   }
 
-  if (!collector || String(loan.lender_id ?? "") !== session.lenderId) {
+  if (!collector || collector.status !== "active") {
     redirectWithStatus(
       "/collector/scan",
       "error",
@@ -104,9 +99,9 @@ export async function collectScannedPaymentAction(formData: FormData) {
   const paymentResult = new PaymentController().record({
     lenderId: session.lenderId,
     loanId,
-    loanLenderId: String(loan.lender_id ?? ""),
+    loanLenderId: session.lenderId,
     collectorId: session.collectorId,
-    collectorLenderId: String(collector.lender_id ?? ""),
+    collectorLenderId: session.lenderId,
     date: new Date().toISOString().slice(0, 10),
     amount,
     method: "cash",
@@ -128,21 +123,16 @@ export async function collectScannedPaymentAction(formData: FormData) {
     currentStatus: String(loan.status ?? "active"),
   });
 
-  await databases.createDocument({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.payments,
-    documentId: paymentId,
-    data: paymentResult.data,
-  });
-  await databases.updateDocument({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.loans,
-    documentId: loanId,
-    data: {
-      total_paid: totals.totalPaid,
-      remaining_amount: totals.remainingAmount,
-      status: totals.status,
-    },
+  await createTenantDocument(
+    "payments",
+    session.lenderId,
+    paymentId,
+    paymentResult.data,
+  );
+  await updateTenantDocument("loans", session.lenderId, loanId, {
+    total_paid: totals.totalPaid,
+    remaining_amount: totals.remainingAmount,
+    status: totals.status,
   });
 
   revalidatePath("/payments");

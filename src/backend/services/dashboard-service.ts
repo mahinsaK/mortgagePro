@@ -1,7 +1,7 @@
-import { appwriteServerConfig } from "@/backend/appwrite/config";
-import { databases, Query } from "@/backend/appwrite/server-client";
+import { Query } from "@/backend/appwrite/server-client";
 import { formatMoney } from "@/backend/lib/currency";
 import { normalizeSearchText } from "@/backend/services/search-text-service";
+import { listTenantDocuments } from "./tenant-data-service";
 import { getPrimaryLender } from "./lender-service";
 
 type DashboardStat = {
@@ -64,7 +64,6 @@ export async function getLenderDashboardData(
   const today = toDateInputValue(new Date());
   const todayRange = getDateRange(today);
   const loanQueries = [
-    Query.equal("lender_id", lender.id),
     Query.orderDesc("created_at"),
     Query.limit(pagination.pageSize),
     Query.offset((pagination.page - 1) * pagination.pageSize),
@@ -81,45 +80,26 @@ export async function getLenderDashboardData(
   ];
 
   if (searchQuery) {
-    loanQueries.splice(1, 0, Query.search("search_text", searchQuery));
+    loanQueries.unshift(Query.search("search_text", searchQuery));
   }
 
   const [initialLoans, totalBorrowers, activeLoans, todaysPayments] = await Promise.all([
-    databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.loans,
-      queries: loanQueries,
-    }),
-    databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.borrowers,
-      queries: [
-        Query.equal("lender_id", lender.id),
-        Query.limit(1),
-        Query.select(["$id"]),
-      ],
-    }),
-    databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.loans,
-      queries: [
-        Query.equal("lender_id", lender.id),
-        Query.equal("status", "active"),
-        Query.limit(1),
-        Query.select(["$id"]),
-      ],
-    }),
-    databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.payments,
-      queries: [
-        Query.equal("lender_id", lender.id),
-        Query.greaterThanEqual("date", todayRange.start),
-        Query.lessThan("date", todayRange.end),
-        Query.limit(MAX_DAILY_PAYMENT_LIMIT),
-        Query.select(["amount"]),
-      ],
-    }),
+    listTenantDocuments("loans", lender.id, loanQueries),
+    listTenantDocuments("borrowers", lender.id, [
+      Query.limit(1),
+      Query.select(["$id"]),
+    ]),
+    listTenantDocuments("loans", lender.id, [
+      Query.equal("status", "active"),
+      Query.limit(1),
+      Query.select(["$id"]),
+    ]),
+    listTenantDocuments("payments", lender.id, [
+      Query.greaterThanEqual("date", todayRange.start),
+      Query.lessThan("date", todayRange.end),
+      Query.limit(MAX_DAILY_PAYMENT_LIMIT),
+      Query.select(["amount"]),
+    ]),
   ]);
   const loans =
     searchQuery && initialLoans.total === 0
@@ -130,16 +110,11 @@ export async function getLenderDashboardData(
   );
   const borrowers =
     borrowerIds.length > 0
-      ? await databases.listDocuments({
-          databaseId: appwriteServerConfig.databaseId,
-          collectionId: appwriteServerConfig.collections.borrowers,
-          queries: [
-            Query.equal("lender_id", lender.id),
+      ? await listTenantDocuments("borrowers", lender.id, [
             Query.equal("$id", borrowerIds),
             Query.limit(borrowerIds.length),
             Query.select(["$id", "name", "contact", "address"]),
-          ],
-        })
+          ])
       : { documents: [] };
 
   const borrowerNames = new Map(
@@ -221,20 +196,15 @@ async function findLoansByBorrowerSearch(
   searchQuery: string,
   pagination: { page: number; pageSize: number },
 ) {
-  const borrowers = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.borrowers,
-    queries: [
-      Query.equal("lender_id", lenderId),
-      Query.or([
-        Query.search("name", searchQuery),
-        Query.search("address", searchQuery),
-        Query.search("contact", searchQuery),
-      ]),
-      Query.limit(BORROWER_SEARCH_FALLBACK_LIMIT),
-      Query.select(["$id"]),
-    ],
-  });
+  const borrowers = await listTenantDocuments("borrowers", lenderId, [
+    Query.or([
+      Query.search("name", searchQuery),
+      Query.search("address", searchQuery),
+      Query.search("contact", searchQuery),
+    ]),
+    Query.limit(BORROWER_SEARCH_FALLBACK_LIMIT),
+    Query.select(["$id"]),
+  ]);
   const borrowerIds = uniqueStrings(
     borrowers.documents.map((borrower) => borrower.$id),
   );
@@ -243,27 +213,22 @@ async function findLoansByBorrowerSearch(
     return { documents: [], total: 0 };
   }
 
-  return databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.loans,
-    queries: [
-      Query.equal("lender_id", lenderId),
-      Query.equal("borrower_id", borrowerIds),
-      Query.orderDesc("created_at"),
-      Query.limit(pagination.pageSize),
-      Query.offset((pagination.page - 1) * pagination.pageSize),
-      Query.select([
-        "$id",
-        "borrower_id",
-        "amount",
-        "total_paid",
-        "remaining_amount",
-        "daily_payment",
-        "status",
-        "end_date",
-      ]),
-    ],
-  });
+  return listTenantDocuments("loans", lenderId, [
+    Query.equal("borrower_id", borrowerIds),
+    Query.orderDesc("created_at"),
+    Query.limit(pagination.pageSize),
+    Query.offset((pagination.page - 1) * pagination.pageSize),
+    Query.select([
+      "$id",
+      "borrower_id",
+      "amount",
+      "total_paid",
+      "remaining_amount",
+      "daily_payment",
+      "status",
+      "end_date",
+    ]),
+  ]);
 }
 
 function emptyStats() {

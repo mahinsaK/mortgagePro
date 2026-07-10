@@ -1,7 +1,10 @@
-import { appwriteServerConfig } from "@/backend/appwrite/config";
-import { databases, Query } from "@/backend/appwrite/server-client";
 import { PaymentController } from "@/backend/modules/payments/controller";
 import { PaymentService } from "@/backend/modules/payments/service";
+import {
+  createTenantDocument,
+  requireTenantDocument,
+  updateTenantDocument,
+} from "./tenant-data-service";
 import { getPrimaryLender } from "./lender-service";
 
 export type RecordLoanPaymentInput = {
@@ -19,39 +22,15 @@ export async function recordLoanPayment(input: RecordLoanPaymentInput) {
     throw new Error("No lender exists in Appwrite yet.");
   }
 
-  const [loanResult, collectorResult] = await Promise.all([
-    databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.loans,
-      queries: [
-        Query.equal("lender_id", lender.id),
-        Query.equal("$id", input.loanId),
-        Query.limit(1),
-        Query.select(["$id", "amount", "total_paid", "status"]),
-      ],
-    }),
-    databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.collectors,
-      queries: [
-        Query.equal("lender_id", lender.id),
-        Query.equal("$id", input.collectorId),
-        Query.limit(1),
-        Query.select(["$id"]),
-      ],
-    }),
+  const [loan] = await Promise.all([
+    requireTenantDocument("loans", lender.id, input.loanId, [
+      "$id",
+      "amount",
+      "total_paid",
+      "status",
+    ]),
+    requireTenantDocument("collectors", lender.id, input.collectorId),
   ]);
-  const loan = loanResult.documents[0];
-  const collector = collectorResult.documents[0];
-
-  if (!loan) {
-    throw new Error("This loan does not belong to the active lender.");
-  }
-
-  if (!collector) {
-    throw new Error("This collector does not belong to the active lender.");
-  }
-
   const paymentResult = new PaymentController().record({
     lenderId: lender.id,
     loanId: input.loanId,
@@ -75,21 +54,16 @@ export async function recordLoanPayment(input: RecordLoanPaymentInput) {
     currentStatus: String(loan.status ?? "active"),
   });
 
-  await databases.createDocument({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.payments,
-    documentId: paymentId,
-    data: paymentResult.data,
-  });
-  await databases.updateDocument({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.loans,
-    documentId: input.loanId,
-    data: {
-      total_paid: totals.totalPaid,
-      remaining_amount: totals.remainingAmount,
-      status: totals.status,
-    },
+  await createTenantDocument(
+    "payments",
+    lender.id,
+    paymentId,
+    paymentResult.data,
+  );
+  await updateTenantDocument("loans", lender.id, input.loanId, {
+    total_paid: totals.totalPaid,
+    remaining_amount: totals.remainingAmount,
+    status: totals.status,
   });
 
   return {

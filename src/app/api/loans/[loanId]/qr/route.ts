@@ -4,7 +4,7 @@ import { generateLoanQrPng } from "@/backend/services/qr-code-service";
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ loanId: string }> },
 ) {
   const { loanId } = await params;
@@ -15,10 +15,14 @@ export async function GET(
   }
 
   const qrBuffer = await generateLoanQrPng(loanId);
+  const isDisplayRequest =
+    new URL(request.url).searchParams.get("display") === "1";
 
   return new Response(new Uint8Array(qrBuffer), {
     headers: {
-      "Content-Disposition": `attachment; filename="${loanId}-qr.png"`,
+      "Content-Disposition": `${
+        isDisplayRequest ? "inline" : "attachment"
+      }; filename="${loanId}-qr.png"`,
       "Content-Type": "image/png",
     },
   });

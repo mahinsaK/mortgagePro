@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import { useState } from "react";
 import { DateRangeCsvExport } from "@/frontend/components/export/csv-export-button";
+import { LoanQrPanel } from "@/frontend/components/loans/loan-qr-panel";
 import { LoanPaymentsPanel } from "@/frontend/components/loans/loan-payments-panel";
 import { PaginationControls } from "@/frontend/components/ui/pagination-controls";
 
@@ -195,15 +196,7 @@ export function LenderDashboardLoansPanel({
                 />
                 <Detail label="End date" value={selectedLoan.endDate} />
               </dl>
-              <div className="mt-5">
-                <a
-                  className="inline-flex h-10 items-center rounded-md border border-[#cfd8e3] px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#f8fafc]"
-                  download={`${selectedLoan.id}-qr.png`}
-                  href={`/api/loans/${selectedLoan.id}/qr`}
-                >
-                  Download QR
-                </a>
-              </div>
+              <LoanQrPanel loanId={selectedLoan.id} />
               <LoanPaymentsPanel loanId={selectedLoan.id} />
             </div>
           </section>

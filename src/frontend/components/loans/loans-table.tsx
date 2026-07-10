@@ -7,6 +7,7 @@ import {
   updateLoanAction,
 } from "@/backend/actions/lending-actions";
 import type { LoanRow } from "@/backend/services/lending-service";
+import { LoanQrPanel } from "@/frontend/components/loans/loan-qr-panel";
 import { LoanPaymentsPanel } from "@/frontend/components/loans/loan-payments-panel";
 
 export function LoansTable({ loans }: { loans: LoanRow[] }) {
@@ -181,15 +182,7 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
                 <Detail label="Borrower ID" value={selectedLoan.borrowerId} />
               </dl>
 
-              <div className="mt-5">
-                <a
-                  className="inline-flex h-10 items-center justify-center rounded-md border border-[#cfd8e3] px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#f8fafc]"
-                  download={`${selectedLoan.id}-qr.png`}
-                  href={`/api/loans/${selectedLoan.id}/qr`}
-                >
-                  Download QR
-                </a>
-              </div>
+              <LoanQrPanel loanId={selectedLoan.id} />
 
               <LoanPaymentsPanel loanId={selectedLoan.id} />
 

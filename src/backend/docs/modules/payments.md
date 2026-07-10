@@ -62,6 +62,7 @@ Query:
 ```txt
 Query.equal("lender_id", lender.id)
 Query.orderDesc("date")
+Query.orderDesc("$createdAt")
 Query.select(["$id", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
 Query.limit(pageSize)
 Query.offset((page - 1) * pageSize)
@@ -70,6 +71,8 @@ Query.offset((page - 1) * pageSize)
 How it works:
 
 - Retrieves one page of payments for the active lender.
+- Sorts by payment date first and creation time second, so payments recorded on
+  the same day are reliably newest-first.
 - Then maps loan, borrower, and collector names.
 
 ## Payment row mapping queries

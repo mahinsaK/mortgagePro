@@ -98,6 +98,7 @@ Query through `getPaymentsExportData()`:
 ```txt
 Query.equal("lender_id", lender.id)
 Query.orderDesc("date")
+Query.orderDesc("$createdAt")
 Query.limit(5000)
 Query.select(["$id", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
 Query.greaterThanEqual("date", selectedStartIso)
@@ -378,6 +379,7 @@ Query through `listForLender()`:
 ```txt
 Query.equal("lender_id", lender.id)
 Query.orderDesc("date")
+Query.orderDesc("$createdAt")
 Query.select(["$id", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
 Query.limit(pageSize)
 Query.offset((page - 1) * pageSize)
@@ -386,6 +388,8 @@ Query.offset((page - 1) * pageSize)
 How it works:
 
 - Lists one page of payments for the active lender.
+- Uses creation time as a secondary descending sort so same-day payments stay
+  newest-first.
 - Retrieves only fields needed for the payments table.
 
 ### Payment row mapping

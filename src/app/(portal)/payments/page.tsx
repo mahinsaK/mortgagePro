@@ -28,7 +28,6 @@ export default async function PaymentsPage({
           <table className="w-full min-w-[880px] border-collapse text-left text-sm">
             <thead className="bg-[#f8fafc] text-[#657386]">
               <tr>
-                <th className="px-5 py-3 font-semibold">Payment</th>
                 <th className="px-5 py-3 font-semibold">Borrower</th>
                 <th className="px-5 py-3 font-semibold">Loan</th>
                 <th className="px-5 py-3 font-semibold">Collector</th>
@@ -40,7 +39,6 @@ export default async function PaymentsPage({
             <tbody>
               {payments.map((payment) => (
                 <tr className="border-t border-[#eef2f6]" key={payment.id}>
-                  <td className="px-5 py-4 font-medium">{payment.id}</td>
                   <td className="px-5 py-4">{payment.borrowerName}</td>
                   <td className="px-5 py-4 text-[#657386]">{payment.loanId}</td>
                   <td className="px-5 py-4">{payment.collectorName}</td>
@@ -55,7 +53,7 @@ export default async function PaymentsPage({
               ))}
               {payments.length === 0 ? (
                 <tr className="border-t border-[#eef2f6]">
-                  <td className="px-5 py-6 text-[#657386]" colSpan={7}>
+                  <td className="px-5 py-6 text-[#657386]" colSpan={6}>
                     No payments found.
                   </td>
                 </tr>

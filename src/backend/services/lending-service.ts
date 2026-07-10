@@ -304,7 +304,7 @@ export async function getPaymentsPageData(options: PaginationOptions = {}) {
   const payments = await listForLender(appwriteServerConfig.collections.payments, lender.id, {
     page: pagination.page,
     pageSize: pagination.pageSize,
-    orderBy: "date",
+    orderBy: ["date", "$createdAt"],
     select: [
       "$id",
       "loan_id",
@@ -336,6 +336,7 @@ export async function getPaymentsExportData(options: {
   const queries = [
     Query.equal("lender_id", lender.id),
     Query.orderDesc("date"),
+    Query.orderDesc("$createdAt"),
     Query.limit(MAX_LOOKUP_LIMIT),
     Query.select([
       "$id",
@@ -485,6 +486,7 @@ export async function getDailyCollectionsData(date: string) {
       Query.greaterThanEqual("date", range.start),
       Query.lessThan("date", range.end),
       Query.orderDesc("date"),
+      Query.orderDesc("$createdAt"),
       Query.limit(MAX_LOOKUP_LIMIT),
       Query.select([
         "$id",
@@ -537,6 +539,7 @@ export async function getLoanPaymentDetails(
       Query.equal("lender_id", lender.id),
       Query.equal("loan_id", loanId),
       Query.orderDesc("date"),
+      Query.orderDesc("$createdAt"),
       Query.limit(MAX_LOOKUP_LIMIT),
       Query.select(["$id", "collector_id", "amount", "method", "date"]),
     ],
@@ -656,7 +659,7 @@ function listForLender(
   options: PaginationOptions & {
     extraQueries?: string[];
     limit?: number;
-    orderBy?: string;
+    orderBy?: string | string[];
     select?: string[];
   } = {},
 ) {
@@ -666,7 +669,12 @@ function listForLender(
   ];
 
   if (options.orderBy) {
-    queries.push(Query.orderDesc(options.orderBy));
+    const orderAttributes = Array.isArray(options.orderBy)
+      ? options.orderBy
+      : [options.orderBy];
+    queries.push(
+      ...orderAttributes.map((attribute) => Query.orderDesc(attribute)),
+    );
   }
 
   if (options.select) {

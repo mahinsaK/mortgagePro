@@ -12,6 +12,7 @@
     "appwrite:seed": "node scripts/seed-appwrite-demo.mjs",
     "appwrite:permissions:check": "node scripts/manage-appwrite-permissions.mjs --check",
     "appwrite:permissions:apply": "node scripts/manage-appwrite-permissions.mjs --apply",
+    "appwrite:collector-sessions:migrate": "node scripts/migrate-collector-session-version.mjs",
     "appwrite:isolation:verify": "node scripts/verify-appwrite-isolation.mjs"
   },
   "dependencies": {

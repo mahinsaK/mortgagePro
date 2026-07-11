@@ -67,6 +67,7 @@ The app expects these core variables in `.env.local`:
 
 - `APPWRITE_RUNTIME_API_KEY` - server-only application key with user, session, and document runtime scopes.
 - `APPWRITE_SETUP_API_KEY` - local-only administration key used by setup, seed, and permission commands; do not add this key to Vercel.
+- `COLLECTOR_SESSION_SECRET` - a dedicated random secret containing at least 32 bytes; collector sessions expire after 12 hours.
 - `NEXT_PUBLIC_APPWRITE_ENDPOINT`
 - `NEXT_PUBLIC_APPWRITE_PROJECT_ID`
 - `NEXT_PUBLIC_APPWRITE_DATABASE_ID`
@@ -82,9 +83,9 @@ The app expects these core variables in `.env.local`:
 - `DEMO_LENDER_PASSWORD`
 - `DEMO_SECOND_LENDER_EMAIL`
 - `DEMO_SECOND_LENDER_PASSWORD`
-- `DEMO_COLLECTOR_NAME`
+- `DEMO_COLLECTOR_ID`
 - `DEMO_COLLECTOR_PASSWORD`
-- `DEMO_SECOND_COLLECTOR_NAME`
+- `DEMO_SECOND_COLLECTOR_ID`
 - `DEMO_SECOND_COLLECTOR_PASSWORD`
 
 ## Appwrite Setup

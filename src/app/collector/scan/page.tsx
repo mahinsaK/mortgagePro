@@ -3,7 +3,7 @@ import {
   collectScannedPaymentAction,
   collectorLogoutAction,
 } from "@/backend/actions/collector-actions";
-import { getCollectorSession } from "@/backend/services/collector-auth-service";
+import { requireActiveCollectorPrincipal } from "@/backend/services/collector-auth-service";
 import { CollectorScanner } from "@/frontend/components/collector/collector-scanner";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ export default async function CollectorScanPage({
 }: {
   searchParams: Promise<{ message?: string; status?: string }>;
 }) {
-  const session = await getCollectorSession();
+  const session = await requireActiveCollectorPrincipal();
   const { message, status } = await searchParams;
 
   if (!session) {

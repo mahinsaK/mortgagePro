@@ -1,10 +1,10 @@
-import { getCollectorSession } from "@/backend/services/collector-auth-service";
+import { requireActiveCollectorPrincipal } from "@/backend/services/collector-auth-service";
 import { getTenantDocument } from "@/backend/services/tenant-data-service";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const session = await getCollectorSession();
+  const session = await requireActiveCollectorPrincipal();
 
   if (!session) {
     return Response.json({ error: "Collector login is required." }, { status: 401 });

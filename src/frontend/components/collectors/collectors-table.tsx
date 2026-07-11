@@ -1,7 +1,8 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { Pencil, Trash2, X } from "lucide-react";
+import { Check, Copy, Pencil, Trash2, X } from "lucide-react";
+import { useState } from "react";
 import {
   deleteCollectorAction,
   updateCollectorAction,
@@ -9,6 +10,16 @@ import {
 import type { CollectorRow } from "@/backend/services/lending-service";
 
 export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) {
+  const [copiedCollectorId, setCopiedCollectorId] = useState("");
+
+  async function copyCollectorId(collectorId: string) {
+    await navigator.clipboard.writeText(collectorId);
+    setCopiedCollectorId(collectorId);
+    window.setTimeout(() => {
+      setCopiedCollectorId((current) => (current === collectorId ? "" : current));
+    }, 2000);
+  }
+
   return (
     <table className="w-full min-w-[920px] border-collapse text-left text-sm">
       <thead className="bg-[#f8fafc] text-[#657386]">
@@ -26,7 +37,22 @@ export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) 
           <tr className="border-t border-[#eef2f6]" key={collector.id}>
             <td className="px-5 py-4">
               <p className="font-medium">{collector.name}</p>
-              <p className="mt-1 text-xs text-[#657386]">{collector.id}</p>
+              <div className="mt-1 flex items-center gap-2 text-xs text-[#657386]">
+                <code>{collector.id}</code>
+                <button
+                  aria-label={`Copy login ID for ${collector.name}`}
+                  className="inline-flex items-center gap-1 rounded border border-[#dfe5ec] px-1.5 py-1 font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
+                  onClick={() => copyCollectorId(collector.id)}
+                  type="button"
+                >
+                  {copiedCollectorId === collector.id ? (
+                    <Check aria-hidden="true" size={12} />
+                  ) : (
+                    <Copy aria-hidden="true" size={12} />
+                  )}
+                  {copiedCollectorId === collector.id ? "Copied" : "Copy ID"}
+                </button>
+              </div>
             </td>
             <td className="px-5 py-4 text-[#657386]">
               {collector.contactInfo || "No contact info"}

@@ -256,6 +256,7 @@ async function seedLender(lender) {
         area: collector.area,
       }),
       password_hash: hashCollectorPassword(collector.password),
+      session_version: 1,
       status: "active",
       created_at: now,
     });

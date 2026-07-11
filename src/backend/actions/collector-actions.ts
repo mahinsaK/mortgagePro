@@ -8,7 +8,7 @@ import { PaymentController } from "@/backend/modules/payments/controller";
 import { PaymentService } from "@/backend/modules/payments/service";
 import {
   clearCollectorSession,
-  getCollectorSession,
+  requireActiveCollectorPrincipal,
   setCollectorSession,
   verifyCollectorPassword,
 } from "@/backend/services/collector-auth-service";
@@ -19,40 +19,48 @@ import {
 } from "@/backend/services/tenant-data-service";
 
 export async function collectorLoginAction(formData: FormData) {
-  const name = readRequired(formData, "name");
+  const collectorId = readRequired(formData, "collector_id");
   const password = readRequired(formData, "password");
   const collectors = await databases.listDocuments({
     databaseId: appwriteServerConfig.databaseId,
     collectionId: appwriteServerConfig.collections.collectors,
     queries: [
-      Query.equal("name", name),
+      Query.equal("$id", collectorId),
       Query.equal("status", "active"),
-      Query.limit(20),
-      Query.select(["$id", "lender_id", "name", "password_hash"]),
+      Query.limit(1),
+      Query.select([
+        "$id",
+        "lender_id",
+        "name",
+        "password_hash",
+        "session_version",
+      ]),
     ],
   });
-  const collector = collectors.documents.find((document) =>
-    verifyCollectorPassword(password, String(document.password_hash ?? "")),
-  );
+  const collector = collectors.documents[0];
 
-  if (!collector) {
+  if (
+    !collector ||
+    !verifyCollectorPassword(password, String(collector.password_hash ?? ""))
+  ) {
     redirectWithStatus(
       "/collector/login",
       "error",
-      "Collector name or password is incorrect.",
+      "Collector ID or password is incorrect.",
     );
   }
 
   await setCollectorSession({
     collectorId: collector.$id,
     lenderId: String(collector.lender_id ?? ""),
-    name: String(collector.name ?? name),
+    name: String(collector.name ?? collectorId),
+    sessionVersion: Number(collector.session_version ?? 1),
   });
   redirect("/collector/scan");
 }
 
 export async function collectScannedPaymentAction(formData: FormData) {
-  const session = await getCollectorSession();
+  const session = await requireActiveCollectorPrincipal();
 
   if (!session) {
     redirect("/collector/login");

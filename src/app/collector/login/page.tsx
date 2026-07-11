@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { collectorLoginAction } from "@/backend/actions/collector-actions";
-import { getCollectorSession } from "@/backend/services/collector-auth-service";
+import { requireActiveCollectorPrincipal } from "@/backend/services/collector-auth-service";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,7 @@ export default async function CollectorLoginPage({
   searchParams: Promise<{ message?: string; status?: string }>;
 }) {
   const { message, status } = await searchParams;
-  const session = await getCollectorSession();
+  const session = await requireActiveCollectorPrincipal();
 
   if (session) {
     redirect("/collector/scan");
@@ -24,17 +24,19 @@ export default async function CollectorLoginPage({
           Scan QR code
         </h1>
         <p className="mt-3 text-sm leading-6 text-[#657386]">
-          Sign in with the collector name and password created by your lender.
+          Sign in with the collector ID and password created by your lender.
         </p>
 
         <form action={collectorLoginAction} className="mt-8 space-y-5">
           <StatusMessage message={message} status={status} />
           <label className="block text-sm font-medium text-[#2d3745]">
-            Collector name
+            Collector ID
             <input
               className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
-              name="name"
-              placeholder="Jordan Lee"
+              autoCapitalize="none"
+              autoCorrect="off"
+              name="collector_id"
+              placeholder="collector_xxxxxxxxxx"
               required
             />
           </label>

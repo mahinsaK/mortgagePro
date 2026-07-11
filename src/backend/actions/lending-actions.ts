@@ -228,6 +228,7 @@ export async function createCollectorAction(formData: FormData) {
       area: readOptional(formData, "area"),
     }),
     password_hash: hashCollectorPassword(password),
+    session_version: 1,
     status: readStatus(formData),
     created_at: now,
   });
@@ -239,13 +240,20 @@ export async function updateCollectorAction(formData: FormData) {
   const lender = await getRequiredLender();
   const collectorId = readRequired(formData, "collector_id");
   const password = readOptional(formData, "password");
+  const collector = await requireTenantDocument(
+    "collectors",
+    lender.id,
+    collectorId,
+    ["$id", "status", "session_version"],
+  );
+  const status = readStatus(formData);
   const data: Record<string, unknown> = {
     name: readRequired(formData, "name"),
     contact_info: JSON.stringify({
       phone: readOptional(formData, "phone"),
       area: readOptional(formData, "area"),
     }),
-    status: readStatus(formData),
+    status,
   };
 
   if (password) {
@@ -254,6 +262,10 @@ export async function updateCollectorAction(formData: FormData) {
     }
 
     data.password_hash = hashCollectorPassword(password);
+  }
+
+  if (password || status !== collector.status) {
+    data.session_version = Number(collector.session_version ?? 1) + 1;
   }
 
   await updateTenantDocument("collectors", lender.id, collectorId, data);

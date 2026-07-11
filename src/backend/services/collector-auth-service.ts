@@ -1,22 +1,24 @@
 import "server-only";
 
-import {
-  createHmac,
-  randomBytes,
-  scryptSync,
-  timingSafeEqual,
-} from "node:crypto";
+import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
-import { appwriteServerConfig } from "@/backend/appwrite/config";
+import {
+  decodeCollectorSession,
+  encodeCollectorSession,
+  type CollectorSessionClaims,
+} from "./collector-session-codec";
+import { getTenantDocument } from "./tenant-data-service";
 
 const COLLECTOR_SESSION_COOKIE = "mortgagepro_collector_session";
+const COLLECTOR_SESSION_LIFETIME_MS = 12 * 60 * 60 * 1000;
 const HASH_KEY_LENGTH = 64;
 
-export type CollectorSession = {
-  collectorId: string;
-  lenderId: string;
-  name: string;
-};
+export type CollectorPrincipal = CollectorSessionClaims;
+
+type NewCollectorSession = Pick<
+  CollectorSessionClaims,
+  "collectorId" | "lenderId" | "name" | "sessionVersion"
+>;
 
 export function hashCollectorPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -42,18 +44,31 @@ export function verifyCollectorPassword(password: string, storedHash: string) {
   return timingSafeEqual(storedBuffer, requestedHash);
 }
 
-export async function setCollectorSession(session: CollectorSession) {
+export async function setCollectorSession(session: NewCollectorSession) {
+  const issuedAt = Date.now();
+  const expiresAt = issuedAt + COLLECTOR_SESSION_LIFETIME_MS;
+  const claims: CollectorSessionClaims = {
+    ...session,
+    issuedAt,
+    expiresAt,
+  };
   const cookieStore = await cookies();
-  cookieStore.set(COLLECTOR_SESSION_COOKIE, encodeSession(session), {
-    httpOnly: true,
-    maxAge: 60 * 60 * 24 * 30,
-    path: "/",
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
+
+  cookieStore.set(
+    COLLECTOR_SESSION_COOKIE,
+    encodeCollectorSession(claims, sessionSecret()),
+    {
+      expires: new Date(expiresAt),
+      httpOnly: true,
+      maxAge: COLLECTOR_SESSION_LIFETIME_MS / 1000,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    },
+  );
 }
 
-export async function getCollectorSession() {
+export async function requireActiveCollectorPrincipal(): Promise<CollectorPrincipal | null> {
   const cookieStore = await cookies();
   const value = cookieStore.get(COLLECTOR_SESSION_COOKIE)?.value ?? "";
 
@@ -61,7 +76,36 @@ export async function getCollectorSession() {
     return null;
   }
 
-  return decodeSession(value);
+  const claims = decodeCollectorSession(value, sessionSecret());
+  if (!claims) {
+    clearInvalidCollectorCookie(cookieStore);
+    return null;
+  }
+
+  const collector = await getTenantDocument(
+    "collectors",
+    claims.lenderId,
+    claims.collectorId,
+    ["$id", "lender_id", "name", "status", "session_version"],
+  );
+  const currentSessionVersion = Number(collector?.session_version ?? 1);
+
+  if (
+    !collector ||
+    collector.$id !== claims.collectorId ||
+    String(collector.lender_id ?? "") !== claims.lenderId ||
+    collector.status !== "active" ||
+    !Number.isInteger(currentSessionVersion) ||
+    currentSessionVersion !== claims.sessionVersion
+  ) {
+    clearInvalidCollectorCookie(cookieStore);
+    return null;
+  }
+
+  return {
+    ...claims,
+    name: String(collector.name ?? claims.name),
+  };
 }
 
 export async function clearCollectorSession() {
@@ -69,49 +113,16 @@ export async function clearCollectorSession() {
   cookieStore.delete(COLLECTOR_SESSION_COOKIE);
 }
 
-function encodeSession(session: CollectorSession) {
-  const payload = Buffer.from(JSON.stringify(session)).toString("base64url");
-  const signature = sign(payload);
-
-  return `${payload}.${signature}`;
-}
-
-function decodeSession(value: string): CollectorSession | null {
-  const [payload, signature] = value.split(".");
-
-  if (!payload || !signature || sign(payload) !== signature) {
-    return null;
-  }
-
+function clearInvalidCollectorCookie(
+  cookieStore: Awaited<ReturnType<typeof cookies>>,
+) {
   try {
-    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString()) as {
-      collectorId?: string;
-      lenderId?: string;
-      name?: string;
-    };
-
-    if (!parsed.collectorId || !parsed.lenderId || !parsed.name) {
-      return null;
-    }
-
-    return {
-      collectorId: parsed.collectorId,
-      lenderId: parsed.lenderId,
-      name: parsed.name,
-    };
+    cookieStore.delete(COLLECTOR_SESSION_COOKIE);
   } catch {
-    return null;
+    // Server Components cannot mutate cookies. Actions and route handlers clear it.
   }
-}
-
-function sign(payload: string) {
-  return createHmac("sha256", sessionSecret()).update(payload).digest("base64url");
 }
 
 function sessionSecret() {
-  return (
-    appwriteServerConfig.apiKey ||
-    appwriteServerConfig.projectId ||
-    "mortgagepro-development-collector-session"
-  );
+  return process.env.COLLECTOR_SESSION_SECRET ?? "";
 }

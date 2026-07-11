@@ -4,6 +4,10 @@ The app uses Appwrite Database with five core collections only.
 
 The setup source is `scripts/setup-appwrite.mjs`.
 
+All five collections are provisioned with empty collection permissions,
+`documentSecurity: false`, and server-only access through the runtime API key.
+Normal Appwrite user sessions must not access database documents directly.
+
 ## Lenders
 
 Purpose: stores one lender business profile per Appwrite Auth user.
@@ -58,6 +62,9 @@ Attributes:
 - `lender_id`: owning lender document ID.
 - `name`: collector name.
 - `contact_info`: JSON string with phone/area.
+- `password_hash`: salted `scrypt` password hash.
+- `session_version`: integer revocation version, starting at `1`. Password or
+  status changes increment it so old collector cookies fail revalidation.
 - `status`: `active` or `inactive`.
 - `created_at`: creation date.
 

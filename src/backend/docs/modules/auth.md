@@ -78,3 +78,6 @@ Session handling:
 
 - Stores the Appwrite session secret in an HTTP-only `mortgagepro_session` cookie.
 - `getPrimaryLender()` maps the current Appwrite user to `lenders.appwrite_user_id`.
+
+Collector authentication is separate from Appwrite Auth. See
+`modules/collectors.md` for collector ID login and 12-hour revocable sessions.

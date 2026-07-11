@@ -2,6 +2,13 @@
 
 This file lists the Appwrite database queries and writes currently used by the backend.
 
+All borrower, collector, loan, and payment operations described below run
+through `tenant-data-service.ts`. That layer always prepends
+`Query.equal("lender_id", lenderId)`, overwrites caller-supplied tenant IDs on
+create, verifies ownership before update/delete, and removes `lender_id` from
+update payloads. Direct SDK snippets below are conceptual operation details;
+they do not bypass that shared boundary.
+
 ## Appwrite client
 
 Path: `src/backend/appwrite/server-client.ts`
@@ -1010,8 +1017,12 @@ Main operations:
 - `databases.create()` creates the database when missing.
 - `databases.getCollection()` checks each collection.
 - `databases.createCollection()` creates missing collections.
+- `databases.updateCollection()` reconciles existing collections to empty
+  client permissions with `documentSecurity: false`.
 - `databases.getAttribute()` checks each attribute.
-- `databases.createStringAttribute()`, `createFloatAttribute()`, `createEnumAttribute()`, `createDatetimeAttribute()` create missing attributes.
+- `databases.createStringAttribute()`, `createIntegerAttribute()`,
+  `createFloatAttribute()`, `createEnumAttribute()`, and
+  `createDatetimeAttribute()` create missing attributes.
 - `databases.getIndex()` checks each index.
 - `databases.createIndex()` creates missing indexes.
 - `users.list(Query.equal("email", user.email))` checks if the seed Appwrite Auth user exists.

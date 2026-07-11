@@ -20,7 +20,8 @@ src/backend
 ## Important files
 
 - `src/backend/appwrite/config.ts`
-  Reads Appwrite endpoint, project, database, collection IDs, and API key from env.
+  Reads Appwrite endpoint, project, database, collection IDs, and the server-only
+  `APPWRITE_RUNTIME_API_KEY` from env. There is no generic key fallback.
 - `src/backend/appwrite/server-client.ts`
   Creates server-side Appwrite clients and exports `Databases`, `Users`, `Account`, `ID`, and `Query` helpers.
 - `src/backend/actions/auth-actions.ts`
@@ -33,6 +34,13 @@ src/backend
   Reads borrowers, borrower profile, loans, payments, collectors, daily collections, and export data.
 - `src/backend/services/lender-service.ts`
   Finds the active lender record from the current Appwrite session.
+- `src/backend/services/tenant-data-service.ts`
+  Centralizes lender-owned reads and mutations. It always prepends the trusted
+  server-derived `lender_id`, overwrites tenant IDs on create, and strips tenant
+  ID changes on update.
+- `src/backend/services/collector-auth-service.ts`
+  Resolves active collectors from 12-hour signed, versioned sessions and
+  revalidates the collector record for every protected collector operation.
 - `src/backend/services/search-text-service.ts`
   Builds searchable text for borrowers and loans from borrower name, phone, and address.
 - `src/backend/services/qr-code-service.ts`
@@ -40,20 +48,23 @@ src/backend
 - `src/backend/modules/sms/service.ts`
   Handles first-phase SMS validation, templates, and provider-backed send results.
 - `scripts/setup-appwrite.mjs`
-  Creates Appwrite collections, attributes, indexes, seed data, and backfills borrower/loan search text.
+  Creates/reconciles deny-by-default Appwrite collections, attributes, indexes,
+  seed data, and search-text backfills using the local setup key.
 
 ## Current backend flow
 
 1. A page in `src/app` calls a backend service function.
 2. The backend service calls `getPrimaryLender()`.
-3. If a lender exists, the service queries Appwrite with `Query.equal("lender_id", lender.id)` where the collection stores lender-owned data.
+3. If a lender exists, the shared tenant data service prepends
+   `Query.equal("lender_id", lender.id)` to every lender-owned query.
 4. The service returns display-ready rows to the frontend.
 
 For form submissions:
 
 1. A frontend form calls a server action from `src/backend/actions/lending-actions.ts`.
 2. The action validates the current lender.
-3. The action writes one document to Appwrite.
+3. The action writes through tenant-aware helpers that derive `lender_id` on
+   the server and verify ownership before update/delete.
 4. The action revalidates affected pages.
 
 ## Auth flow
@@ -66,10 +77,18 @@ For form submissions:
 
 ## Important security note
 
-Most lender-owned reads and writes are scoped with `lender_id`, so borrower, collector, loan, and payment data stays separated by lender.
+The critical-release source now uses server-only Appwrite database access,
+empty client collection permissions, shared tenant-aware helpers, collector ID
+login, and revocable collector sessions. The last observed live Appwrite
+metadata still had broad `Role.users()` access, so the deployed project remains
+untrusted until the permission apply and direct-client verification steps pass.
 
 ## More docs
 
+- `security-tenant-isolation-assessment.md`: current tenant isolation,
+  collector authorization, payment integrity, and enterprise-readiness audit.
+- `critical-tenant-isolation-rollout.md`: exact key, migration, permission,
+  verification, rotation, and rollback procedure for this release.
 - `database-schema.md`: collections, attributes, and indexes.
 - `database-queries.md`: every Appwrite query/write currently used by the app.
 - `modules/*.md`: module-by-module explanation.

@@ -126,6 +126,8 @@ How it works:
 
 - The dashboard and loans page do not load payment rows by default.
 - When `View payments` is clicked, the client calls `/api/loans/{loanId}/payments`.
+- Payment totals and rows open in a right-side drawer instead of expanding the
+  loan details card.
 - The backend verifies `lender_id` and `loan_id`.
 - The response includes payment rows, stored `totalPaid`, and stored `remaining`.
 

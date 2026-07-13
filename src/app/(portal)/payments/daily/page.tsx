@@ -34,9 +34,9 @@ export default async function DailyCollectionsPage({
         <div className="flex flex-wrap items-end justify-between gap-4">
           <form className="flex flex-wrap items-end gap-3">
             <label className="text-sm font-medium text-[#2d3745]">
-              Collection date
+              <span className="sr-only">Collection date</span>
               <input
-                className="mt-2 h-10 rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+                className="h-10 rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
                 defaultValue={selectedDate}
                 name="date"
                 type="date"

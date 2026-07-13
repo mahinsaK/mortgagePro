@@ -22,12 +22,15 @@ export function CsvExportButton({
 }) {
   return (
     <button
-      className="h-10 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
+      aria-label={label}
+      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#15191f] text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
       disabled={rows.length === 0}
       onClick={() => downloadCsv(filename, rows)}
+      title={label}
       type="button"
     >
-      {label}
+      <Download aria-hidden="true" size={17} />
+      <span className="sr-only">{label}</span>
     </button>
   );
 }
@@ -77,11 +80,13 @@ export function DateRangeCsvExport({
     <Popover.Root>
       <Popover.Trigger asChild>
         <button
-          className="flex h-10 items-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
+          aria-label="Export CSV"
+          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#15191f] text-white transition hover:bg-[#2d3745]"
+          title="Export CSV"
           type="button"
         >
           <Download aria-hidden="true" size={17} />
-          Export CSV
+          <span className="sr-only">Export CSV</span>
         </button>
       </Popover.Trigger>
       <Popover.Portal>

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { appwriteServerConfig } from "@/backend/appwrite/config";
 import { databases, Query, users } from "@/backend/appwrite/server-client";
 import { normalizeCurrency } from "@/backend/lib/currency";
+import { validateNewCollectorUsername } from "@/backend/modules/collectors/username";
 import { PaymentService } from "@/backend/modules/payments/service";
 import { hashCollectorPassword } from "@/backend/services/collector-auth-service";
 import { getPrimaryLender } from "@/backend/services/lender-service";
@@ -211,29 +212,94 @@ export async function deleteLoanAction(formData: FormData) {
   revalidatePath("/dashboard/lender");
 }
 
-export async function createCollectorAction(formData: FormData) {
-  const lender = await getRequiredLender();
-  const collectorId = createDocumentId("collector");
-  const now = new Date().toISOString();
-  const password = readRequired(formData, "password");
+export type CreateCollectorActionState = {
+  status: "idle" | "error" | "success";
+  message: string;
+  submittedUsername?: string;
+  fieldErrors?: {
+    username?: string;
+  };
+};
 
-  if (password.length < 8) {
-    throw new Error("Collector password must be at least 8 characters.");
+export async function createCollectorAction(
+  _previousState: CreateCollectorActionState,
+  formData: FormData,
+): Promise<CreateCollectorActionState> {
+  const lender = await getRequiredLender();
+  const username = readOptional(formData, "username");
+  const usernameError = validateNewCollectorUsername(username);
+  const name = readOptional(formData, "name");
+  const now = new Date().toISOString();
+  const password = readOptional(formData, "password");
+
+  if (usernameError) {
+    return collectorFormError(usernameError, username, usernameError);
   }
 
-  await createTenantDocument("collectors", lender.id, collectorId, {
-    name: readRequired(formData, "name"),
-    contact_info: JSON.stringify({
-      phone: readOptional(formData, "phone"),
-      area: readOptional(formData, "area"),
-    }),
-    password_hash: hashCollectorPassword(password),
-    session_version: 1,
-    status: readStatus(formData),
-    created_at: now,
+  if (!name) {
+    return collectorFormError("Collector name is required.", username);
+  }
+
+  if (!password) {
+    return collectorFormError("Collector password is required.", username);
+  }
+
+  if (password.length < 8) {
+    return collectorFormError(
+      "Collector password must be at least 8 characters.",
+      username,
+    );
+  }
+
+  const existingCollectors = await databases.listDocuments({
+    databaseId: appwriteServerConfig.databaseId,
+    collectionId: appwriteServerConfig.collections.collectors,
+    queries: [
+      Query.equal("$id", username),
+      Query.limit(1),
+      Query.select(["$id"]),
+    ],
   });
 
+  if (existingCollectors.total > 0) {
+    return collectorFormError(
+      "That username already exists. Choose another or generate a new one.",
+      username,
+      "Username already exists.",
+    );
+  }
+
+  try {
+    await createTenantDocument("collectors", lender.id, username, {
+      name,
+      contact_info: JSON.stringify({
+        phone: readOptional(formData, "phone"),
+        area: readOptional(formData, "area"),
+      }),
+      password_hash: hashCollectorPassword(password),
+      session_version: 1,
+      status: readStatus(formData),
+      created_at: now,
+    });
+  } catch (error) {
+    if (isConflict(error)) {
+      return collectorFormError(
+        "That username was just taken. Choose another or generate a new one.",
+        username,
+        "Username already exists.",
+      );
+    }
+
+    throw error;
+  }
+
   revalidatePath("/collectors");
+
+  return {
+    status: "success",
+    message: "Collector added successfully.",
+    submittedUsername: username,
+  };
 }
 
 export async function updateCollectorAction(formData: FormData) {
@@ -427,4 +493,26 @@ function readLoanStatus(formData: FormData) {
   }
 
   return "active";
+}
+
+function collectorFormError(
+  message: string,
+  submittedUsername: string,
+  usernameError?: string,
+): CreateCollectorActionState {
+  return {
+    status: "error",
+    message,
+    submittedUsername,
+    fieldErrors: usernameError ? { username: usernameError } : undefined,
+  };
+}
+
+function isConflict(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    Number(error.code) === 409
+  );
 }

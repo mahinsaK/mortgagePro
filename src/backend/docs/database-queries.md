@@ -864,7 +864,7 @@ How it works:
 
 Path: `src/backend/actions/lending-actions.ts`
 
-Function: `createCollectorAction(formData)`
+Function: `createCollectorAction(previousState, formData)`
 
 Collection: `collectors`
 
@@ -872,9 +872,12 @@ Write:
 
 ```txt
 databases.createDocument({
+  documentId: username,
   lender_id: lender.id,
   name,
   contact_info,
+  password_hash,
+  session_version: 1,
   status,
   created_at
 })
@@ -882,8 +885,22 @@ databases.createDocument({
 
 How it works:
 
+- Validates the new lowercase username and checks `$id` globally.
+- Uses the globally unique username as the permanent collector document ID.
+- Returns an inline username error for pre-existing IDs and Appwrite `409`
+  creation races.
 - Creates a collector under the active lender.
 - Stores phone/area as JSON in `contact_info`.
+- Hashes only the password with salted `scrypt`; the username is not part of
+  the password hash.
+
+Availability query used by the authenticated lender form:
+
+```txt
+Query.equal("$id", username)
+Query.limit(1)
+Query.select(["$id"])
+```
 
 ## Update collector
 
@@ -916,6 +933,7 @@ How it works:
 
 - Confirms the collector belongs to the active lender.
 - Updates collector name, phone, area, and status.
+- Does not update the permanent username/document ID.
 
 ## Delete collector
 

@@ -19,7 +19,7 @@ import {
 } from "@/backend/services/tenant-data-service";
 
 export async function collectorLoginAction(formData: FormData) {
-  const collectorId = readRequired(formData, "collector_id");
+  const collectorId = readRequired(formData, "username");
   const password = readRequired(formData, "password");
   const collectors = await databases.listDocuments({
     databaseId: appwriteServerConfig.databaseId,
@@ -46,7 +46,7 @@ export async function collectorLoginAction(formData: FormData) {
     redirectWithStatus(
       "/collector/login",
       "error",
-      "Collector ID or password is incorrect.",
+      "Username or password is incorrect.",
     );
   }
 

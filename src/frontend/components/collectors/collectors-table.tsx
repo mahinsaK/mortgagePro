@@ -10,21 +10,22 @@ import {
 import type { CollectorRow } from "@/backend/services/lending-service";
 
 export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) {
-  const [copiedCollectorId, setCopiedCollectorId] = useState("");
+  const [copiedUsername, setCopiedUsername] = useState("");
 
-  async function copyCollectorId(collectorId: string) {
-    await navigator.clipboard.writeText(collectorId);
-    setCopiedCollectorId(collectorId);
+  async function copyUsername(username: string) {
+    await navigator.clipboard.writeText(username);
+    setCopiedUsername(username);
     window.setTimeout(() => {
-      setCopiedCollectorId((current) => (current === collectorId ? "" : current));
+      setCopiedUsername((current) => (current === username ? "" : current));
     }, 2000);
   }
 
   return (
-    <table className="w-full min-w-[920px] border-collapse text-left text-sm">
+    <table className="w-full min-w-[1040px] border-collapse text-left text-sm">
       <thead className="bg-[#f8fafc] text-[#657386]">
         <tr>
           <th className="px-5 py-3 font-semibold">Name</th>
+          <th className="px-5 py-3 font-semibold">Username</th>
           <th className="px-5 py-3 font-semibold">Contact</th>
           <th className="px-5 py-3 font-semibold">Area</th>
           <th className="px-5 py-3 font-semibold">Status</th>
@@ -35,22 +36,22 @@ export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) 
       <tbody>
         {collectors.map((collector) => (
           <tr className="border-t border-[#eef2f6]" key={collector.id}>
+            <td className="px-5 py-4 font-medium">{collector.name}</td>
             <td className="px-5 py-4">
-              <p className="font-medium">{collector.name}</p>
-              <div className="mt-1 flex items-center gap-2 text-xs text-[#657386]">
-                <code>{collector.id}</code>
+              <div className="flex items-center gap-2 text-[#657386]">
+                <code>{collector.username}</code>
                 <button
-                  aria-label={`Copy login ID for ${collector.name}`}
-                  className="inline-flex items-center gap-1 rounded border border-[#dfe5ec] px-1.5 py-1 font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
-                  onClick={() => copyCollectorId(collector.id)}
+                  aria-label={`Copy username for ${collector.name}`}
+                  className="inline-flex items-center gap-1 rounded border border-[#dfe5ec] px-1.5 py-1 text-xs font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
+                  onClick={() => copyUsername(collector.username)}
                   type="button"
                 >
-                  {copiedCollectorId === collector.id ? (
+                  {copiedUsername === collector.username ? (
                     <Check aria-hidden="true" size={12} />
                   ) : (
                     <Copy aria-hidden="true" size={12} />
                   )}
-                  {copiedCollectorId === collector.id ? "Copied" : "Copy ID"}
+                  {copiedUsername === collector.username ? "Copied" : "Copy"}
                 </button>
               </div>
             </td>
@@ -100,7 +101,7 @@ export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) 
         ))}
         {collectors.length === 0 ? (
           <tr className="border-t border-[#eef2f6]">
-            <td className="px-5 py-6 text-[#657386]" colSpan={6}>
+            <td className="px-5 py-6 text-[#657386]" colSpan={7}>
               No collectors found.
             </td>
           </tr>
@@ -153,6 +154,17 @@ function EditCollectorDialog({ collector }: { collector: CollectorRow }) {
               name="name"
               required
             />
+            <label className="text-sm font-medium text-[#2d3745]">
+              Username
+              <input
+                className="mt-2 h-10 w-full cursor-not-allowed rounded-md border border-[#dfe5ec] bg-[#f8fafc] px-3 text-sm text-[#657386]"
+                disabled
+                value={collector.username}
+              />
+              <span className="mt-1 block text-xs font-normal text-[#657386]">
+                Usernames are permanent after creation.
+              </span>
+            </label>
             <Field
               defaultValue={collector.contactInfo}
               label="Phone"

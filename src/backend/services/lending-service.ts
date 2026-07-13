@@ -45,6 +45,7 @@ export type BorrowerProfileData = {
 
 export type CollectorRow = {
   id: string;
+  username: string;
   name: string;
   contactInfo: string;
   areaInfo: string;
@@ -438,6 +439,7 @@ export async function getCollectorsPageData(options: PaginationOptions = {}) {
     pageInfo: toPageInfo(collectors.total, pagination),
     collectors: collectors.documents.map((collector) => ({
       id: collector.$id,
+      username: collector.$id,
       name: String(collector.name ?? ""),
       contactInfo: formatContactPhone(String(collector.contact_info ?? "")),
       areaInfo: formatContactArea(String(collector.contact_info ?? "")),

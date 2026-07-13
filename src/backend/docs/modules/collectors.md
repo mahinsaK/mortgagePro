@@ -5,6 +5,7 @@ Paths:
 - `src/backend/modules/collectors/dto.ts`
 - `src/backend/modules/collectors/controller.ts`
 - `src/backend/modules/collectors/service.ts`
+- `src/backend/modules/collectors/username.ts`
 - `src/backend/modules/collectors/__tests__/collectors.test.ts`
 - `src/backend/actions/lending-actions.ts`
 - `src/backend/actions/collector-actions.ts`
@@ -13,7 +14,8 @@ Paths:
 
 ## Purpose
 
-Manages collectors owned by a lender.
+Manages collectors owned by a lender, including permanent usernames stored as
+the Appwrite collector document `$id`.
 
 ## DTO/controller/service layer
 
@@ -22,6 +24,8 @@ The module files validate and prepare collector payloads:
 - `toCreateCollectorDto(input)` validates lender ID, name, phone, area, and status.
 - `CollectorController.create(input)` returns success or failure.
 - `CollectorService.prepareCreate(dto)` creates the document-shaped payload.
+- Username helpers normalize interactive drafts, validate new usernames, and
+  generate compact name-based candidates.
 
 These files do not call Appwrite directly.
 
@@ -29,11 +33,12 @@ These files do not call Appwrite directly.
 
 Path: `src/backend/actions/lending-actions.ts`
 
-Function: `createCollectorAction(formData)`
+Function: `createCollectorAction(previousState, formData)`
 
 Writes to the `collectors` collection:
 
 ```txt
+documentId: validated globally unique username
 lender_id: active lender ID
 name
 contact_info: JSON string with phone/area
@@ -43,7 +48,14 @@ status
 created_at
 ```
 
-After create, it revalidates `/collectors`.
+The add form derives compact suggestions such as `jordanlee4821`, checks global
+availability through `GET /api/collectors/username?value=...`, and allows the
+lender to customize the username before creation. Appwrite's unique `$id`
+constraint is the final race-safe uniqueness check. A duplicate returns an
+inline field error. Usernames cannot be changed after creation.
+
+After create, the action revalidates `/collectors` and returns a success state
+so the dialog closes and resets.
 
 ## Update collector write
 
@@ -55,6 +67,7 @@ How it works:
 
 - Verifies the collector belongs to the active lender.
 - Updates collector name, phone, area, status, and optional password.
+- Ignores any submitted username because the collector `$id` is permanent.
 - Increments `session_version` after password or status changes, immediately
   invalidating previously issued collector sessions.
 
@@ -92,8 +105,8 @@ How it works:
 - Uses pagination.
 - Fetches only list fields.
 - Displays phone and area as separate columns by parsing `contact_info`.
-- Displays the collector document ID with a copy control because the ID is the
-  collector login identifier.
+- Displays the permanent username in its own column with a copy control. The
+  Name column contains only the collector's display name.
 
 ## Active collector count query
 
@@ -117,8 +130,9 @@ How it works:
 
 ## Collector login and protected access
 
-Collectors sign in with the globally unique collector document ID plus their
-password. Name-based login is not supported.
+Collectors sign in with their globally unique username plus password. The
+username is the collector document `$id`; existing legacy IDs containing
+underscores or hyphens remain compatible. Name-based login is not supported.
 
 The `mortgagepro_collector_session` cookie is HTTP-only, SameSite Lax, Secure in
 production, signed with the mandatory `COLLECTOR_SESSION_SECRET`, and expires

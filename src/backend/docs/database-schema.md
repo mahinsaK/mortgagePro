@@ -57,6 +57,10 @@ Indexes:
 
 Purpose: stores collectors owned by a lender.
 
+The collector document `$id` is also the permanent, globally unique login
+username. New IDs use a friendly lowercase name-and-digits format. Existing
+legacy IDs remain valid usernames.
+
 Attributes:
 
 - `lender_id`: owning lender document ID.

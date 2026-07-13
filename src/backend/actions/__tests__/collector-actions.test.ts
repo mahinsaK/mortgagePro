@@ -52,7 +52,7 @@ describe("collectorLoginAction", () => {
     mocks.listDocuments.mockResolvedValue({
       documents: [
         {
-          $id: "collector_A",
+          $id: "jordanlee4821",
           lender_id: "lender_A",
           name: "Jordan Lee",
           password_hash: "stored",
@@ -67,9 +67,9 @@ describe("collectorLoginAction", () => {
     });
   });
 
-  it("authenticates by collector ID and stores the current session version", async () => {
+  it("authenticates by username and stores the current session version", async () => {
     const formData = new FormData();
-    formData.set("collector_id", "collector_A");
+    formData.set("username", "jordanlee4821");
     formData.set("password", "CollectorPass123!");
 
     await expect(collectorLoginAction(formData)).rejects.toThrow(
@@ -79,14 +79,52 @@ describe("collectorLoginAction", () => {
     const queries = mocks.listDocuments.mock.calls[0][0].queries as string[];
     const serialized = queries.join(" ");
     expect(serialized).toContain('"attribute":"$id"');
-    expect(serialized).toContain('"values":["collector_A"]');
+    expect(serialized).toContain('"values":["jordanlee4821"]');
     expect(serialized).not.toContain('"attribute":"name"');
     expect(mocks.setCollectorSession).toHaveBeenCalledWith({
-      collectorId: "collector_A",
+      collectorId: "jordanlee4821",
       lenderId: "lender_A",
       name: "Jordan Lee",
       sessionVersion: 7,
     });
+  });
+
+  it("continues to accept an existing legacy collector ID as the username", async () => {
+    mocks.listDocuments.mockResolvedValue({
+      documents: [
+        {
+          $id: "collector_A",
+          lender_id: "lender_A",
+          name: "Jordan Lee",
+          password_hash: "stored",
+          session_version: 7,
+        },
+      ],
+      total: 1,
+    });
+    const formData = new FormData();
+    formData.set("username", "collector_A");
+    formData.set("password", "CollectorPass123!");
+
+    await expect(collectorLoginAction(formData)).rejects.toThrow(
+      "redirect:/collector/scan",
+    );
+    expect(mocks.setCollectorSession).toHaveBeenCalledWith(
+      expect.objectContaining({ collectorId: "collector_A" }),
+    );
+  });
+
+  it("returns a generic error for an unknown username", async () => {
+    mocks.listDocuments.mockResolvedValue({ documents: [], total: 0 });
+    const formData = new FormData();
+    formData.set("username", "unknownuser4821");
+    formData.set("password", "CollectorPass123!");
+
+    await expect(collectorLoginAction(formData)).rejects.toThrow(
+      "redirect:/collector/login?status=error&message=Username%20or%20password%20is%20incorrect.",
+    );
+    expect(mocks.verifyCollectorPassword).not.toHaveBeenCalled();
+    expect(mocks.setCollectorSession).not.toHaveBeenCalled();
   });
 
   it("does not collect a loan outside the collector lender", async () => {

@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  createTenantDocument: vi.fn(),
   getPrimaryLender: vi.fn(),
   hashCollectorPassword: vi.fn(),
+  listDocuments: vi.fn(),
   requireTenantDocument: vi.fn(),
   updateTenantDocument: vi.fn(),
 }));
@@ -12,13 +14,16 @@ vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("@/backend/appwrite/config", () => ({
   appwriteServerConfig: {
     databaseId: "database",
-    collections: { lenders: "lenders" },
+    collections: { collectors: "collectors", lenders: "lenders" },
   },
 }));
 vi.mock("@/backend/appwrite/server-client", async () => {
   const { Query } = await import("node-appwrite");
   return {
-    databases: { updateDocument: vi.fn() },
+    databases: {
+      listDocuments: mocks.listDocuments,
+      updateDocument: vi.fn(),
+    },
     Query,
     users: { updatePassword: vi.fn() },
   };
@@ -40,14 +45,23 @@ vi.mock("@/backend/services/search-text-service", () => ({
   createLoanSearchText: vi.fn(() => "loan search"),
 }));
 vi.mock("@/backend/services/tenant-data-service", () => ({
-  createTenantDocument: vi.fn(),
+  createTenantDocument: mocks.createTenantDocument,
   deleteTenantDocument: vi.fn(),
   listTenantDocuments: vi.fn(),
   requireTenantDocument: mocks.requireTenantDocument,
   updateTenantDocument: mocks.updateTenantDocument,
 }));
 
-import { updateCollectorAction } from "../lending-actions";
+import {
+  createCollectorAction,
+  updateCollectorAction,
+  type CreateCollectorActionState,
+} from "../lending-actions";
+
+const INITIAL_COLLECTOR_STATE: CreateCollectorActionState = {
+  status: "idle",
+  message: "",
+};
 
 function collectorForm(status: "active" | "inactive", password = "") {
   const formData = new FormData();
@@ -58,16 +72,95 @@ function collectorForm(status: "active" | "inactive", password = "") {
   return formData;
 }
 
+function newCollectorForm(username = "jordanlee4821") {
+  const formData = new FormData();
+  formData.set("username", username);
+  formData.set("name", "Jordan Lee");
+  formData.set("phone", "+1 555 0102");
+  formData.set("area", "Austin North");
+  formData.set("password", "CollectorPass123!");
+  formData.set("status", "active");
+  return formData;
+}
+
 describe("collector session revocation on lender updates", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getPrimaryLender.mockResolvedValue({ id: "lender_A" });
+    mocks.listDocuments.mockResolvedValue({ documents: [], total: 0 });
     mocks.requireTenantDocument.mockResolvedValue({
       $id: "collector_A",
       session_version: 4,
       status: "active",
     });
     mocks.hashCollectorPassword.mockReturnValue("new-hash");
+    mocks.createTenantDocument.mockResolvedValue({ $id: "jordanlee4821" });
+  });
+
+  it("uses the permanent username as the collector document ID", async () => {
+    const result = await createCollectorAction(
+      INITIAL_COLLECTOR_STATE,
+      newCollectorForm(),
+    );
+
+    expect(result).toMatchObject({ status: "success" });
+    expect(mocks.hashCollectorPassword).toHaveBeenCalledWith(
+      "CollectorPass123!",
+    );
+    expect(mocks.createTenantDocument).toHaveBeenCalledWith(
+      "collectors",
+      "lender_A",
+      "jordanlee4821",
+      expect.objectContaining({
+        name: "Jordan Lee",
+        password_hash: "new-hash",
+        session_version: 1,
+      }),
+    );
+  });
+
+  it("returns an inline error when the username already exists", async () => {
+    mocks.listDocuments.mockResolvedValue({
+      documents: [{ $id: "jordanlee4821" }],
+      total: 1,
+    });
+
+    const result = await createCollectorAction(
+      INITIAL_COLLECTOR_STATE,
+      newCollectorForm(),
+    );
+
+    expect(result).toMatchObject({
+      status: "error",
+      submittedUsername: "jordanlee4821",
+      fieldErrors: { username: "Username already exists." },
+    });
+    expect(mocks.createTenantDocument).not.toHaveBeenCalled();
+  });
+
+  it("handles an Appwrite duplicate race as an inline error", async () => {
+    mocks.createTenantDocument.mockRejectedValue({ code: 409 });
+
+    const result = await createCollectorAction(
+      INITIAL_COLLECTOR_STATE,
+      newCollectorForm(),
+    );
+
+    expect(result).toMatchObject({
+      status: "error",
+      fieldErrors: { username: "Username already exists." },
+    });
+  });
+
+  it("rejects invalid new usernames before querying Appwrite", async () => {
+    const result = await createCollectorAction(
+      INITIAL_COLLECTOR_STATE,
+      newCollectorForm("JordanLee4821"),
+    );
+
+    expect(result).toMatchObject({ status: "error" });
+    expect(mocks.listDocuments).not.toHaveBeenCalled();
+    expect(mocks.createTenantDocument).not.toHaveBeenCalled();
   });
 
   it("increments the session version after a password change", async () => {
@@ -92,6 +185,20 @@ describe("collector session revocation on lender updates", () => {
       "lender_A",
       "collector_A",
       expect.objectContaining({ status: "inactive", session_version: 5 }),
+    );
+  });
+
+  it("ignores a manipulated username during collector updates", async () => {
+    const formData = collectorForm("active");
+    formData.set("username", "attackerchosen9999");
+
+    await updateCollectorAction(formData);
+
+    expect(mocks.updateTenantDocument).toHaveBeenCalledWith(
+      "collectors",
+      "lender_A",
+      "collector_A",
+      expect.not.objectContaining({ username: expect.anything() }),
     );
   });
 });

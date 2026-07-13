@@ -337,9 +337,12 @@ Required change: use a globally unique collector login ID, or require a lender
 code plus collector username. Enforce uniqueness with an index or another
 authoritative identity store.
 
-Remediation status: **Implemented in source, pending deployment.** Collector
-document `$id` is the login identifier, login no longer searches by name, and
-the lender collector table has a copy-ID control.
+Remediation status: **Implemented in source, pending deployment.** The globally
+unique collector username is stored as the collector document `$id`, login no
+longer searches by name, and the lender collector table has a dedicated
+username column with a copy control. Newly created usernames are validated and
+checked for availability; Appwrite's `$id` uniqueness rejects creation races.
+Existing legacy collector IDs remain valid usernames.
 
 #### `COLLECTOR-002`: no login rate limiting or lockout
 

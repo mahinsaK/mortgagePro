@@ -7,7 +7,7 @@ MortgagePro is a Next.js application for managing a small lending operation end 
 - Manages lenders, borrowers, collectors, loans, and payments in Appwrite.
 - Supports lender, collector, and borrower dashboard views.
 - Sends SMS notifications through the TextLK API.
-- Provides QR-based collector login and loan lookup flows.
+- Provides username-based collector login and QR loan lookup flows.
 - Includes export endpoints for borrowers and payments.
 
 ## Project Structure
@@ -26,7 +26,7 @@ MortgagePro is a Next.js application for managing a small lending operation end 
 - `/auth/login` - lender sign-in.
 - `/auth/register` - account registration.
 - `/auth/password-reset` - password recovery.
-- `/collector/login` - collector sign-in.
+- `/collector/login` - collector username and password sign-in.
 - `/collector/scan` - QR-based collector workflow.
 - `/dashboard/*` - role-specific dashboards.
 - `/borrowers` - borrower management.

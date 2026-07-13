@@ -31,6 +31,7 @@ export async function GET(request: Request) {
         "amount",
         "total_paid",
         "remaining_amount",
+        "daily_payment",
         "status",
       ]),
     ],
@@ -73,6 +74,7 @@ export async function GET(request: Request) {
         loan.remaining_amount ??
           Math.max(Number(loan.amount ?? 0) - Number(loan.total_paid ?? 0), 0),
       ),
+      dailyPayment: Number(loan.daily_payment ?? 0),
       status: String(loan.status ?? "active"),
     },
   });

@@ -1,5 +1,7 @@
 "use client";
 
+import * as Dialog from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
 import QrScanner from "qr-scanner";
 import { useEffect, useRef, useState } from "react";
 
@@ -9,6 +11,7 @@ type LoanPreview = {
   amount: number;
   totalPaid: number;
   remainingAmount: number;
+  dailyPayment: number;
   status: string;
 };
 
@@ -27,8 +30,8 @@ export function CollectorScanner({
   const scannerRef = useRef<QrScanner | null>(null);
   const isMountedRef = useRef(true);
   const [cameraMessage, setCameraMessage] = useState("");
-  const [loanId, setLoanId] = useState("");
   const [loan, setLoan] = useState<LoanPreview | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState("");
   const [lookupError, setLookupError] = useState("");
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -58,6 +61,7 @@ export function CollectorScanner({
     setCameraMessage("");
     setLookupError("");
     setLoan(null);
+    setPaymentAmount("");
     setIsScanning(true);
 
     const scanner = new QrScanner(
@@ -70,7 +74,6 @@ export function CollectorScanner({
         }
 
         stopScanning();
-        setLoanId(scannedLoanId);
         void lookupLoan(scannedLoanId);
       },
       {
@@ -101,11 +104,11 @@ export function CollectorScanner({
     }
   }
 
-  async function lookupLoan(value = loanId) {
+  async function lookupLoan(value: string) {
     const requestedLoanId = value.trim();
 
     if (!requestedLoanId) {
-      setLookupError("Enter or scan a loan ID.");
+      setLookupError("The scanned QR code is empty.");
       return;
     }
 
@@ -128,6 +131,7 @@ export function CollectorScanner({
       }
 
       setLoan(data.loan);
+      setPaymentAmount("");
     } catch (error) {
       setLookupError(
         error instanceof Error ? error.message : "Could not validate this QR code.",
@@ -166,54 +170,92 @@ export function CollectorScanner({
         onClick={isScanning ? stopScanning : () => void startScanning()}
         type="button"
       >
-        {isScanning ? "Stop scanning" : "Start scanning"}
+        {isLookingUp
+          ? "Checking scanned QR..."
+          : isScanning
+            ? "Stop scanning"
+            : "Start scanning"}
       </button>
 
-      <div className="mt-4 flex gap-2">
-        <input
-          className="h-11 min-w-0 flex-1 rounded-md border border-[#cfd8e3] px-3 text-sm outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#dbeafe]"
-          onChange={(event) => setLoanId(event.target.value)}
-          placeholder="Loan ID from QR"
-          value={loanId}
-        />
-        <button
-          className="h-11 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
-          disabled={isLookingUp}
-          onClick={() => void lookupLoan()}
-          type="button"
-        >
-          {isLookingUp ? "Checking" : "Check"}
-        </button>
-      </div>
+      <Dialog.Root
+        onOpenChange={(open) => {
+          if (!open) {
+            setLoan(null);
+            setPaymentAmount("");
+          }
+        }}
+        open={loan !== null}
+      >
+        {loan ? (
+          <Dialog.Portal>
+            <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
+            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-32px)] w-[min(560px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-[#dfe5ec] bg-white text-[#15191f] shadow-2xl">
+              <div className="flex items-start justify-between gap-4 border-b border-[#dfe5ec] px-5 py-4">
+                <div>
+                  <Dialog.Title className="text-xl font-semibold">
+                    Payment details
+                  </Dialog.Title>
+                  <Dialog.Description className="mt-1 text-sm text-[#657386]">
+                    Confirm the loan and enter the amount being collected.
+                  </Dialog.Description>
+                </div>
+                <Dialog.Close asChild>
+                  <button
+                    aria-label="Close payment details"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-md border border-[#dfe5ec] text-[#657386] transition hover:bg-[#f8fafc]"
+                    type="button"
+                  >
+                    <X aria-hidden="true" size={17} />
+                  </button>
+                </Dialog.Close>
+              </div>
 
-      {loan ? (
-        <form action={collectAction} className="mt-4 rounded-md border border-[#dfe5ec] p-4">
-          <input name="loan_id" type="hidden" value={loan.id} />
-          <dl className="grid gap-3 text-sm">
-            <Detail label="Borrower" value={loan.borrowerName} />
-            <Detail label="Loan" value={loan.id} />
-            <Detail label="Remaining" value={formatMoney(loan.remainingAmount)} />
-          </dl>
-          <label className="mt-4 block text-sm font-medium text-[#2d3745]">
-            Amount
-            <input
-              className="mt-2 h-11 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#dbeafe]"
-              min="0.01"
-              name="amount"
-              placeholder="0.00"
-              required
-              step="0.01"
-              type="number"
-            />
-          </label>
-          <button
-            className="mt-4 h-11 w-full rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8]"
-            type="submit"
-          >
-            Collect payment
-          </button>
-        </form>
-      ) : null}
+              <form action={collectAction} className="p-5">
+                <input name="loan_id" type="hidden" value={loan.id} />
+                <dl className="grid gap-4 rounded-lg bg-[#f8fafc] p-4 sm:grid-cols-2">
+                  <Detail label="Borrower" value={loan.borrowerName} />
+                  <Detail label="Status" value={loan.status} />
+                  <Detail label="Loan amount" value={formatMoney(loan.amount)} />
+                  <Detail label="Total paid" value={formatMoney(loan.totalPaid)} />
+                  <Detail label="Remaining" value={formatMoney(loan.remainingAmount)} />
+                  <Detail label="Daily payment" value={formatMoney(loan.dailyPayment)} />
+                </dl>
+
+                <label className="mt-5 block text-sm font-medium text-[#2d3745]">
+                  Payment amount
+                  <input
+                    className="mt-2 h-11 w-full rounded-md border border-[#cfd8e3] px-3 text-base outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#dbeafe]"
+                    min="0.01"
+                    name="amount"
+                    onChange={(event) => setPaymentAmount(event.target.value)}
+                    placeholder="Enter a custom amount"
+                    required
+                    step="0.01"
+                    type="number"
+                    value={paymentAmount}
+                  />
+                </label>
+
+                <button
+                  className="mt-3 h-11 w-full rounded-md border border-[#93c5fd] bg-[#eff6ff] px-4 text-sm font-semibold text-[#1d4ed8] transition hover:bg-[#dbeafe] disabled:cursor-not-allowed disabled:border-[#dfe5ec] disabled:bg-[#f8fafc] disabled:text-[#9aa6b2]"
+                  disabled={loan.dailyPayment <= 0}
+                  onClick={() => setPaymentAmount(String(loan.dailyPayment))}
+                  type="button"
+                >
+                  Use daily payment · {formatMoney(loan.dailyPayment)}
+                </button>
+
+                <button
+                  className="mt-4 h-11 w-full rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8]"
+                  type="submit"
+                >
+                  Collect payment
+                </button>
+              </form>
+            </Dialog.Content>
+          </Dialog.Portal>
+        ) : null}
+      </Dialog.Root>
     </section>
   );
 }

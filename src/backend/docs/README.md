@@ -39,8 +39,8 @@ src/backend
   server-derived `lender_id`, overwrites tenant IDs on create, and strips tenant
   ID changes on update.
 - `src/backend/services/collector-auth-service.ts`
-  Resolves active collectors from 12-hour signed, versioned sessions and
-  revalidates the collector record for every protected collector operation.
+  Resolves active collectors from signed 12-hour sessions and revalidates the
+  collector record for every protected collector operation.
 - `src/backend/services/search-text-service.ts`
   Builds searchable text for borrowers and loans from borrower name, phone, and address.
 - `src/backend/services/qr-code-service.ts`
@@ -79,7 +79,7 @@ For form submissions:
 
 The critical-release source now uses server-only Appwrite database access,
 empty client collection permissions, shared tenant-aware helpers, collector ID
-login, and revocable collector sessions. The last observed live Appwrite
+login, and signed collector sessions. The last observed live Appwrite
 metadata still had broad `Role.users()` access, so the deployed project remains
 untrusted until the permission apply and direct-client verification steps pass.
 

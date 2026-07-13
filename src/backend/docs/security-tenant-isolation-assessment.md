@@ -19,8 +19,8 @@ financial/PII production use.**
 The source branch now implements the selected critical release: deny-by-default
 collection provisioning/reconciliation, separate runtime and setup keys,
 shared tenant-aware data helpers, generic not-found behavior for cross-tenant
-IDs, collector ID login, dedicated 12-hour signed sessions, database-backed
-session revocation, and focused security verification.
+IDs, collector username login, dedicated 12-hour signed sessions, active-record
+revalidation, and focused security verification.
 
 That is a material improvement in the code, but it does not by itself change
 the live Appwrite project. The last read-only live metadata inspection on July
@@ -44,8 +44,9 @@ Direct answers:
   applied and the direct-session verifier passes.
 - **Does the official collector payment action reject another lender's loan?**
   Yes; lookup and collection query by both loan ID and collector lender ID.
-- **Are collector cookies short-lived and revocable?** Yes in this branch: 12
-  hours, active-record revalidation, and session-version revocation.
+- **Are collector cookies short-lived and revocable?** Partly in this branch:
+  they expire after 12 hours, and inactive or deleted collectors lose access
+  immediately. A password change alone does not cancel an existing cookie.
 - **Can the current overall system be trusted as an enterprise financial
   system?** No.
 - **Should real customer or financial data be added before remediation?** No.
@@ -131,9 +132,9 @@ collector-ID lookup.
 Collectors are not Appwrite Auth users. In the remediated branch they
 authenticate by globally unique collector document ID plus password. Passwords
 are hashed with Node `scrypt` using a random salt. The HMAC-signed HTTP-only
-cookie contains issue/expiry/version claims, expires after 12 hours, and is
+cookie contains issue/expiry claims, expires after 12 hours, and is
 accepted only after `requireActiveCollectorPrincipal()` reloads the active
-collector by both collector and lender ID and matches `session_version`.
+collector by both collector and lender ID.
 
 Evidence:
 
@@ -361,24 +362,25 @@ identifier, alert on abuse, and define lockout/recovery behavior.
 Severity: **Medium**
 
 Collector cookies last 30 days. The signed payload has no issued-at time,
-explicit expiry, unique session ID, or session version stored server-side.
+explicit expiry or unique session ID stored server-side.
 Changing a collector password does not revoke an already-issued session while
 the collector remains active. Deactivation blocks the payment action because it
 re-loads the active collector, which is good.
 
 Required change: use a dedicated mandatory `COLLECTOR_SESSION_SECRET`, add
-issued-at/expiry/session ID/version claims, store revocable session state, and
-invalidate sessions on password or role changes.
+issued-at/expiry claims, and invalidate access when a collector becomes
+inactive or is deleted.
 
 The current signing secret falls back from the Appwrite API key to the public
 project ID and finally to a hard-coded development value. Production must fail
 closed when a dedicated high-entropy session secret is absent.
 
 Remediation status: **Implemented in source, pending deployment.** The cookie
-now expires after 12 hours and carries `issuedAt`, `expiresAt`, and
-`sessionVersion`. `COLLECTOR_SESSION_SECRET` is mandatory and validated at a
-minimum of 32 bytes with no fallback. Password/status changes increment the
-collector's database version.
+now expires after 12 hours and carries `issuedAt` and `expiresAt`.
+`COLLECTOR_SESSION_SECRET` is mandatory and validated at a minimum of 32 bytes
+with no fallback. Changing a password does not immediately revoke an existing
+session; during development, that session remains valid until its 12-hour
+expiry unless the collector is made inactive or deleted.
 
 #### `COLLECTOR-004`: read route does not revalidate collector status
 
@@ -394,8 +396,8 @@ collector for every protected collector page, route, and action.
 
 Remediation status: **Implemented in source, pending deployment.** The scan
 page, loan route, and payment action use one active-principal resolver. Deleted,
-inactive, expired, tampered, tenant-mismatched, and version-mismatched sessions
-fail; mutable request contexts clear invalid cookies.
+inactive, expired, tampered, and tenant-mismatched sessions fail; mutable
+request contexts clear invalid cookies.
 
 ## Payment integrity assessment
 
@@ -498,7 +500,7 @@ Gaps requiring enterprise hardening:
 
 ## Authorization test coverage
 
-The remediated local suite has 20 test files and 52 passing tests. New critical
+The remediated local suite has 26 test files and 83 passing tests. New critical
 coverage proves:
 
 - all four tenant-owned collection helpers prepend lender ownership;
@@ -506,8 +508,7 @@ coverage proves:
 - cross-tenant IDs cannot reach update/delete SDK calls;
 - collector login queries `$id`, not `name`;
 - tampered and expired collector cookies fail;
-- inactive, deleted, tenant-mismatched, and version-mismatched collectors fail;
-- password/status changes increment the revocation version;
+- inactive, deleted, and tenant-mismatched collectors fail;
 - collector A receives not-found and cannot collect lender B's loan; and
 - the collector loan API returns `404` for lender B's loan ID.
 
@@ -628,7 +629,7 @@ true:
 
 MortgagePro now has a substantially stronger critical-release source design:
 deny-by-default provisioning, server-only credential separation, centralized
-tenant helpers, collector ID login, short-lived revocable collector sessions,
+tenant helpers, collector username login, signed short-lived collector sessions,
 and focused isolation verification. The implemented branch is suitable for a
 controlled security rollout using demo data.
 

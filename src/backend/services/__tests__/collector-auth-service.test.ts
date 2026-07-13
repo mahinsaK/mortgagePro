@@ -36,7 +36,6 @@ describe("requireActiveCollectorPrincipal", () => {
         name: "Old name",
         issuedAt: now,
         expiresAt: now + 60_000,
-        sessionVersion: 4,
       },
       secret,
     );
@@ -45,7 +44,6 @@ describe("requireActiveCollectorPrincipal", () => {
       $id: "collector_A",
       lender_id: "lender_A",
       name: "Current name",
-      session_version: 4,
       status: "active",
     });
   });
@@ -55,13 +53,12 @@ describe("requireActiveCollectorPrincipal", () => {
       collectorId: "collector_A",
       lenderId: "lender_A",
       name: "Current name",
-      sessionVersion: 4,
     });
     expect(mocks.getTenantDocument).toHaveBeenCalledWith(
       "collectors",
       "lender_A",
       "collector_A",
-      expect.arrayContaining(["lender_id", "status", "session_version"]),
+      ["$id", "lender_id", "name", "status"],
     );
   });
 
@@ -73,18 +70,7 @@ describe("requireActiveCollectorPrincipal", () => {
         $id: "collector_A",
         lender_id: "lender_A",
         name: "Collector",
-        session_version: 4,
         status: "inactive",
-      },
-    ],
-    [
-      "version-mismatched",
-      {
-        $id: "collector_A",
-        lender_id: "lender_A",
-        name: "Collector",
-        session_version: 5,
-        status: "active",
       },
     ],
     [
@@ -93,7 +79,6 @@ describe("requireActiveCollectorPrincipal", () => {
         $id: "collector_A",
         lender_id: "lender_B",
         name: "Collector",
-        session_version: 4,
         status: "active",
       },
     ],

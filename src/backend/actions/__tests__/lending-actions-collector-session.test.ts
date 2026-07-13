@@ -83,16 +83,12 @@ function newCollectorForm(username = "jordanlee4821") {
   return formData;
 }
 
-describe("collector session revocation on lender updates", () => {
+describe("collector writes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getPrimaryLender.mockResolvedValue({ id: "lender_A" });
     mocks.listDocuments.mockResolvedValue({ documents: [], total: 0 });
-    mocks.requireTenantDocument.mockResolvedValue({
-      $id: "collector_A",
-      session_version: 4,
-      status: "active",
-    });
+    mocks.requireTenantDocument.mockResolvedValue({ $id: "collector_A" });
     mocks.hashCollectorPassword.mockReturnValue("new-hash");
     mocks.createTenantDocument.mockResolvedValue({ $id: "jordanlee4821" });
   });
@@ -114,8 +110,10 @@ describe("collector session revocation on lender updates", () => {
       expect.objectContaining({
         name: "Jordan Lee",
         password_hash: "new-hash",
-        session_version: 1,
       }),
+    );
+    expect(mocks.createTenantDocument.mock.calls[0][3]).not.toHaveProperty(
+      "session_version",
     );
   });
 
@@ -163,7 +161,7 @@ describe("collector session revocation on lender updates", () => {
     expect(mocks.createTenantDocument).not.toHaveBeenCalled();
   });
 
-  it("increments the session version after a password change", async () => {
+  it("updates the password hash when the password changes", async () => {
     await updateCollectorAction(collectorForm("active", "NewPassword123!"));
 
     expect(mocks.updateTenantDocument).toHaveBeenCalledWith(
@@ -172,19 +170,18 @@ describe("collector session revocation on lender updates", () => {
       "collector_A",
       expect.objectContaining({
         password_hash: "new-hash",
-        session_version: 5,
       }),
     );
   });
 
-  it("increments the session version after a status change", async () => {
+  it("updates the collector status", async () => {
     await updateCollectorAction(collectorForm("inactive"));
 
     expect(mocks.updateTenantDocument).toHaveBeenCalledWith(
       "collectors",
       "lender_A",
       "collector_A",
-      expect.objectContaining({ status: "inactive", session_version: 5 }),
+      expect.objectContaining({ status: "inactive" }),
     );
   });
 

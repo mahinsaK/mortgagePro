@@ -15,7 +15,6 @@ function claims(overrides: Partial<CollectorSessionClaims> = {}) {
     name: "Jordan Lee",
     issuedAt: now,
     expiresAt: now + 12 * 60 * 60 * 1000,
-    sessionVersion: 3,
     ...overrides,
   };
 }

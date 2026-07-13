@@ -56,7 +56,6 @@ describe("collectorLoginAction", () => {
           lender_id: "lender_A",
           name: "Jordan Lee",
           password_hash: "stored",
-          session_version: 7,
         },
       ],
       total: 1,
@@ -67,7 +66,7 @@ describe("collectorLoginAction", () => {
     });
   });
 
-  it("authenticates by username and stores the current session version", async () => {
+  it("authenticates by username and stores the collector identity", async () => {
     const formData = new FormData();
     formData.set("username", "jordanlee4821");
     formData.set("password", "CollectorPass123!");
@@ -81,11 +80,11 @@ describe("collectorLoginAction", () => {
     expect(serialized).toContain('"attribute":"$id"');
     expect(serialized).toContain('"values":["jordanlee4821"]');
     expect(serialized).not.toContain('"attribute":"name"');
+    expect(serialized).not.toContain("session_version");
     expect(mocks.setCollectorSession).toHaveBeenCalledWith({
       collectorId: "jordanlee4821",
       lenderId: "lender_A",
       name: "Jordan Lee",
-      sessionVersion: 7,
     });
   });
 
@@ -97,7 +96,6 @@ describe("collectorLoginAction", () => {
           lender_id: "lender_A",
           name: "Jordan Lee",
           password_hash: "stored",
-          session_version: 7,
         },
       ],
       total: 1,
@@ -132,7 +130,6 @@ describe("collectorLoginAction", () => {
       collectorId: "collector_A",
       lenderId: "lender_A",
       name: "Jordan Lee",
-      sessionVersion: 1,
     });
     mocks.getTenantDocument.mockImplementation((collection: string) =>
       Promise.resolve(

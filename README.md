@@ -127,7 +127,6 @@ npm run appwrite:permissions:apply
 - `npm run appwrite:seed` - seed the demo Appwrite data only.
 - `npm run appwrite:permissions:check` - inspect collection permission metadata without changing it.
 - `npm run appwrite:permissions:apply` - back up, harden, and verify collection permissions.
-- `npm run appwrite:collector-sessions:migrate` - add/backfill collector session revocation versions before deployment.
 - `npm run appwrite:isolation:verify` - verify normal-session CRUD denial and runtime-key CRUD using throwaway records.
 
 ## Technology Stack

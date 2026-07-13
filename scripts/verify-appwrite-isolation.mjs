@@ -175,7 +175,6 @@ function makeProbe(prefix, appwriteUserId) {
         name: "Isolation collector",
         contact_info: "",
         password_hash: "probe:probe",
-        session_version: 1,
         status: "active",
         created_at: now,
       },

@@ -6,7 +6,6 @@ export type CollectorSessionClaims = {
   name: string;
   issuedAt: number;
   expiresAt: number;
-  sessionVersion: number;
 };
 
 export function encodeCollectorSession(
@@ -53,9 +52,6 @@ export function decodeCollectorSession(
       !Number.isFinite(parsed.issuedAt) ||
       typeof parsed.expiresAt !== "number" ||
       !Number.isFinite(parsed.expiresAt) ||
-      typeof parsed.sessionVersion !== "number" ||
-      !Number.isInteger(parsed.sessionVersion) ||
-      parsed.sessionVersion < 1 ||
       parsed.issuedAt > now ||
       parsed.expiresAt <= now ||
       parsed.expiresAt <= parsed.issuedAt

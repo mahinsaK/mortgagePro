@@ -67,8 +67,6 @@ Attributes:
 - `name`: collector name.
 - `contact_info`: JSON string with phone/area.
 - `password_hash`: salted `scrypt` password hash.
-- `session_version`: integer revocation version, starting at `1`. Password or
-  status changes increment it so old collector cookies fail revalidation.
 - `status`: `active` or `inactive`.
 - `created_at`: creation date.
 

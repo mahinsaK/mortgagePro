@@ -43,7 +43,6 @@ lender_id: active lender ID
 name
 contact_info: JSON string with phone/area
 password_hash: salted scrypt hash
-session_version: 1
 status
 created_at
 ```
@@ -68,8 +67,8 @@ How it works:
 - Verifies the collector belongs to the active lender.
 - Updates collector name, phone, area, status, and optional password.
 - Ignores any submitted username because the collector `$id` is permanent.
-- Increments `session_version` after password or status changes, immediately
-  invalidating previously issued collector sessions.
+- Existing sessions are rejected when a collector becomes inactive or is
+  deleted. Password changes apply to the next login.
 
 ## Delete collector write
 
@@ -136,13 +135,12 @@ underscores or hyphens remain compatible. Name-based login is not supported.
 
 The `mortgagepro_collector_session` cookie is HTTP-only, SameSite Lax, Secure in
 production, signed with the mandatory `COLLECTOR_SESSION_SECRET`, and expires
-after 12 hours. Claims include collector ID, lender ID, issue time, expiry, and
-`sessionVersion`.
+after 12 hours. Claims include collector ID, lender ID, issue time, and expiry.
 
 `requireActiveCollectorPrincipal()` verifies the HMAC with a timing-safe
 comparison, checks expiry, reloads the collector by both collector ID and
-lender ID, requires active status, and compares the database session version.
-The scan page, loan lookup route, and payment action all use this resolver.
+lender ID, and requires active status. The scan page, loan lookup route, and
+payment action all use this resolver.
 
 Scanned loan lookup is a combined loan-ID/lender-ID query. Another lender's
 loan is returned as `404`, just like an unknown loan ID.

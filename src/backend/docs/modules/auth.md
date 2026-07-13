@@ -89,4 +89,4 @@ Session handling:
   compatibility helper.
 
 Collector authentication is separate from Appwrite Auth. See
-`modules/collectors.md` for collector ID login and 12-hour revocable sessions.
+`modules/collectors.md` for collector username login and signed 12-hour sessions.

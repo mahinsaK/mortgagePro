@@ -17,7 +17,7 @@ export type CollectorPrincipal = CollectorSessionClaims;
 
 type NewCollectorSession = Pick<
   CollectorSessionClaims,
-  "collectorId" | "lenderId" | "name" | "sessionVersion"
+  "collectorId" | "lenderId" | "name"
 >;
 
 export function hashCollectorPassword(password: string) {
@@ -86,17 +86,14 @@ export async function requireActiveCollectorPrincipal(): Promise<CollectorPrinci
     "collectors",
     claims.lenderId,
     claims.collectorId,
-    ["$id", "lender_id", "name", "status", "session_version"],
+    ["$id", "lender_id", "name", "status"],
   );
-  const currentSessionVersion = Number(collector?.session_version ?? 1);
 
   if (
     !collector ||
     collector.$id !== claims.collectorId ||
     String(collector.lender_id ?? "") !== claims.lenderId ||
-    collector.status !== "active" ||
-    !Number.isInteger(currentSessionVersion) ||
-    currentSessionVersion !== claims.sessionVersion
+    collector.status !== "active"
   ) {
     clearInvalidCollectorCookie(cookieStore);
     return null;

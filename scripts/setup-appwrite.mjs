@@ -82,7 +82,6 @@ const schema = [
       stringAttr("name", 160, true),
       stringAttr("contact_info", 1000, false),
       stringAttr("password_hash", 256, false),
-      integerAttr("session_version", false, 1, undefined, 1),
       enumAttr("status", ["active", "inactive"], true),
       datetimeAttr("created_at", true),
     ],
@@ -402,7 +401,6 @@ async function seedData() {
       area: "Austin North",
     }),
     password_hash: hashSeedPassword("CollectorPass123!"),
-    session_version: 1,
     status: "active",
     created_at: now,
   });
@@ -558,10 +556,6 @@ function hashSeedPassword(password) {
 
 function floatAttr(key, required, min, max, xdefault) {
   return { type: "float", key, required, min, max, xdefault };
-}
-
-function integerAttr(key, required, min, max, xdefault) {
-  return { type: "integer", key, required, min, max, xdefault };
 }
 
 function enumAttr(key, elements, required, xdefault) {

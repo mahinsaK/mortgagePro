@@ -78,30 +78,15 @@ COLLECTOR_SESSION_SECRET=...
 Keep all existing `NEXT_PUBLIC_APPWRITE_*` identifiers unchanged unless the
 Appwrite project itself changed. Confirm no secret uses a `NEXT_PUBLIC_*` name.
 
-## 4. Run the additive collector-session migration
-
-Before deploying the new code, add and backfill the revocation version field:
-
-```bash
-npm run appwrite:collector-sessions:migrate
-```
-
-This command is idempotent. It creates `collectors.session_version` as an
-integer with default `1`, waits for Appwrite to make it available, and
-backfills legacy demo collectors. It does not change collection permissions.
-
-If schema validation fails, stop. Because the records are demo-only, reset and
-reseed rather than weakening authorization.
-
-## 5. Deploy the hardened application
+## 4. Deploy the hardened application
 
 Deploy this branch with the new runtime key and collector secret. Keep the old
 Appwrite key active but unused during verification. Smoke-test lender login,
-dashboard loading, and collector login by collector ID.
+dashboard loading, and collector login by username.
 
 The deployed app must not use the setup key.
 
-## 6. Capture the pre-change permission state
+## 5. Capture the pre-change permission state
 
 Run:
 
@@ -113,7 +98,7 @@ Before remediation, this command is expected to return a non-zero exit status
 and show non-empty permission arrays. It prints only collection IDs and
 permission metadata. Save the output in the private remediation evidence.
 
-## 7. Apply deny-by-default permissions
+## 6. Apply deny-by-default permissions
 
 Run:
 
@@ -138,7 +123,7 @@ npm run appwrite:permissions:check
 All five collections must show empty permissions, disabled document security,
 enabled state, and `compliant: true`.
 
-## 8. Run direct-client and runtime verification
+## 7. Run direct-client and runtime verification
 
 Set dedicated demo credentials if the seeded defaults are not being used:
 
@@ -161,7 +146,7 @@ records, passwords, session secrets, or API keys.
 
 Do not continue if any normal-session operation succeeds.
 
-## 9. Run two-tenant application smoke tests
+## 8. Run two-tenant application smoke tests
 
 Using lender A, lender B, collector A, and collector B demo records, verify:
 
@@ -170,8 +155,7 @@ Using lender A, lender B, collector A, and collector B demo records, verify:
 - cross-tenant resource IDs behave as not found and do not reveal existence;
 - collector A receives `404` when scanning lender B's loan ID;
 - collector A cannot create a payment for lender B's loan;
-- collector login accepts the copied collector ID, not the collector name;
-- changing a collector password invalidates its existing cookie;
+- collector login accepts the copied username, not the collector name;
 - changing a collector to inactive invalidates its existing cookie; and
 - deleted, expired, or tampered collector cookies cannot view or collect.
 
@@ -184,7 +168,7 @@ npx tsc --noEmit
 npm run build
 ```
 
-## 10. Retire the previous key
+## 9. Retire the previous key
 
 Only after all checks pass:
 
@@ -204,7 +188,6 @@ database access.
 - If its key wiring is incompatible, temporarily place the retained previous
   server key value in `APPWRITE_RUNTIME_API_KEY` while correcting the deploy.
 - Keep all collection permissions empty.
-- Keep the additive `session_version` attribute; it is backward-compatible.
 - Reset/reseed demo data if schema or smoke tests reveal inconsistent records.
 
 Never restore `Role.users()` database access to make a rollback build work.

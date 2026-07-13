@@ -20,7 +20,6 @@ describe("collector loan lookup", () => {
       collectorId: "collector_A",
       lenderId: "lender_A",
       name: "Jordan Lee",
-      sessionVersion: 1,
     });
     mocks.getTenantDocument.mockResolvedValue(null);
 

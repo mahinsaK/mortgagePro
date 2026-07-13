@@ -33,7 +33,6 @@ export async function collectorLoginAction(formData: FormData) {
         "lender_id",
         "name",
         "password_hash",
-        "session_version",
       ]),
     ],
   });
@@ -54,7 +53,6 @@ export async function collectorLoginAction(formData: FormData) {
     collectorId: collector.$id,
     lenderId: String(collector.lender_id ?? ""),
     name: String(collector.name ?? collectorId),
-    sessionVersion: Number(collector.session_version ?? 1),
   });
   redirect("/collector/scan");
 }

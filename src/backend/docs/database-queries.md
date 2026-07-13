@@ -877,7 +877,6 @@ databases.createDocument({
   name,
   contact_info,
   password_hash,
-  session_version: 1,
   status,
   created_at
 })

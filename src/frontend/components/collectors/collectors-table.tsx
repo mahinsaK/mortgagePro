@@ -26,7 +26,7 @@ export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) 
           <tr className="border-t border-[#eef2f6]" key={collector.id}>
             <td className="px-5 py-4">
               <p className="font-medium">{collector.name}</p>
-              <p className="mt-1 text-xs text-[#657386]">{collector.id}</p>
+              <p className="mt-1 text-[13px] text-[#657386]">{collector.id}</p>
             </td>
             <td className="px-5 py-4 text-[#657386]">
               {collector.contactInfo || "No contact info"}
@@ -38,8 +38,8 @@ export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) 
               <span
                 className={
                   collector.status === "active"
-                    ? "rounded-full bg-[#dcfce7] px-3 py-1 text-xs font-semibold text-[#166534]"
-                    : "rounded-full bg-[#f1f5f9] px-3 py-1 text-xs font-semibold text-[#64748b]"
+                    ? "rounded-full bg-[#dcfce7] px-3 py-1 text-[13px] font-semibold text-[#166534]"
+                    : "rounded-full bg-[#f1f5f9] px-3 py-1 text-[13px] font-semibold text-[#64748b]"
                 }
               >
                 {collector.status}

@@ -112,7 +112,7 @@ export function LenderDashboardLoansPanel({
                   <td className="px-5 py-4">{loan.remainingAmount}</td>
                   <td className="px-5 py-4">{loan.dailyPayment}</td>
                   <td className="px-5 py-4">
-                    <span className="rounded-full bg-[#e0ecff] px-3 py-1 text-xs font-semibold text-[#1d4ed8]">
+                    <span className="rounded-full bg-[#e0ecff] px-3 py-1 text-[13px] font-semibold text-[#1d4ed8]">
                       {loan.status}
                     </span>
                   </td>

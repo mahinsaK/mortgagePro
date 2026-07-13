@@ -19,7 +19,10 @@ vi.mock("../tenant-data-service", () => ({
   getTenantDocument: mocks.getTenantDocument,
 }));
 
-import { requireActiveCollectorPrincipal } from "../collector-auth-service";
+import {
+  createCollectorCredentialFingerprint,
+  requireActiveCollectorPrincipal,
+} from "../collector-auth-service";
 import { encodeCollectorSession } from "../collector-session-codec";
 
 const secret = "0123456789abcdef0123456789abcdef";
@@ -29,11 +32,16 @@ describe("requireActiveCollectorPrincipal", () => {
     vi.clearAllMocks();
     vi.stubEnv("COLLECTOR_SESSION_SECRET", secret);
     const now = Date.now();
+    const passwordHash = "salt:current-password-hash";
     const token = encodeCollectorSession(
       {
         collectorId: "collector_A",
         lenderId: "lender_A",
         name: "Old name",
+        credentialFingerprint: createCollectorCredentialFingerprint(
+          passwordHash,
+          secret,
+        ),
         issuedAt: now,
         expiresAt: now + 60_000,
       },
@@ -44,6 +52,7 @@ describe("requireActiveCollectorPrincipal", () => {
       $id: "collector_A",
       lender_id: "lender_A",
       name: "Current name",
+      password_hash: passwordHash,
       status: "active",
     });
   });
@@ -58,7 +67,7 @@ describe("requireActiveCollectorPrincipal", () => {
       "collectors",
       "lender_A",
       "collector_A",
-      ["$id", "lender_id", "name", "status"],
+      ["$id", "lender_id", "name", "password_hash", "status"],
     );
   });
 
@@ -70,7 +79,18 @@ describe("requireActiveCollectorPrincipal", () => {
         $id: "collector_A",
         lender_id: "lender_A",
         name: "Collector",
+        password_hash: "salt:current-password-hash",
         status: "inactive",
+      },
+    ],
+    [
+      "password-changed",
+      {
+        $id: "collector_A",
+        lender_id: "lender_A",
+        name: "Collector",
+        password_hash: "salt:new-password-hash",
+        status: "active",
       },
     ],
     [
@@ -79,6 +99,7 @@ describe("requireActiveCollectorPrincipal", () => {
         $id: "collector_A",
         lender_id: "lender_B",
         name: "Collector",
+        password_hash: "salt:current-password-hash",
         status: "active",
       },
     ],

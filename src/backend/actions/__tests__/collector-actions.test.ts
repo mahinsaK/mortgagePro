@@ -85,6 +85,7 @@ describe("collectorLoginAction", () => {
       collectorId: "jordanlee4821",
       lenderId: "lender_A",
       name: "Jordan Lee",
+      passwordHash: "stored",
     });
   });
 

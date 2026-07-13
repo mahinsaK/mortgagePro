@@ -156,6 +156,7 @@ Using lender A, lender B, collector A, and collector B demo records, verify:
 - collector A receives `404` when scanning lender B's loan ID;
 - collector A cannot create a payment for lender B's loan;
 - collector login accepts the copied username, not the collector name;
+- changing a collector password invalidates its existing cookie;
 - changing a collector to inactive invalidates its existing cookie; and
 - deleted, expired, or tampered collector cookies cannot view or collect.
 

@@ -68,7 +68,8 @@ How it works:
 - Updates collector name, phone, area, status, and optional password.
 - Ignores any submitted username because the collector `$id` is permanent.
 - Existing sessions are rejected when a collector becomes inactive or is
-  deleted. Password changes apply to the next login.
+  deleted. Changing the password also rejects all sessions created with the
+  previous password.
 
 ## Delete collector write
 
@@ -135,11 +136,14 @@ underscores or hyphens remain compatible. Name-based login is not supported.
 
 The `mortgagepro_collector_session` cookie is HTTP-only, SameSite Lax, Secure in
 production, signed with the mandatory `COLLECTOR_SESSION_SECRET`, and expires
-after 12 hours. Claims include collector ID, lender ID, issue time, and expiry.
+after 12 hours. Claims include collector ID, lender ID, issue time, expiry, and
+a secret-derived credential fingerprint. The password and stored password hash
+are never placed in the cookie.
 
 `requireActiveCollectorPrincipal()` verifies the HMAC with a timing-safe
 comparison, checks expiry, reloads the collector by both collector ID and
-lender ID, and requires active status. The scan page, loan lookup route, and
+lender ID, requires active status, and compares the credential fingerprint to
+the collector's current password hash. The scan page, loan lookup route, and
 payment action all use this resolver.
 
 Scanned loan lookup is a combined loan-ID/lender-ID query. Another lender's

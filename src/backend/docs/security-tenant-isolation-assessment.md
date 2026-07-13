@@ -46,7 +46,7 @@ Direct answers:
   Yes; lookup and collection query by both loan ID and collector lender ID.
 - **Are collector cookies short-lived and revocable?** Partly in this branch:
   they expire after 12 hours, and inactive or deleted collectors lose access
-  immediately. A password change alone does not cancel an existing cookie.
+  immediately. Changing a collector password also cancels existing cookies.
 - **Can the current overall system be trusted as an enterprise financial
   system?** No.
 - **Should real customer or financial data be added before remediation?** No.
@@ -58,11 +58,10 @@ Direct answers:
 | Empty client collection permissions | Implemented in `0976933` | Pending apply/check |
 | Separate runtime/setup Appwrite keys | Implemented in `0976933` | Pending environment/key rollout |
 | Shared tenant-aware reads/writes | Implemented in `b9cbf2a` | Pending deployment |
-| Collector ID login and copy-ID UI | Implemented in `a7fa177` | Pending deployment |
-| 12-hour versioned collector sessions | Implemented in `a7fa177` | Pending secret/schema/deployment |
-| Tenant/session automated tests | 52 tests passing in `61e6f08` | Local/mocked coverage complete |
+| Collector username login and copy UI | Implemented in source | Pending deployment |
+| 12-hour credential-bound collector sessions | Implemented in source | Pending secret/deployment |
+| Tenant/session automated tests | 84 tests passing | Local/mocked coverage complete |
 | Direct Appwrite session denial verifier | Implemented in `61e6f08` | Must run after permission apply |
-| Additive collector schema migration | Implemented in `76888ba` | Must run before deployment |
 
 The exact deployment, verification, key rotation, and rollback procedure is in
 `critical-tenant-isolation-rollout.md`.
@@ -378,9 +377,9 @@ closed when a dedicated high-entropy session secret is absent.
 Remediation status: **Implemented in source, pending deployment.** The cookie
 now expires after 12 hours and carries `issuedAt` and `expiresAt`.
 `COLLECTOR_SESSION_SECRET` is mandatory and validated at a minimum of 32 bytes
-with no fallback. Changing a password does not immediately revoke an existing
-session; during development, that session remains valid until its 12-hour
-expiry unless the collector is made inactive or deleted.
+with no fallback. A secret-derived fingerprint binds each cookie to the current
+password hash without placing the password or password hash in the cookie.
+Changing the password causes existing collector sessions to fail revalidation.
 
 #### `COLLECTOR-004`: read route does not revalidate collector status
 
@@ -500,7 +499,7 @@ Gaps requiring enterprise hardening:
 
 ## Authorization test coverage
 
-The remediated local suite has 26 test files and 83 passing tests. New critical
+The remediated local suite has 26 test files and 84 passing tests. New critical
 coverage proves:
 
 - all four tenant-owned collection helpers prepend lender ownership;
@@ -509,6 +508,7 @@ coverage proves:
 - collector login queries `$id`, not `name`;
 - tampered and expired collector cookies fail;
 - inactive, deleted, and tenant-mismatched collectors fail;
+- changing a collector password invalidates existing collector cookies;
 - collector A receives not-found and cannot collect lender B's loan; and
 - the collector loan API returns `404` for lender B's loan ID.
 

@@ -13,6 +13,7 @@ function claims(overrides: Partial<CollectorSessionClaims> = {}) {
     collectorId: "collector_A",
     lenderId: "lender_A",
     name: "Jordan Lee",
+    credentialFingerprint: "credential-fingerprint",
     issuedAt: now,
     expiresAt: now + 12 * 60 * 60 * 1000,
     ...overrides,

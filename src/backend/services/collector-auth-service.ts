@@ -1,6 +1,6 @@
 import "server-only";
 
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import {
   decodeCollectorSession,
@@ -13,12 +13,15 @@ const COLLECTOR_SESSION_COOKIE = "mortgagepro_collector_session";
 const COLLECTOR_SESSION_LIFETIME_MS = 12 * 60 * 60 * 1000;
 const HASH_KEY_LENGTH = 64;
 
-export type CollectorPrincipal = CollectorSessionClaims;
+export type CollectorPrincipal = Omit<
+  CollectorSessionClaims,
+  "credentialFingerprint"
+>;
 
 type NewCollectorSession = Pick<
   CollectorSessionClaims,
   "collectorId" | "lenderId" | "name"
->;
+> & { passwordHash: string };
 
 export function hashCollectorPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -47,8 +50,15 @@ export function verifyCollectorPassword(password: string, storedHash: string) {
 export async function setCollectorSession(session: NewCollectorSession) {
   const issuedAt = Date.now();
   const expiresAt = issuedAt + COLLECTOR_SESSION_LIFETIME_MS;
+  const secret = sessionSecret();
   const claims: CollectorSessionClaims = {
-    ...session,
+    collectorId: session.collectorId,
+    lenderId: session.lenderId,
+    name: session.name,
+    credentialFingerprint: createCollectorCredentialFingerprint(
+      session.passwordHash,
+      secret,
+    ),
     issuedAt,
     expiresAt,
   };
@@ -56,7 +66,7 @@ export async function setCollectorSession(session: NewCollectorSession) {
 
   cookieStore.set(
     COLLECTOR_SESSION_COOKIE,
-    encodeCollectorSession(claims, sessionSecret()),
+    encodeCollectorSession(claims, secret),
     {
       expires: new Date(expiresAt),
       httpOnly: true,
@@ -86,23 +96,41 @@ export async function requireActiveCollectorPrincipal(): Promise<CollectorPrinci
     "collectors",
     claims.lenderId,
     claims.collectorId,
-    ["$id", "lender_id", "name", "status"],
+    ["$id", "lender_id", "name", "password_hash", "status"],
   );
 
   if (
     !collector ||
     collector.$id !== claims.collectorId ||
     String(collector.lender_id ?? "") !== claims.lenderId ||
-    collector.status !== "active"
+    collector.status !== "active" ||
+    !hasMatchingCollectorCredential(
+      claims.credentialFingerprint,
+      String(collector.password_hash ?? ""),
+      sessionSecret(),
+    )
   ) {
     clearInvalidCollectorCookie(cookieStore);
     return null;
   }
 
   return {
-    ...claims,
+    collectorId: claims.collectorId,
+    lenderId: claims.lenderId,
     name: String(collector.name ?? claims.name),
+    issuedAt: claims.issuedAt,
+    expiresAt: claims.expiresAt,
   };
+}
+
+export function createCollectorCredentialFingerprint(
+  passwordHash: string,
+  secret: string,
+) {
+  return createHmac("sha256", secret)
+    .update("collector-credential:")
+    .update(passwordHash)
+    .digest("base64url");
 }
 
 export async function clearCollectorSession() {
@@ -122,4 +150,20 @@ function clearInvalidCollectorCookie(
 
 function sessionSecret() {
   return process.env.COLLECTOR_SESSION_SECRET ?? "";
+}
+
+function hasMatchingCollectorCredential(
+  sessionFingerprint: string,
+  passwordHash: string,
+  secret: string,
+) {
+  const expected = Buffer.from(
+    createCollectorCredentialFingerprint(passwordHash, secret),
+    "base64url",
+  );
+  const received = Buffer.from(sessionFingerprint, "base64url");
+
+  return (
+    expected.length === received.length && timingSafeEqual(expected, received)
+  );
 }

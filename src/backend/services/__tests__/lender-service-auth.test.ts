@@ -1,0 +1,99 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  listDocuments: vi.fn(),
+  resolveAppwriteSession: vi.fn(),
+}));
+
+vi.mock("@/backend/appwrite/config", () => ({
+  appwriteServerConfig: {
+    apiKey: "runtime-key",
+    databaseId: "database",
+    collections: { lenders: "lenders" },
+  },
+}));
+
+vi.mock("@/backend/appwrite/server-client", async () => {
+  const { Query } = await import("node-appwrite");
+  return { databases: { listDocuments: mocks.listDocuments }, Query };
+});
+
+vi.mock("@/backend/services/auth-session-service", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/backend/services/auth-session-service")
+  >("@/backend/services/auth-session-service");
+  return {
+    ...actual,
+    resolveAppwriteSession: mocks.resolveAppwriteSession,
+  };
+});
+
+import { resolvePrimaryLender } from "../lender-service";
+
+describe("lender authentication resolution", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("maps a valid session to its active lender", async () => {
+    mocks.resolveAppwriteSession.mockResolvedValue({
+      status: "authenticated",
+      user: { $id: "user_A" },
+    });
+    mocks.listDocuments.mockResolvedValue({
+      documents: [
+        {
+          $id: "lender_A",
+          appwrite_user_id: "user_A",
+          company_name: "Lender A",
+          email: "owner@example.test",
+          status: "active",
+          currency: "USD",
+        },
+      ],
+    });
+
+    await expect(resolvePrimaryLender()).resolves.toMatchObject({
+      status: "authenticated",
+      lender: { id: "lender_A", appwriteUserId: "user_A" },
+    });
+  });
+
+  it("returns inactive when the user has no active lender profile", async () => {
+    mocks.resolveAppwriteSession.mockResolvedValue({
+      status: "authenticated",
+      user: { $id: "user_A" },
+    });
+    mocks.listDocuments.mockResolvedValue({
+      documents: [{ $id: "lender_A", status: "inactive" }],
+    });
+
+    await expect(resolvePrimaryLender()).resolves.toEqual({
+      status: "inactive",
+    });
+  });
+
+  it("preserves invalid and unavailable session states", async () => {
+    mocks.resolveAppwriteSession.mockResolvedValueOnce({ status: "invalid" });
+    await expect(resolvePrimaryLender()).resolves.toEqual({ status: "invalid" });
+
+    mocks.resolveAppwriteSession.mockResolvedValueOnce({
+      status: "unavailable",
+    });
+    await expect(resolvePrimaryLender()).resolves.toEqual({
+      status: "unavailable",
+    });
+  });
+
+  it("returns unavailable when the lender lookup fails", async () => {
+    mocks.resolveAppwriteSession.mockResolvedValue({
+      status: "authenticated",
+      user: { $id: "user_A" },
+    });
+    mocks.listDocuments.mockRejectedValue(new Error("Appwrite unavailable"));
+
+    await expect(resolvePrimaryLender()).resolves.toEqual({
+      status: "unavailable",
+    });
+  });
+});

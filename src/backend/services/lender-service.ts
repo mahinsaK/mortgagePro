@@ -1,7 +1,10 @@
 import { appwriteServerConfig } from "@/backend/appwrite/config";
 import { databases, Query } from "@/backend/appwrite/server-client";
 import { normalizeCurrency } from "@/backend/lib/currency";
-import { getCurrentAppwriteUser } from "@/backend/services/auth-session-service";
+import {
+  AuthenticationServiceUnavailableError,
+  resolveAppwriteSession,
+} from "@/backend/services/auth-session-service";
 
 export type LenderProfile = {
   id: string;
@@ -13,40 +16,69 @@ export type LenderProfile = {
   currency: string;
 };
 
-export async function getPrimaryLender(): Promise<LenderProfile | null> {
+export type LenderAuthResolution =
+  | { status: "anonymous" }
+  | { status: "invalid" }
+  | { status: "inactive" }
+  | { status: "unavailable" }
+  | { status: "authenticated"; lender: LenderProfile };
+
+export async function resolvePrimaryLender(): Promise<LenderAuthResolution> {
   if (!appwriteServerConfig.apiKey) {
-    return null;
+    return { status: "unavailable" };
   }
 
-  const user = await getCurrentAppwriteUser();
+  const session = await resolveAppwriteSession();
 
-  if (!user) {
-    return null;
+  if (session.status !== "authenticated") {
+    return session;
   }
 
-  const lenders = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.lenders,
-    queries: [
-      Query.equal("appwrite_user_id", user.$id),
-      Query.equal("status", "active"),
-      Query.limit(1),
-    ],
-  });
+  let lenders;
+
+  try {
+    lenders = await databases.listDocuments({
+      databaseId: appwriteServerConfig.databaseId,
+      collectionId: appwriteServerConfig.collections.lenders,
+      queries: [
+        Query.equal("appwrite_user_id", session.user.$id),
+        Query.limit(1),
+      ],
+    });
+  } catch {
+    return { status: "unavailable" };
+  }
 
   const lender = lenders.documents[0];
 
-  if (!lender) {
-    return null;
+  if (!lender || String(lender.status ?? "") !== "active") {
+    return { status: "inactive" };
   }
 
   return {
-    id: lender.$id,
-    appwriteUserId: String(lender.appwrite_user_id ?? ""),
-    companyName: String(lender.company_name ?? "MortgagePro"),
-    email: String(lender.email ?? ""),
-    contactInfo: String(lender.contact_info ?? ""),
-    status: String(lender.status ?? "active"),
-    currency: normalizeCurrency(String(lender.currency ?? "")),
+    status: "authenticated",
+    lender: {
+      id: lender.$id,
+      appwriteUserId: String(lender.appwrite_user_id ?? ""),
+      companyName: String(lender.company_name ?? "MortgagePro"),
+      email: String(lender.email ?? ""),
+      contactInfo: String(lender.contact_info ?? ""),
+      status: String(lender.status ?? "active"),
+      currency: normalizeCurrency(String(lender.currency ?? "")),
+    },
   };
+}
+
+export async function getPrimaryLender(): Promise<LenderProfile | null> {
+  const result = await resolvePrimaryLender();
+
+  if (result.status === "authenticated") {
+    return result.lender;
+  }
+
+  if (result.status === "unavailable") {
+    throw new AuthenticationServiceUnavailableError();
+  }
+
+  return null;
 }

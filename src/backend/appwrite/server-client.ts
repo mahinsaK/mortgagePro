@@ -10,6 +10,16 @@ const client = new Client()
 
 export const databases = new Databases(client);
 export const users = new Users(client);
+
+export function createAdminAccountClient() {
+  const accountClient = new Client()
+    .setEndpoint(appwriteServerConfig.endpoint)
+    .setProject(appwriteServerConfig.projectId)
+    .setKey(appwriteServerConfig.apiKey);
+
+  return new Account(accountClient);
+}
+
 export function createAccountClient(session?: string) {
   const accountClient = new Client()
     .setEndpoint(appwriteServerConfig.endpoint)

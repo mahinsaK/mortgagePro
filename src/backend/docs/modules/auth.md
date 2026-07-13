@@ -48,9 +48,10 @@ The current Appwrite Auth seed user is created by:
 Login:
 
 ```txt
-Account.createEmailPasswordSession(email, password)
+Admin Account.createEmailPasswordSession(email, password)
 Query.equal("appwrite_user_id", session.userId)
 Query.equal("status", "active")
+set mortgagepro_session = session.secret
 ```
 
 Registration:
@@ -58,7 +59,7 @@ Registration:
 ```txt
 Users.create(userId, email, password, companyName)
 databases.createDocument(lenders, ...)
-Account.createEmailPasswordSession(email, password)
+Users.createSession(userId)
 ```
 
 Password reset:
@@ -77,7 +78,15 @@ Account.deleteSession("current")
 Session handling:
 
 - Stores the Appwrite session secret in an HTTP-only `mortgagepro_session` cookie.
-- `getPrimaryLender()` maps the current Appwrite user to `lenders.appwrite_user_id`.
+- Creates one Appwrite session per successful lender login.
+- Resolves sessions as anonymous, authenticated, invalid, or unavailable without
+  modifying cookies during page rendering.
+- Invalid or inactive sessions redirect through `/auth/session/clear`, which
+  expires the cookie and returns the lender to login.
+- Appwrite outages preserve the cookie and display `/auth/unavailable`.
+- `resolvePrimaryLender()` maps the current Appwrite user to
+  `lenders.appwrite_user_id`; `getPrimaryLender()` remains the service-level
+  compatibility helper.
 
 Collector authentication is separate from Appwrite Auth. See
 `modules/collectors.md` for collector ID login and 12-hour revocable sessions.

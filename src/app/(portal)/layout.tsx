@@ -1,5 +1,5 @@
 import { PortalShell } from "@/frontend/components/layout/portal-shell";
-import { getPrimaryLender } from "@/backend/services/lender-service";
+import { resolvePrimaryLender } from "@/backend/services/lender-service";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -9,13 +9,21 @@ export default async function PortalLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const lender = await getPrimaryLender();
+  const auth = await resolvePrimaryLender();
 
-  if (!lender) {
+  if (auth.status === "invalid" || auth.status === "inactive") {
+    redirect("/auth/session/clear");
+  }
+
+  if (auth.status === "unavailable") {
+    redirect("/auth/unavailable");
+  }
+
+  if (auth.status === "anonymous") {
     redirect("/auth/login");
   }
 
   return (
-    <PortalShell lender={lender}>{children}</PortalShell>
+    <PortalShell lender={auth.lender}>{children}</PortalShell>
   );
 }

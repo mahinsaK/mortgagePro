@@ -1,11 +1,13 @@
 "use server";
 
+import { AppwriteException, type Models } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { appwriteServerConfig } from "@/backend/appwrite/config";
 import {
   createAccountClient,
+  createAdminAccountClient,
   databases,
   ID,
   Query,
@@ -27,14 +29,18 @@ export async function loginAction(formData: FormData) {
     redirectWithAuthStatus("/auth/login", "error", result.error ?? "Login failed.");
   }
 
-  let session;
+  let session: Models.Session;
 
   try {
-    session = await createAccountClient().createEmailPasswordSession({
+    session = await createAdminAccountClient().createEmailPasswordSession({
       email: result.data.email,
       password: result.data.password,
     });
-  } catch {
+  } catch (error) {
+    if (!isRejectedLogin(error)) {
+      redirect("/auth/unavailable");
+    }
+
     redirectWithAuthStatus(
       "/auth/login",
       "error",
@@ -42,10 +48,22 @@ export async function loginAction(formData: FormData) {
     );
   }
 
-  const lender = await findLenderByAppwriteUserId(session.userId);
+  if (!session.secret) {
+    await revokeAppwriteSession(session);
+    redirect("/auth/unavailable");
+  }
+
+  let lender;
+
+  try {
+    lender = await findLenderByAppwriteUserId(session.userId);
+  } catch {
+    await revokeAppwriteSession(session);
+    redirect("/auth/unavailable");
+  }
 
   if (!lender) {
-    await clearAuthSession();
+    await revokeAppwriteSession(session);
     redirectWithAuthStatus(
       "/auth/login",
       "error",
@@ -53,7 +71,13 @@ export async function loginAction(formData: FormData) {
     );
   }
 
-  await createAndStoreServerSession(session.userId);
+  try {
+    await setAuthSessionSecret(session.secret, session.expire);
+  } catch {
+    await revokeAppwriteSession(session);
+    redirect("/auth/unavailable");
+  }
+
   redirect("/dashboard/lender");
 }
 
@@ -130,10 +154,16 @@ async function createAndStoreServerSession(userId: string) {
   const session = await users.createSession({ userId });
 
   if (!session.secret) {
+    await revokeAppwriteSession(session);
     throw new Error("Could not create an Appwrite server session.");
   }
 
-  await setAuthSessionSecret(session.secret, session.expire);
+  try {
+    await setAuthSessionSecret(session.secret, session.expire);
+  } catch (error) {
+    await revokeAppwriteSession(session);
+    throw error;
+  }
 }
 
 export async function requestPasswordResetAction(formData: FormData) {
@@ -278,4 +308,27 @@ function getAppwriteMessage(error: unknown, fallback: string) {
   }
 
   return fallback;
+}
+
+function isRejectedLogin(error: unknown) {
+  return (
+    error instanceof AppwriteException &&
+    error.code === 401 &&
+    ["user_invalid_credentials", "user_blocked", "user_unauthorized"].includes(
+      error.type,
+    )
+  );
+}
+
+async function revokeAppwriteSession(
+  session: Pick<Models.Session, "$id" | "userId">,
+) {
+  try {
+    await users.deleteSession({
+      userId: session.userId,
+      sessionId: session.$id,
+    });
+  } catch {
+    // Session cleanup is best-effort and must not expose session details.
+  }
 }

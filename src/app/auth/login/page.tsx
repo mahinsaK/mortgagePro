@@ -2,7 +2,7 @@ import Link from "next/link";
 import { KeyRound, QrCode, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
 import { loginAction } from "@/backend/actions/auth-actions";
-import { getPrimaryLender } from "@/backend/services/lender-service";
+import { resolvePrimaryLender } from "@/backend/services/lender-service";
 import { LoginForm } from "@/frontend/components/auth/login-form";
 
 export const dynamic = "force-dynamic";
@@ -13,10 +13,18 @@ export default async function LoginPage({
   searchParams: Promise<{ message?: string; status?: string }>;
 }) {
   const { message, status } = await searchParams;
-  const lender = await getPrimaryLender();
+  const auth = await resolvePrimaryLender();
 
-  if (lender) {
+  if (auth.status === "authenticated") {
     redirect("/dashboard/lender");
+  }
+
+  if (auth.status === "invalid" || auth.status === "inactive") {
+    redirect("/auth/session/clear");
+  }
+
+  if (auth.status === "unavailable") {
+    redirect("/auth/unavailable");
   }
 
   return (

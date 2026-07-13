@@ -84,43 +84,55 @@ export async function getLenderDashboardData(
     loanQueries.splice(1, 0, Query.search("search_text", searchQuery));
   }
 
-  const [initialLoans, totalBorrowers, activeLoans, todaysPayments] = await Promise.all([
-    databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.loans,
-      queries: loanQueries,
-    }),
-    databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.borrowers,
-      queries: [
-        Query.equal("lender_id", lender.id),
-        Query.limit(1),
-        Query.select(["$id"]),
-      ],
-    }),
-    databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.loans,
-      queries: [
-        Query.equal("lender_id", lender.id),
-        Query.equal("status", "active"),
-        Query.limit(1),
-        Query.select(["$id"]),
-      ],
-    }),
-    databases.listDocuments({
-      databaseId: appwriteServerConfig.databaseId,
-      collectionId: appwriteServerConfig.collections.payments,
-      queries: [
-        Query.equal("lender_id", lender.id),
-        Query.greaterThanEqual("date", todayRange.start),
-        Query.lessThan("date", todayRange.end),
-        Query.limit(MAX_DAILY_PAYMENT_LIMIT),
-        Query.select(["amount"]),
-      ],
-    }),
-  ]);
+  const [initialLoans, totalBorrowers, activeLoans, todaysPayments, overdueLoans] =
+    await Promise.all([
+      databases.listDocuments({
+        databaseId: appwriteServerConfig.databaseId,
+        collectionId: appwriteServerConfig.collections.loans,
+        queries: loanQueries,
+      }),
+      databases.listDocuments({
+        databaseId: appwriteServerConfig.databaseId,
+        collectionId: appwriteServerConfig.collections.borrowers,
+        queries: [
+          Query.equal("lender_id", lender.id),
+          Query.limit(1),
+          Query.select(["$id"]),
+        ],
+      }),
+      databases.listDocuments({
+        databaseId: appwriteServerConfig.databaseId,
+        collectionId: appwriteServerConfig.collections.loans,
+        queries: [
+          Query.equal("lender_id", lender.id),
+          Query.equal("status", "active"),
+          Query.limit(1),
+          Query.select(["$id"]),
+        ],
+      }),
+      databases.listDocuments({
+        databaseId: appwriteServerConfig.databaseId,
+        collectionId: appwriteServerConfig.collections.payments,
+        queries: [
+          Query.equal("lender_id", lender.id),
+          Query.greaterThanEqual("date", todayRange.start),
+          Query.lessThan("date", todayRange.end),
+          Query.limit(MAX_DAILY_PAYMENT_LIMIT),
+          Query.select(["amount"]),
+        ],
+      }),
+      databases.listDocuments({
+        databaseId: appwriteServerConfig.databaseId,
+        collectionId: appwriteServerConfig.collections.loans,
+        queries: [
+          Query.equal("lender_id", lender.id),
+          Query.equal("status", ["active", "overdue"]),
+          Query.lessThan("end_date", todayRange.end),
+          Query.limit(1),
+          Query.select(["$id"]),
+        ],
+      }),
+    ]);
   const loans =
     searchQuery && initialLoans.total === 0
       ? await findLoansByBorrowerSearch(lender.id, searchQuery, pagination)
@@ -182,9 +194,9 @@ export async function getLenderDashboardData(
         change: "Collected today",
       },
       {
-        label: "",
-        value: "",
-        change: "",
+        label: "Overdue loans",
+        value: String(overdueLoans.total),
+        change: "Past the end date",
       },
     ],
     loans: loans.documents.map((loan) => {
@@ -271,7 +283,7 @@ function emptyStats() {
     { label: "Total borrowers", value: "0", change: "Registered profiles" },
     { label: "Active loans", value: "0", change: "Currently running" },
     { label: "Today's collection", value: formatMoney(0, "USD"), change: "Collected today" },
-    { label: "", value: "", change: "" },
+    { label: "Overdue loans", value: "0", change: "Past the end date" },
   ];
 }
 

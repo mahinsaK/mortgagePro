@@ -26,7 +26,6 @@ export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) 
           <tr className="border-t border-[#eef2f6]" key={collector.id}>
             <td className="px-5 py-4">
               <p className="font-medium">{collector.name}</p>
-              <p className="mt-1 text-[13px] text-[#657386]">{collector.id}</p>
             </td>
             <td className="px-5 py-4 text-[#657386]">
               {collector.contactInfo || "No contact info"}

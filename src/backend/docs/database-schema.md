@@ -94,6 +94,7 @@ Indexes:
 - `idx_loan_borrower_id`: helps find loans for a borrower.
 - `idx_loan_status`: helps filter loans by status.
 - `idx_loan_lender_status`: helps count active loans for one lender.
+- `idx_loan_lender_status_end`: helps count overdue loans for one lender by status and end date.
 - `idx_loan_lender_borrower`: helps list loans for one lender and one borrower.
 - `idx_loan_lender_created`: helps list one lender's loans ordered by creation date.
 - `idx_loan_search_text`: fulltext index used by dashboard loan search.

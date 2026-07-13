@@ -16,6 +16,7 @@ Shows lender overview data:
 - Total borrower count.
 - Active loan count.
 - Today's collection amount.
+- Overdue loan count.
 - Searchable/paginated loan list.
 - Date-range CSV exports for payments and borrowers.
 
@@ -35,12 +36,13 @@ Path: `src/backend/services/dashboard-service.ts`
 
 Function: `getLenderDashboardData(options)`
 
-The service runs four main queries in parallel:
+The service runs five main queries in parallel:
 
 1. Dashboard loans list from `loans`.
 2. Total borrower count from `borrowers`.
 3. Active loan count from `loans`.
 4. Today's payment amounts from `payments`.
+5. Overdue loan count from `loans`.
 
 ## Dashboard loans list query
 
@@ -117,6 +119,22 @@ Query.select(["amount"])
 ```
 
 The service sums only the payment amounts returned for today.
+
+## Overdue loans query
+
+Collection: `loans`
+
+```txt
+Query.equal("lender_id", lender.id)
+Query.equal("status", ["active", "overdue"])
+Query.lessThan("end_date", tomorrowStartIso)
+Query.limit(1)
+Query.select(["$id"])
+```
+
+The dashboard counts an unfinished loan as overdue once its end date is reached. Completed and
+cancelled loans are excluded. The card reads `overdueLoans.total`, so the service does not load all
+overdue loans into memory.
 
 ## Search behavior
 

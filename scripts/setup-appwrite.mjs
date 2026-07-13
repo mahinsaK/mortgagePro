@@ -121,6 +121,7 @@ const schema = [
       keyIndex("idx_loan_borrower_id", ["borrower_id"]),
       keyIndex("idx_loan_status", ["status"]),
       keyIndex("idx_loan_lender_status", ["lender_id", "status"]),
+      keyIndex("idx_loan_lender_status_end", ["lender_id", "status", "end_date"]),
       keyIndex("idx_loan_lender_borrower", ["lender_id", "borrower_id"]),
       keyIndex("idx_loan_lender_created", ["lender_id", "created_at"]),
       fulltextIndex("idx_loan_search_text", ["search_text"]),

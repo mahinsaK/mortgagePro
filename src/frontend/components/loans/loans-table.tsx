@@ -10,11 +10,10 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
   return (
     <>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1120px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[1020px] border-collapse text-left text-sm">
           <thead className="bg-[#f8fafc] text-[#657386]">
             <tr>
               <th className="px-5 py-3 font-semibold">QR</th>
-              <th className="px-5 py-3 font-semibold">Loan</th>
               <th className="px-5 py-3 font-semibold">Borrower</th>
               <th className="px-5 py-3 font-semibold">Amount</th>
               <th className="px-5 py-3 font-semibold">Total paid</th>
@@ -42,7 +41,6 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
                     Download
                   </a>
                 </td>
-                <td className="px-5 py-4 font-medium">{loan.id}</td>
                 <td className="px-5 py-4">{loan.borrowerName}</td>
                 <td className="px-5 py-4">{loan.amount}</td>
                 <td className="px-5 py-4">{loan.totalPaid}</td>
@@ -59,7 +57,7 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
             ))}
             {loans.length === 0 ? (
               <tr className="border-t border-[#eef2f6]">
-                <td className="px-5 py-6 text-[#657386]" colSpan={10}>
+                <td className="px-5 py-6 text-[#657386]" colSpan={9}>
                   No loans found.
                 </td>
               </tr>

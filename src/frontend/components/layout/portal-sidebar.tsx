@@ -10,6 +10,7 @@ import {
   ChevronRight,
   HandCoins,
   LayoutDashboard,
+  LogOut,
   MessageSquareText,
   Users,
 } from "lucide-react";
@@ -40,8 +41,8 @@ export function PortalSidebar({
     >
       <div className="flex h-20 items-center justify-between gap-3 border-b border-[#dfe5ec] px-4">
         <div className={collapsed ? "sr-only" : ""}>
-          <p className="text-sm font-semibold text-[#2563eb]">MortgagePro</p>
-          <p className="mt-1 text-xs font-medium uppercase tracking-[0.16em] text-[#657386]">
+          <p className="text-base font-semibold text-[#2563eb]">MortgagePro</p>
+          <p className="mt-1 text-[13px] font-medium uppercase tracking-[0.14em] text-[#657386]">
             Lender portal
           </p>
         </div>
@@ -67,7 +68,7 @@ export function PortalSidebar({
           return (
             <Link
               aria-label={item.label}
-              className={`mb-1 flex h-11 items-center rounded-md px-3 text-sm font-medium transition ${
+              className={`mb-1 flex h-11 items-center rounded-md px-3 text-[15px] font-medium transition ${
                 isActive
                   ? "bg-[#e0ecff] text-[#1d4ed8]"
                   : "text-[#425066] hover:bg-[#f1f5f9] hover:text-[#15191f]"
@@ -76,7 +77,7 @@ export function PortalSidebar({
               key={item.href}
               title={collapsed ? item.label : undefined}
             >
-              <Icon aria-hidden="true" className="shrink-0" size={18} />
+              <Icon aria-hidden="true" className="shrink-0" size={19} />
               <span className={collapsed ? "sr-only" : "ml-3"}>
                 {item.label}
               </span>
@@ -85,14 +86,16 @@ export function PortalSidebar({
         })}
       </nav>
 
-      <div className="border-t border-[#dfe5ec] p-4">
+      <div className="mt-auto border-t border-[#dfe5ec] p-3">
         <form action={logoutAction}>
           <button
-          className="flex h-10 items-center justify-center rounded-md border border-[#cfd8e3] text-sm font-medium text-[#2d3745] transition hover:border-[#94a3b8] hover:bg-[#f8fafc]"
-          title={collapsed ? "Sign out" : undefined}
+            aria-label="Sign out"
+            className="flex h-11 w-full items-center justify-center rounded-md bg-[#dc2626] px-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#b91c1c] focus:outline-none focus:ring-2 focus:ring-[#fecaca] focus:ring-offset-2"
+            title={collapsed ? "Sign out" : undefined}
             type="submit"
-        >
-          {collapsed ? "Out" : "Sign out"}
+          >
+            <LogOut aria-hidden="true" className="shrink-0" size={18} />
+            <span className={collapsed ? "sr-only" : "ml-2"}>Sign out</span>
           </button>
         </form>
       </div>

@@ -81,11 +81,11 @@ export function DateRangeCsvExport({
       <Popover.Trigger asChild>
         <button
           aria-label="Export CSV"
-          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#15191f] text-white transition hover:bg-[#2d3745]"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#15191f] text-white shadow-sm transition hover:bg-[#2d3745]"
           title="Export CSV"
           type="button"
         >
-          <Download aria-hidden="true" size={17} />
+          <Download aria-hidden="true" size={16} />
           <span className="sr-only">Export CSV</span>
         </button>
       </Popover.Trigger>

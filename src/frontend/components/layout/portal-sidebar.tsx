@@ -68,7 +68,9 @@ export function PortalSidebar({
           return (
             <Link
               aria-label={item.label}
-              className={`mb-1 flex h-11 items-center rounded-md px-3 text-[15px] font-medium transition ${
+              className={`mb-1 flex h-11 items-center rounded-md text-[15px] font-medium transition ${
+                collapsed ? "justify-center px-0" : "px-3"
+              } ${
                 isActive
                   ? "bg-[#e0ecff] text-[#1d4ed8]"
                   : "text-[#425066] hover:bg-[#f1f5f9] hover:text-[#15191f]"
@@ -90,7 +92,7 @@ export function PortalSidebar({
         <form action={logoutAction}>
           <button
             aria-label="Sign out"
-            className="flex h-11 w-full items-center justify-center rounded-md bg-[#dc2626] px-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#b91c1c] focus:outline-none focus:ring-2 focus:ring-[#fecaca] focus:ring-offset-2"
+            className="flex h-11 w-full items-center justify-center rounded-md bg-[#15191f] px-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#2d3745] focus:outline-none focus:ring-2 focus:ring-[#cbd5e1] focus:ring-offset-2"
             title={collapsed ? "Sign out" : undefined}
             type="submit"
           >

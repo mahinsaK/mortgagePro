@@ -43,6 +43,8 @@ const templates = [
 ];
 
 export function SmsWorkbench({ count, message, phone, status }: SmsWorkbenchProps) {
+  const [customNumber, setCustomNumber] = useState("");
+  const [customNumberError, setCustomNumberError] = useState("");
   const [messageText, setMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Recipient[]>([]);
@@ -93,7 +95,10 @@ export function SmsWorkbench({ count, message, phone, status }: SmsWorkbenchProp
     setSelectedRecipients((currentRecipients) => {
       if (
         currentRecipients.some(
-          (currentRecipient) => currentRecipient.id === recipient.id,
+          (currentRecipient) =>
+            currentRecipient.id === recipient.id ||
+            phoneIdentity(currentRecipient.phoneNumber) ===
+              phoneIdentity(recipient.phoneNumber),
         )
       ) {
         return currentRecipients;
@@ -109,114 +114,180 @@ export function SmsWorkbench({ count, message, phone, status }: SmsWorkbenchProp
     );
   }
 
+  function addCustomNumber() {
+    const value = customNumber.trim();
+    const digits = phoneIdentity(value);
+
+    if (digits.length < 7 || digits.length > 15) {
+      setCustomNumberError("Enter a phone number containing 7 to 15 digits.");
+      return;
+    }
+
+    if (
+      selectedRecipients.some(
+        (recipient) => phoneIdentity(recipient.phoneNumber) === digits,
+      )
+    ) {
+      setCustomNumberError("That phone number is already selected.");
+      return;
+    }
+
+    addRecipient({
+      id: `custom-${digits}`,
+      name: "Custom number",
+      businessName: "",
+      phoneNumber: value.startsWith("+") ? `+${digits}` : digits,
+    });
+    setCustomNumber("");
+    setCustomNumberError("");
+  }
+
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-      <section className="rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm">
-        <div className="mb-5">
-          <p className="text-sm font-medium text-[#657386]">Selected SMS</p>
-          <h2 className="mt-1 text-lg font-semibold">Borrower recipients</h2>
-        </div>
+    <div className="grid gap-6">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <section className="rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm">
+          <div className="mb-5">
+            <p className="text-sm font-medium text-[#657386]">Selected SMS</p>
+            <h2 className="mt-1 text-lg font-semibold">Message recipients</h2>
+          </div>
 
-        <StatusBanner count={count} message={message} phone={phone} status={status} />
+          <StatusBanner count={count} message={message} phone={phone} status={status} />
 
-        <div className="grid gap-5">
-          <label className="text-sm font-medium text-[#2d3745]">
-            Search borrowers
-            <div className="mt-2 flex gap-2">
-              <div className="flex h-11 flex-1 items-center rounded-md border border-[#cfd8e3] px-3 transition focus-within:border-[#1d4ed8] focus-within:ring-2 focus-within:ring-[#dbeafe]">
-                <Search
-                  aria-hidden="true"
-                  className="mr-2 shrink-0 text-[#657386]"
-                  size={18}
-                />
+          <div className="grid gap-5">
+            <label className="text-sm font-medium text-[#2d3745]">
+              Search borrowers
+              <div className="mt-2 flex gap-2">
+                <div className="flex h-11 flex-1 items-center rounded-md border border-[#cfd8e3] px-3 transition focus-within:border-[#1d4ed8] focus-within:ring-2 focus-within:ring-[#dbeafe]">
+                  <Search
+                    aria-hidden="true"
+                    className="mr-2 shrink-0 text-[#657386]"
+                    size={18}
+                  />
+                  <input
+                    className="h-full w-full border-0 bg-transparent text-sm outline-none"
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void searchBorrowers();
+                      }
+                    }}
+                    placeholder="Borrower name or contact number"
+                    type="search"
+                    value={searchQuery}
+                  />
+                </div>
+                <button
+                  className="h-11 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
+                  disabled={isSearching}
+                  onClick={() => void searchBorrowers()}
+                  type="button"
+                >
+                  {isSearching ? "Searching" : "Search"}
+                </button>
+              </div>
+            </label>
+
+            <SearchResults
+              error={searchError}
+              hasSearched={hasSearched}
+              onAdd={addRecipient}
+              recipients={searchResults}
+              selectedRecipients={selectedRecipients}
+            />
+
+            <label className="text-sm font-medium text-[#2d3745]">
+              Add a custom phone number
+              <div className="mt-2 flex gap-2">
                 <input
-                  className="h-full w-full border-0 bg-transparent text-sm outline-none"
-                  onChange={(event) => setSearchQuery(event.target.value)}
+                  className="h-11 min-w-0 flex-1 rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+                  onChange={(event) => {
+                    setCustomNumber(event.target.value);
+                    setCustomNumberError("");
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
                       event.preventDefault();
-                      void searchBorrowers();
+                      addCustomNumber();
                     }
                   }}
-                  placeholder="Borrower name or contact number"
-                  type="search"
-                  value={searchQuery}
+                  placeholder="+94 77 123 4567"
+                  type="tel"
+                  value={customNumber}
                 />
+                <button
+                  className="h-11 rounded-md border border-[#cfd8e3] bg-white px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc]"
+                  onClick={addCustomNumber}
+                  type="button"
+                >
+                  Add
+                </button>
               </div>
-              <button
-                className="h-11 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
-                disabled={isSearching}
-                onClick={() => void searchBorrowers()}
-                type="button"
-              >
-                {isSearching ? "Searching" : "Search"}
-              </button>
-            </div>
-          </label>
-
-          <SearchResults
-            error={searchError}
-            hasSearched={hasSearched}
-            onAdd={addRecipient}
-            recipients={searchResults}
-            selectedRecipients={selectedRecipients}
-          />
-
-          <SelectedRecipients
-            onRemove={removeRecipient}
-            recipients={selectedRecipients}
-          />
-
-          <TemplateCards onSelect={setMessageText} />
-
-          <form action={sendSelectedSmsAction} className="grid gap-4">
-            <input
-              name="recipients"
-              type="hidden"
-              value={selectedRecipientsPayload}
-            />
-            <label className="text-sm font-medium text-[#2d3745]">
-              Message
-              <textarea
-                className="mt-2 min-h-40 w-full resize-y rounded-md border border-[#cfd8e3] px-3 py-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
-                maxLength={480}
-                name="message"
-                onChange={(event) => setMessageText(event.target.value)}
-                placeholder="Type the customer message"
-                required
-                value={messageText}
-              />
+              {customNumberError ? (
+                <span className="mt-2 block text-sm font-medium text-[#b91c1c]">
+                  {customNumberError}
+                </span>
+              ) : null}
             </label>
-            <div className="flex flex-wrap justify-end gap-2">
-              <button
-                className="inline-flex h-11 items-center gap-2 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
-                disabled={!messageText.trim()}
-                formAction={sendAllBorrowersSmsAction}
-                onClick={(event) => {
-                  if (!confirm("Send this SMS to all borrowers?")) {
-                    event.preventDefault();
-                  }
-                }}
-                title="Sends this message to every borrower under this lender account."
-                type="submit"
-              >
-                <Users aria-hidden="true" size={17} />
-                Send all borrowers
-              </button>
-              <button
-                className="inline-flex h-11 items-center gap-2 rounded-md bg-[#15191f] px-5 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
-                disabled={selectedRecipients.length === 0 || !messageText.trim()}
-                type="submit"
-              >
-                <Send aria-hidden="true" size={17} />
-                Send selected
-              </button>
-            </div>
-          </form>
-        </div>
-      </section>
 
-      <QuickSmsPanel />
+            <SelectedRecipients
+              onRemove={removeRecipient}
+              recipients={selectedRecipients}
+            />
+
+            <form action={sendSelectedSmsAction} className="grid gap-4">
+              <input
+                name="recipients"
+                type="hidden"
+                value={selectedRecipientsPayload}
+              />
+              <label className="text-sm font-medium text-[#2d3745]">
+                Message
+                <textarea
+                  className="mt-2 min-h-40 w-full resize-y rounded-md border border-[#cfd8e3] px-3 py-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+                  maxLength={480}
+                  name="message"
+                  onChange={(event) => setMessageText(event.target.value)}
+                  placeholder="Type the customer message"
+                  required
+                  value={messageText}
+                />
+              </label>
+              <div className="flex flex-wrap justify-end gap-2">
+                <button
+                  className="inline-flex h-11 items-center gap-2 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
+                  disabled={!messageText.trim()}
+                  formAction={sendAllBorrowersSmsAction}
+                  onClick={(event) => {
+                    if (!confirm("Send this SMS to all borrowers?")) {
+                      event.preventDefault();
+                    }
+                  }}
+                  title="Sends this message to every borrower under this lender account."
+                  type="submit"
+                >
+                  <Users aria-hidden="true" size={17} />
+                  Send all borrowers
+                </button>
+                <button
+                  className="inline-flex h-11 items-center gap-2 rounded-md bg-[#15191f] px-5 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
+                  disabled={
+                    selectedRecipients.length === 0 || !messageText.trim()
+                  }
+                  type="submit"
+                >
+                  <Send aria-hidden="true" size={17} />
+                  Send selected
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <QuickSmsPanel />
+      </div>
+
+      <TemplateCards onSelect={setMessageText} />
     </div>
   );
 }
@@ -236,6 +307,9 @@ function SearchResults({
 }) {
   const selectedRecipientIds = new Set(
     selectedRecipients.map((recipient) => recipient.id),
+  );
+  const selectedPhoneNumbers = new Set(
+    selectedRecipients.map((recipient) => phoneIdentity(recipient.phoneNumber)),
   );
 
   if (error) {
@@ -257,7 +331,9 @@ function SearchResults({
   return (
     <div className="grid gap-2">
       {recipients.map((recipient) => {
-        const isSelected = selectedRecipientIds.has(recipient.id);
+        const isSelected =
+          selectedRecipientIds.has(recipient.id) ||
+          selectedPhoneNumbers.has(phoneIdentity(recipient.phoneNumber));
 
         return (
           <article
@@ -300,7 +376,7 @@ function SelectedRecipients({
     <div className="min-h-20 rounded-md border border-[#dfe5ec] bg-[#f8fafc] p-3">
       <div className="mb-2 flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-[#2d3745]">
-          Selected borrowers
+          Selected recipients
         </p>
         <span className="text-xs font-semibold text-[#657386]">
           {recipients.length}
@@ -312,9 +388,11 @@ function SelectedRecipients({
             className="inline-flex h-8 items-center gap-2 rounded-md border border-[#cfd8e3] bg-white px-2.5 text-xs font-semibold text-[#2d3745]"
             key={recipient.id}
           >
-            {recipient.name || recipient.phoneNumber}
+            {recipient.name === "Custom number"
+              ? recipient.phoneNumber
+              : `${recipient.name || "Recipient"} · ${recipient.phoneNumber}`}
             <button
-              aria-label={`Remove ${recipient.name}`}
+              aria-label={`Remove ${recipient.name || recipient.phoneNumber}`}
               className="text-[#657386] transition hover:text-[#b91c1c]"
               onClick={() => onRemove(recipient.id)}
               type="button"
@@ -324,7 +402,7 @@ function SelectedRecipients({
           </span>
         ))}
         {recipients.length === 0 ? (
-          <span className="text-sm text-[#657386]">No selected borrowers</span>
+          <span className="text-sm text-[#657386]">No selected recipients</span>
         ) : null}
       </div>
     </div>
@@ -333,16 +411,16 @@ function SelectedRecipients({
 
 function TemplateCards({ onSelect }: { onSelect: (message: string) => void }) {
   return (
-    <div className="rounded-md border border-[#dfe5ec] bg-[#f8fafc] p-3">
+    <section className="rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold text-[#2d3745]">
+        <h2 className="text-lg font-semibold text-[#15191f]">
           Message templates
-        </p>
+        </h2>
         <span className="text-xs font-semibold text-[#657386]">
           Click to fill
         </span>
       </div>
-      <div className="mt-3 grid gap-2">
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
         {templates.map((template) => (
           <button
             className="rounded-md border border-[#dfe5ec] bg-white p-3 text-left transition hover:border-[#bfdbfe] hover:bg-[#f8fafc]"
@@ -366,8 +444,12 @@ function TemplateCards({ onSelect }: { onSelect: (message: string) => void }) {
           </button>
         ))}
       </div>
-    </div>
+    </section>
   );
+}
+
+function phoneIdentity(value: string) {
+  return value.replace(/\D/g, "");
 }
 
 function QuickSmsPanel() {

@@ -39,7 +39,7 @@ export function LenderDashboardLoansPanel({
 
   return (
     <div className="mt-6">
-      <div className="mb-6 flex flex-wrap items-center gap-2">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <form
           action="/dashboard/lender"
           className="flex w-full max-w-lg gap-2"

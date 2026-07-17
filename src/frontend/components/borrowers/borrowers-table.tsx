@@ -52,7 +52,7 @@ export function BorrowersTable({ borrowers }: { borrowers: BorrowerRow[] }) {
             role="link"
             tabIndex={0}
           >
-            <td className="px-5 py-4 font-medium text-[#1d4ed8]">
+            <td className="px-5 py-4 font-semibold text-[#15191f]">
               {borrower.name}
             </td>
             <td className="px-5 py-4 text-[#657386]">

@@ -85,6 +85,14 @@ describe("dashboard-service", () => {
         });
       }
 
+      if (
+        collectionId === "loans" &&
+        joinedQueries.includes('"attribute":"end_date"') &&
+        joinedQueries.includes('"method":"lessThan"')
+      ) {
+        return Promise.resolve({ documents: [], total: 3 });
+      }
+
       if (collectionId === "borrowers" && joinedQueries.includes('"attribute":"$id"')) {
         return Promise.resolve({
           documents: [
@@ -133,5 +141,21 @@ describe("dashboard-service", () => {
       borrower: "Avery Johnson",
       borrowerContact: "+1 555 0101",
     });
+    expect(dashboard.stats[3]).toEqual({
+      label: "Overdue loans",
+      value: "3",
+      change: "Past the end date",
+    });
+
+    const overdueCall = mocks.listDocuments.mock.calls.find(
+      ([params]) =>
+        params.collectionId === "loans" &&
+        (params.queries as string[]).join(" ").includes('"method":"lessThan"'),
+    );
+    const overdueQueries = overdueCall?.[0].queries.join(" ") ?? "";
+
+    expect(overdueQueries).toContain('"attribute":"lender_id"');
+    expect(overdueQueries).toContain('"values":["active","overdue"]');
+    expect(overdueQueries).toContain('"attribute":"end_date"');
   });
 });

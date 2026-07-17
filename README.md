@@ -27,7 +27,7 @@ MortgagePro is a Next.js application for managing a small lending operation end 
 - `/auth/register` - account registration.
 - `/auth/password-reset` - password recovery.
 - `/collector/login` - collector username and password sign-in.
-- `/collector/scan` - QR-based collector workflow.
+- `/collector/scan` - camera-based QR workflow with a payment-details popup and daily/custom amount entry.
 - `/dashboard/*` - role-specific dashboards.
 - `/borrowers` - borrower management.
 - `/loans` - loan management.

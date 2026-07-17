@@ -25,11 +25,10 @@ export default async function PaymentsPage({
           <h2 className="text-lg font-semibold">Payments list</h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[880px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[760px] border-collapse text-left text-sm">
             <thead className="bg-[#f8fafc] text-[#657386]">
               <tr>
                 <th className="px-5 py-3 font-semibold">Borrower</th>
-                <th className="px-5 py-3 font-semibold">Loan</th>
                 <th className="px-5 py-3 font-semibold">Collector</th>
                 <th className="px-5 py-3 font-semibold">Amount</th>
                 <th className="px-5 py-3 font-semibold">Method</th>
@@ -40,11 +39,10 @@ export default async function PaymentsPage({
               {payments.map((payment) => (
                 <tr className="border-t border-[#eef2f6]" key={payment.id}>
                   <td className="px-5 py-4">{payment.borrowerName}</td>
-                  <td className="px-5 py-4 text-[#657386]">{payment.loanId}</td>
                   <td className="px-5 py-4">{payment.collectorName}</td>
                   <td className="px-5 py-4">{payment.amount}</td>
                   <td className="px-5 py-4">
-                    <span className="rounded-full bg-[#e0ecff] px-3 py-1 text-xs font-semibold text-[#1d4ed8]">
+                    <span className="rounded-full bg-[#e0ecff] px-3 py-1 text-[13px] font-semibold text-[#1d4ed8]">
                       {payment.method}
                     </span>
                   </td>
@@ -53,7 +51,7 @@ export default async function PaymentsPage({
               ))}
               {payments.length === 0 ? (
                 <tr className="border-t border-[#eef2f6]">
-                  <td className="px-5 py-6 text-[#657386]" colSpan={6}>
+                  <td className="px-5 py-6 text-[#657386]" colSpan={5}>
                     No payments found.
                   </td>
                 </tr>

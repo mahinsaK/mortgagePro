@@ -60,7 +60,7 @@ Direct answers:
 | Shared tenant-aware reads/writes | Implemented in `b9cbf2a` | Pending deployment |
 | Collector username login and copy UI | Implemented in source | Pending deployment |
 | 12-hour credential-bound collector sessions | Implemented in source | Pending secret/deployment |
-| Tenant/session automated tests | 84 tests passing | Local/mocked coverage complete |
+| Tenant/session automated tests | 85 tests passing | Local/mocked coverage complete |
 | Direct Appwrite session denial verifier | Implemented in `61e6f08` | Must run after permission apply |
 
 The exact deployment, verification, key rotation, and rollback procedure is in
@@ -499,7 +499,7 @@ Gaps requiring enterprise hardening:
 
 ## Authorization test coverage
 
-The remediated local suite has 26 test files and 84 passing tests. New critical
+The remediated local suite has 27 test files and 85 passing tests. New critical
 coverage proves:
 
 - all four tenant-owned collection helpers prepend lender ownership;

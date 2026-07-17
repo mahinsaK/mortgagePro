@@ -95,10 +95,12 @@ How it works:
 
 - The SMS page does not list all borrowers/customers.
 - Borrower search results can be added to a temporary browser array.
+- Valid custom phone numbers can be added to the same selected-recipient array;
+  duplicate numbers are prevented before sending.
 - The selected array is posted only when the lender clicks `Send selected`.
 - `Send all borrowers` retrieves lender-owned borrower phone numbers on the server only when clicked.
 - Quick SMS sends one typed number directly.
-- Templates only fill the message text in the browser.
+- Templates appear below the send panels and only fill the message text in the browser.
 
 ## Future loan messages
 

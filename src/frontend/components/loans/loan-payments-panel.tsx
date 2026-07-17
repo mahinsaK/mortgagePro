@@ -3,6 +3,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { RefreshCw, X } from "lucide-react";
 import { useState } from "react";
+import { LocalTimestamp } from "@/frontend/components/ui/local-timestamp";
 
 type LoanPaymentDetails = {
   loanId: string;
@@ -14,6 +15,7 @@ type LoanPaymentDetails = {
     collectorName: string;
     method: string;
     date: string;
+    recordedAt: string;
   }>;
 };
 
@@ -139,7 +141,7 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
                         <th className="px-3 py-3 font-semibold">Collector</th>
                         <th className="px-3 py-3 font-semibold">Amount</th>
                         <th className="px-3 py-3 font-semibold">Method</th>
-                        <th className="px-3 py-3 font-semibold">Date</th>
+                        <th className="px-3 py-3 font-semibold">Collected at</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -158,7 +160,7 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
                             {payment.method}
                           </td>
                           <td className="break-words px-3 py-3 text-[#657386]">
-                            {payment.date}
+                            <LocalTimestamp value={payment.recordedAt} />
                           </td>
                         </tr>
                       ))}

@@ -21,6 +21,7 @@ export async function GET(request: Request) {
   const rows = payments.map((payment) => ({
     payment_id: payment.id,
     date: payment.rawDate,
+    collected_at: payment.recordedAt,
     borrower: payment.borrowerName,
     loan_id: payment.loanId,
     collector: payment.collectorName,
@@ -38,6 +39,7 @@ export async function GET(request: Request) {
           {
             payment_id: "TOTAL",
             date: "",
+            collected_at: "",
             borrower: `${payments.length} payments`,
             loan_id: "",
             collector: "",

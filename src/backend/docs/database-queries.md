@@ -104,10 +104,9 @@ Query through `getPaymentsExportData()`:
 
 ```txt
 Query.equal("lender_id", lender.id)
-Query.orderDesc("date")
 Query.orderDesc("$createdAt")
 Query.limit(5000)
-Query.select(["$id", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
+Query.select(["$id", "$createdAt", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
 Query.greaterThanEqual("date", selectedStartIso)
 Query.lessThan("date", selectedEndTomorrowIso)
 ```
@@ -385,9 +384,8 @@ Query through `listForLender()`:
 
 ```txt
 Query.equal("lender_id", lender.id)
-Query.orderDesc("date")
 Query.orderDesc("$createdAt")
-Query.select(["$id", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
+Query.select(["$id", "$createdAt", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
 Query.limit(pageSize)
 Query.offset((page - 1) * pageSize)
 ```
@@ -395,8 +393,9 @@ Query.offset((page - 1) * pageSize)
 How it works:
 
 - Lists one page of payments for the active lender.
-- Uses creation time as a secondary descending sort so same-day payments stay
-  newest-first.
+- Uses the full creation timestamp as the descending sort, so the latest
+  payment time is first. The UI formats that timestamp in the lender's browser
+  timezone.
 - Retrieves only fields needed for the payments table.
 
 ### Payment row mapping
@@ -474,9 +473,9 @@ Collection: `payments`
 ```txt
 Query.equal("lender_id", lender.id)
 Query.equal("loan_id", loanId)
-Query.orderDesc("date")
+Query.orderDesc("$createdAt")
 Query.limit(5000)
-Query.select(["$id", "collector_id", "amount", "method", "date"])
+Query.select(["$id", "$createdAt", "collector_id", "amount", "method", "date", "created_at"])
 ```
 
 How it works:
@@ -516,9 +515,9 @@ Query:
 
 ```txt
 Query.equal("lender_id", lender.id)
-Query.orderDesc("date")
+Query.orderDesc("$createdAt")
 Query.limit(5000)
-Query.select(["$id", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
+Query.select(["$id", "$createdAt", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
 Query.greaterThanEqual("date", startDateStartIso) // when startDate exists
 Query.lessThan("date", endDateNextDayIso)         // when endDate exists
 ```
@@ -588,9 +587,9 @@ Query:
 Query.equal("lender_id", lender.id)
 Query.greaterThanEqual("date", dayStartIso)
 Query.lessThan("date", nextDayStartIso)
-Query.orderDesc("date")
+Query.orderDesc("$createdAt")
 Query.limit(5000)
-Query.select(["$id", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
+Query.select(["$id", "$createdAt", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
 ```
 
 How it works:

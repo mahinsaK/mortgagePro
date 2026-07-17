@@ -1,4 +1,5 @@
 import { getPaymentsPageData } from "@/backend/services/lending-service";
+import { LocalTimestamp } from "@/frontend/components/ui/local-timestamp";
 import { PaginationControls } from "@/frontend/components/ui/pagination-controls";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,7 @@ export default async function PaymentsPage({
                 <th className="px-5 py-3 font-semibold">Collector</th>
                 <th className="px-5 py-3 font-semibold">Amount</th>
                 <th className="px-5 py-3 font-semibold">Method</th>
-                <th className="px-5 py-3 font-semibold">Date</th>
+                <th className="px-5 py-3 font-semibold">Collected at</th>
               </tr>
             </thead>
             <tbody>
@@ -46,7 +47,9 @@ export default async function PaymentsPage({
                       {payment.method}
                     </span>
                   </td>
-                  <td className="px-5 py-4 text-[#657386]">{payment.date}</td>
+                  <td className="px-5 py-4 text-[#657386]">
+                    <LocalTimestamp value={payment.recordedAt} />
+                  </td>
                 </tr>
               ))}
               {payments.length === 0 ? (

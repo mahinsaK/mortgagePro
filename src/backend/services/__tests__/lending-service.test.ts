@@ -51,16 +51,15 @@ describe("lending-service", () => {
     mocks.listDocuments.mockResolvedValue({ documents: [], total: 0 });
   });
 
-  it("sorts payments newest-first within the same payment date", async () => {
+  it("sorts payments newest-first by their full creation timestamp", async () => {
     await getPaymentsPageData({ page: 1, pageSize: 10 });
 
     const queries = mocks.listDocuments.mock.calls[0][0].queries as string[];
     const joinedQueries = queries.join(" ");
 
-    expect(joinedQueries).toContain('"attribute":"date"');
     expect(joinedQueries).toContain('"attribute":"$createdAt"');
     expect(
       queries.filter((query) => query.includes('"method":"orderDesc"')),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
   });
 });

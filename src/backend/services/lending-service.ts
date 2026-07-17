@@ -63,6 +63,7 @@ export type PaymentRow = {
   method: string;
   date: string;
   rawDate: string;
+  recordedAt: string;
 };
 
 export type LoanPaymentDetails = {
@@ -75,6 +76,7 @@ export type LoanPaymentDetails = {
     collectorName: string;
     method: string;
     date: string;
+    recordedAt: string;
   }>;
 };
 
@@ -293,9 +295,10 @@ export async function getPaymentsPageData(options: PaginationOptions = {}) {
   const payments = await listForLender("payments", lender.id, {
     page: pagination.page,
     pageSize: pagination.pageSize,
-    orderBy: ["date", "$createdAt"],
+    orderBy: "$createdAt",
     select: [
       "$id",
+      "$createdAt",
       "loan_id",
       "collector_id",
       "amount",
@@ -323,11 +326,11 @@ export async function getPaymentsExportData(options: {
   }
 
   const queries = [
-    Query.orderDesc("date"),
     Query.orderDesc("$createdAt"),
     Query.limit(MAX_LOOKUP_LIMIT),
     Query.select([
       "$id",
+      "$createdAt",
       "loan_id",
       "collector_id",
       "amount",
@@ -461,11 +464,11 @@ export async function getDailyCollectionsData(date: string) {
   const payments = await listTenantDocuments("payments", lender.id, [
     Query.greaterThanEqual("date", range.start),
     Query.lessThan("date", range.end),
-    Query.orderDesc("date"),
     Query.orderDesc("$createdAt"),
     Query.limit(MAX_LOOKUP_LIMIT),
     Query.select([
       "$id",
+      "$createdAt",
       "loan_id",
       "collector_id",
       "amount",
@@ -504,10 +507,17 @@ export async function getLoanPaymentDetails(
 
   const payments = await listTenantDocuments("payments", lender.id, [
     Query.equal("loan_id", loanId),
-    Query.orderDesc("date"),
     Query.orderDesc("$createdAt"),
     Query.limit(MAX_LOOKUP_LIMIT),
-    Query.select(["$id", "collector_id", "amount", "method", "date"]),
+    Query.select([
+      "$id",
+      "$createdAt",
+      "collector_id",
+      "amount",
+      "method",
+      "date",
+      "created_at",
+    ]),
   ]);
   const collectorIds = uniqueStrings(
     payments.documents.map((payment) => String(payment.collector_id ?? "")),
@@ -543,6 +553,9 @@ export async function getLoanPaymentDetails(
         collectorNames.get(String(payment.collector_id)) ?? "Unknown collector",
       method: String(payment.method ?? "cash"),
       date: formatDate(String(payment.date ?? "")),
+      recordedAt: String(
+        payment.$createdAt ?? payment.created_at ?? payment.date ?? "",
+      ),
     })),
   };
 }
@@ -615,6 +628,9 @@ async function mapPaymentDocuments(
     method: String(payment.method ?? "cash"),
     date: formatDate(String(payment.date ?? payment.created_at)),
     rawDate: String(payment.date ?? payment.created_at ?? ""),
+    recordedAt: String(
+      payment.$createdAt ?? payment.created_at ?? payment.date ?? "",
+    ),
   }));
 }
 

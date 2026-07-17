@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { PaymentRow } from "@/backend/services/lending-service";
 import { CsvExportButton } from "@/frontend/components/export/csv-export-button";
+import { LocalTimestamp } from "@/frontend/components/ui/local-timestamp";
 
 export function DailyCollectionsTable({
   payments,
@@ -33,6 +34,7 @@ export function DailyCollectionsTable({
   const exportRows = filteredPayments.map((payment) => ({
     payment_id: payment.id,
     date: payment.rawDate,
+    collected_at: payment.recordedAt,
     borrower: payment.borrowerName,
     loan_id: payment.loanId,
     collector: payment.collectorName,
@@ -79,6 +81,7 @@ export function DailyCollectionsTable({
               <th className="px-5 py-3 font-semibold">Collector</th>
               <th className="px-5 py-3 font-semibold">Amount</th>
               <th className="px-5 py-3 font-semibold">Method</th>
+              <th className="px-5 py-3 font-semibold">Time</th>
             </tr>
           </thead>
           <tbody>
@@ -92,11 +95,14 @@ export function DailyCollectionsTable({
                     {payment.method}
                   </span>
                 </td>
+                <td className="px-5 py-4 text-[#657386]">
+                  <LocalTimestamp timeOnly value={payment.recordedAt} />
+                </td>
               </tr>
             ))}
             {filteredPayments.length === 0 ? (
               <tr className="border-t border-[#eef2f6]">
-                <td className="px-5 py-6 text-[#657386]" colSpan={4}>
+                <td className="px-5 py-6 text-[#657386]" colSpan={5}>
                   No collections found for this filter.
                 </td>
               </tr>

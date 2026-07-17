@@ -73,9 +73,8 @@ Query:
 
 ```txt
 Query.equal("lender_id", lender.id)
-Query.orderDesc("date")
 Query.orderDesc("$createdAt")
-Query.select(["$id", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
+Query.select(["$id", "$createdAt", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
 Query.limit(pageSize)
 Query.offset((page - 1) * pageSize)
 ```
@@ -83,8 +82,10 @@ Query.offset((page - 1) * pageSize)
 How it works:
 
 - Retrieves one page of payments for the active lender.
-- Sorts by payment date first and creation time second, so payments recorded on
-  the same day are reliably newest-first.
+- Sorts by the full Appwrite creation timestamp, so the latest collection time
+  appears first across both dates and times.
+- Displays that timestamp in the lender's browser timezone, making morning and
+  evening collections distinguishable.
 - Then maps loan, borrower, and collector names.
 
 ## Payment row mapping queries
@@ -137,9 +138,9 @@ Query:
 Query.equal("lender_id", lender.id)
 Query.greaterThanEqual("date", dayStartIso)
 Query.lessThan("date", nextDayStartIso)
-Query.orderDesc("date")
+Query.orderDesc("$createdAt")
 Query.limit(5000)
-Query.select(["$id", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
+Query.select(["$id", "$createdAt", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
 ```
 
 How it works:
@@ -147,7 +148,8 @@ How it works:
 - Retrieves payments only for one selected day.
 - No pagination is used because this is a daily detail page.
 - Collector filtering on this page is local/client-side after the selected day's payments are loaded.
-- The CSV export downloads the currently filtered rows.
+- The CSV export downloads the currently filtered rows with a `collected_at`
+  timestamp.
 
 ## Dashboard today's collection query
 
@@ -180,9 +182,9 @@ Query:
 
 ```txt
 Query.equal("lender_id", lender.id)
-Query.orderDesc("date")
+Query.orderDesc("$createdAt")
 Query.limit(5000)
-Query.select(["$id", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
+Query.select(["$id", "$createdAt", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
 Query.greaterThanEqual("date", startDateStartIso)
 Query.lessThan("date", endDateNextDayIso)
 ```

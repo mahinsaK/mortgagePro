@@ -22,7 +22,9 @@ The module files validate and prepare payment payloads:
 - `toRecordPaymentDto(input)` validates lender ID, loan ID, loan lender ID, collector ID, collector lender ID, date, amount, and method.
 - `PaymentController.record(input)` returns success or failure.
 - `PaymentService.prepareRecord(dto)` rejects a collector when `loanLenderId !== collectorLenderId`.
-- `PaymentService.calculateLoanTotals(input)` calculates stored `total_paid`, `remaining_amount`, and status.
+- `PaymentService.calculateLoanTotals(input)` calculates stored `total_paid`,
+  `remaining_amount`, and status, rounds currency values to two decimal places,
+  and rejects payments above the remaining balance.
 
 These files do not call Appwrite directly.
 
@@ -34,11 +36,21 @@ Function: `recordLoanPayment(input)`
 
 How it works:
 
-- Verifies the loan belongs to the active lender.
-- Verifies the collector belongs to the active lender.
-- Creates one payment document.
-- Updates the loan document with `total_paid`, `remaining_amount`, and `status`.
+- Requires a unique request token generated when the collector scans a loan.
+- Derives the payment document ID from the lender, collector, loan, and request
+  token. Retrying the same request returns the existing result instead of
+  creating another payment.
+- Opens an Appwrite transaction and verifies the active loan and collector
+  belong to the same lender inside that transaction.
+- Rejects an amount above the transaction's current remaining balance.
+- Stages the payment document and the loan `total_paid`, `remaining_amount`,
+  and `status` update in the same transaction, then commits both together.
+- Retries a transaction conflict up to three times, re-reading the latest loan
+  balance before each attempt.
 - Marks the loan `completed` when remaining balance reaches zero.
+
+No new payment attribute or database migration is needed because the unique,
+deterministic Appwrite document ID is the idempotency boundary.
 
 ## Collector loan ownership validation
 

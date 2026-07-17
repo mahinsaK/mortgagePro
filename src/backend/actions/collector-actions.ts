@@ -4,8 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { appwriteServerConfig } from "@/backend/appwrite/config";
 import { databases, Query } from "@/backend/appwrite/server-client";
-import { PaymentController } from "@/backend/modules/payments/controller";
-import { PaymentService } from "@/backend/modules/payments/service";
 import {
   clearCollectorSession,
   requireActiveCollectorPrincipal,
@@ -13,10 +11,9 @@ import {
   verifyCollectorPassword,
 } from "@/backend/services/collector-auth-service";
 import {
-  createTenantDocument,
-  getTenantDocument,
-  updateTenantDocument,
-} from "@/backend/services/tenant-data-service";
+  PaymentWriteError,
+  recordTenantLoanPayment,
+} from "@/backend/services/payment-recording-service";
 
 export async function collectorLoginAction(formData: FormData) {
   const collectorId = readRequired(formData, "username");
@@ -67,6 +64,7 @@ export async function collectScannedPaymentAction(formData: FormData) {
 
   const loanId = readRequired(formData, "loan_id");
   const amount = Number(readRequired(formData, "amount"));
+  const requestId = String(formData.get("payment_request_id") ?? "").trim();
 
   if (!Number.isFinite(amount) || amount <= 0) {
     redirectWithStatus(
@@ -76,75 +74,38 @@ export async function collectScannedPaymentAction(formData: FormData) {
     );
   }
 
-  const [loanResult, collectorResult] = await Promise.all([
-    getTenantDocument("loans", session.lenderId, loanId, [
-      "$id",
-      "amount",
-      "total_paid",
-      "status",
-    ]),
-    getTenantDocument("collectors", session.lenderId, session.collectorId, [
-      "$id",
-      "status",
-    ]),
-  ]);
-  const loan = loanResult;
-  const collector = collectorResult;
+  let duplicate = false;
 
-  if (!loan) {
-    redirectWithStatus("/collector/scan", "error", "That QR code is not a valid loan.");
-  }
-
-  if (!collector || collector.status !== "active") {
-    redirectWithStatus(
-      "/collector/scan",
-      "error",
-      "You cannot collect this payment because this collector is not registered for that lender.",
-    );
-  }
-
-  const paymentResult = new PaymentController().record({
-    lenderId: session.lenderId,
-    loanId,
-    loanLenderId: session.lenderId,
-    collectorId: session.collectorId,
-    collectorLenderId: session.lenderId,
-    date: new Date().toISOString().slice(0, 10),
-    amount,
-    method: "cash",
-  });
-
-  if (!paymentResult.ok || !paymentResult.data) {
+  try {
+    const result = await recordTenantLoanPayment({
+      lenderId: session.lenderId,
+      loanId,
+      collectorId: session.collectorId,
+      date: new Date().toISOString().slice(0, 10),
+      amount,
+      method: "cash",
+      requestId,
+    });
+    duplicate = result.duplicate;
+  } catch (error) {
     redirectWithStatus(
       `/collector/scan?loan=${encodeURIComponent(loanId)}`,
       "error",
-      paymentResult.error ?? "Payment collection failed.",
+      error instanceof PaymentWriteError
+        ? error.message
+        : "Payment collection failed. Please try again.",
     );
   }
 
-  const paymentId = createDocumentId("payment");
-  const totals = new PaymentService().calculateLoanTotals({
-    loanAmount: Number(loan.amount ?? 0),
-    currentTotalPaid: Number(loan.total_paid ?? 0),
-    paymentAmount: amount,
-    currentStatus: String(loan.status ?? "active"),
-  });
-
-  await createTenantDocument(
-    "payments",
-    session.lenderId,
-    paymentId,
-    paymentResult.data,
-  );
-  await updateTenantDocument("loans", session.lenderId, loanId, {
-    total_paid: totals.totalPaid,
-    remaining_amount: totals.remainingAmount,
-    status: totals.status,
-  });
-
   revalidatePath("/payments");
   revalidatePath("/dashboard/lender");
-  redirectWithStatus("/collector/scan", "success", "Payment collected successfully.");
+  redirectWithStatus(
+    "/collector/scan",
+    "success",
+    duplicate
+      ? "This payment was already recorded. No duplicate was added."
+      : "Payment collected successfully.",
+  );
 }
 
 export async function collectorLogoutAction() {
@@ -171,9 +132,4 @@ function redirectWithStatus(
   redirect(
     `${path}${separator}status=${status}&message=${encodeURIComponent(message)}`,
   );
-}
-
-function createDocumentId(prefix: string) {
-  const randomPart = crypto.randomUUID().replaceAll("-", "").slice(0, 22);
-  return `${prefix}_${randomPart}`;
 }

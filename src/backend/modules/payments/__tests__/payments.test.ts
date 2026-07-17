@@ -36,18 +36,44 @@ describe("PaymentController", () => {
     });
   });
 
-  it("marks the loan completed when payment covers the balance", () => {
+  it("marks the loan completed when payment exactly covers the balance", () => {
     const totals = new PaymentService().calculateLoanTotals({
       loanAmount: 1000,
       currentTotalPaid: 900,
-      paymentAmount: 150,
+      paymentAmount: 100,
       currentStatus: "active",
     });
 
     expect(totals).toEqual({
-      totalPaid: 1050,
+      totalPaid: 1000,
       remainingAmount: 0,
       status: "completed",
+    });
+  });
+
+  it("rejects a payment above the remaining loan balance", () => {
+    expect(() =>
+      new PaymentService().calculateLoanTotals({
+        loanAmount: 1000,
+        currentTotalPaid: 900,
+        paymentAmount: 150,
+        currentStatus: "active",
+      }),
+    ).toThrow("Payment amount cannot exceed the remaining loan balance.");
+  });
+
+  it("rounds monetary totals to two decimal places", () => {
+    const totals = new PaymentService().calculateLoanTotals({
+      loanAmount: 1,
+      currentTotalPaid: 0.1,
+      paymentAmount: 0.2,
+      currentStatus: "active",
+    });
+
+    expect(totals).toEqual({
+      totalPaid: 0.3,
+      remainingAmount: 0.7,
+      status: "active",
     });
   });
 });

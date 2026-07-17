@@ -158,7 +158,10 @@ Using lender A, lender B, collector A, and collector B demo records, verify:
 - collector login accepts the copied username, not the collector name;
 - changing a collector password invalidates its existing cookie;
 - changing a collector to inactive invalidates its existing cookie; and
-- deleted, expired, or tampered collector cookies cannot view or collect.
+- deleted, expired, or tampered collector cookies cannot view or collect;
+- submitting the same collector payment request twice creates one payment;
+- a payment above the remaining balance is rejected; and
+- a successful payment changes the payment list and loan balance together.
 
 Also run:
 
@@ -196,8 +199,9 @@ Never restore `Role.users()` database access to make a rollback build work.
 ## Remaining non-critical-release blockers
 
 Even after this rollout passes, the application is not enterprise-ready until
-the deferred roadmap is completed: exact minor-unit money storage,
-transactional/idempotent payments, overpayment rejection, auditable voids,
-financial-history retention, rate limiting, MFA/step-up controls, CSP/security
-headers, monitoring, backup/restore drills, incident response, penetration
-testing, and applicable compliance review.
+the deferred roadmap is completed: exact minor-unit money storage, auditable
+voids, financial-history retention, rate limiting, MFA/step-up controls,
+CSP/security headers, monitoring, backup/restore drills, incident response,
+penetration testing, and applicable compliance review. Transactional payment
+writes, retry idempotency, and overpayment rejection are implemented in source
+and must be included in the deployment smoke tests above.

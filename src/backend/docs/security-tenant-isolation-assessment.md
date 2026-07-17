@@ -31,9 +31,10 @@ session. Until the guided rollout passes, the deployed database boundary must
 still be treated as critically vulnerable.
 
 Even after the critical rollout, deferred financial and operational issues
-remain: payment/balance writes are non-transactional and non-idempotent, money
-uses floating point, overpayments are accepted, financial history can be hard
+remain: money uses floating point storage, financial history can be hard
 deleted, and enterprise monitoring/MFA/backup/compliance controls are absent.
+Transactional payment writes, retry idempotency, and overpayment rejection are
+implemented in source but still require deployment smoke verification.
 
 Direct answers:
 
@@ -426,6 +427,11 @@ Required change: record the payment and update loan totals in one transaction,
 handle transaction conflicts, and derive/reconcile totals from the payment
 ledger.
 
+Remediation status: **Implemented in source, pending deployment.** The payment
+and loan update are staged under one Appwrite transaction. Commit conflicts are
+retried up to three times after re-reading the loan, so a concurrent payment
+cannot silently overwrite the balance used by another transaction.
+
 ### `PAYMENT-002`: duplicate submission protection is absent
 
 Severity: **High**
@@ -436,6 +442,11 @@ constraint to prevent a retry/double tap from creating two payments.
 Required change: issue a server-recognized idempotency key per collection
 attempt, persist it with a unique constraint/design, and return the original
 result for safe retries.
+
+Remediation status: **Implemented in source, pending deployment.** The scanner
+issues a unique request token for each scanned loan. A deterministic Appwrite
+payment document ID binds that token to the lender, collector, and loan; an
+exact retry returns the prior result and a changed reuse is rejected.
 
 ### `PAYMENT-003`: overpayment is accepted
 
@@ -449,6 +460,10 @@ present behavior rather than an accidental edge case.
 Required change: define the business rule. Reject overpayment, allocate excess
 to a credit ledger, or record a controlled adjustment. Do not silently mix
 policies.
+
+Remediation status: **Implemented in source, pending deployment.** Payment
+totals now reject an amount above the latest remaining balance before either
+write is committed. Paying the exact remaining balance completes the loan.
 
 ### `PAYMENT-004`: money is stored and calculated as floating point
 
@@ -519,7 +534,9 @@ test has not yet run because permission deployment is intentionally left to the
 guided rollout.
 
 Still missing from this critical release are real two-tenant end-to-end tests
-for every UI/export path and the deferred payment concurrency/transaction tests.
+for every UI/export path and live Appwrite concurrency/transaction tests. Mocked
+tests now cover duplicate retry, overpayment, atomic staging, and conflict
+re-check behavior.
 
 Required test matrix:
 
@@ -581,8 +598,8 @@ Dependency audit results are time-sensitive and must be rerun in CI.
    rate limiting remains deferred.
 5. **Source complete:** revalidate the active collector on every protected
    collector route/page/action.
-6. Make payment creation and balance update transactional.
-7. Add idempotency and a defined overpayment policy.
+6. **Source complete:** make payment creation and balance update transactional.
+7. **Source complete:** add idempotency and reject overpayments.
 8. Store money in integer minor units or an exact decimal representation.
 9. Replace hard deletion of financial history with reversals and audit events.
 
@@ -618,6 +635,9 @@ true:
 - [ ] Disabled collectors cannot view or record any loan data. Source tests
   pass; deployed smoke verification remains.
 - [ ] Payments are atomic, idempotent, exact-precision, and concurrency-safe.
+  Atomic writes, request idempotency, overpayment rejection, and conflict
+  retries are implemented in source; exact-precision storage and live
+  concurrency verification remain.
 - [ ] Payment corrections use auditable reversals instead of deletion.
 - [ ] Security events and financial mutations are attributable and monitored.
 - [ ] MFA, privileged-action controls, backups, restore tests, and incident
@@ -630,8 +650,9 @@ true:
 MortgagePro now has a substantially stronger critical-release source design:
 deny-by-default provisioning, server-only credential separation, centralized
 tenant helpers, collector username login, signed short-lived collector sessions,
-and focused isolation verification. The implemented branch is suitable for a
-controlled security rollout using demo data.
+transactional/idempotent payment recording, overpayment rejection, and focused
+isolation verification. The implemented branch is suitable for a controlled
+security rollout using demo data.
 
 It is **not currently safe to trust as an enterprise lending/payment system**.
 First, the last observed live Appwrite configuration remains a release-blocking
@@ -642,6 +663,6 @@ deferred financial-ledger and enterprise-operations blockers.
 The accurate current label is: **critical isolation code complete; live
 remediation pending; enterprise readiness not achieved.** Do not add real
 financial or personal data until live isolation evidence is recorded, and do
-not make an enterprise claim until transactional/idempotent exact-money
-payments, auditable corrections, rate limiting, MFA, monitoring, backups,
+not make an enterprise claim until exact-money storage, auditable corrections,
+rate limiting, MFA, monitoring, backups,
 incident response, penetration testing, and compliance review are complete.

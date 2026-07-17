@@ -828,7 +828,10 @@ Path: `src/backend/services/payment-recording-service.ts`
 
 Function: `recordLoanPayment(input)`
 
-Loan ownership query:
+The service creates an Appwrite transaction first. All following reads and
+writes include the same `transactionId`.
+
+Loan ownership query inside the transaction:
 
 ```txt
 Query.equal("lender_id", lender.id)
@@ -837,16 +840,21 @@ Query.limit(1)
 Query.select(["$id", "amount", "total_paid", "status"])
 ```
 
-Collector ownership query:
+Active collector ownership query inside the transaction:
 
 ```txt
 Query.equal("lender_id", lender.id)
 Query.equal("$id", collectorId)
+Query.equal("status", "active")
 Query.limit(1)
 Query.select(["$id"])
 ```
 
-Writes:
+The payment document ID is a deterministic hash of the lender, collector, loan,
+and client-generated payment request token. The service checks that ID inside
+the transaction before staging any write.
+
+Transactional writes:
 
 ```txt
 payments: create payment document
@@ -855,10 +863,14 @@ loans: update total_paid, remaining_amount, status
 
 How it works:
 
-- Confirms both loan and collector belong to the active lender.
-- Creates the payment document.
-- Uses `PaymentService.calculateLoanTotals(...)`.
-- Updates the loan totals and marks the loan completed when the remaining balance is zero.
+- Confirms both loan and active collector belong to the lender.
+- Returns the prior result for an exact retry without another balance update.
+- Rejects reused request tokens with different payment details.
+- Rejects payments greater than the current remaining balance.
+- Commits payment creation and loan totals together, so neither write can
+  persist alone.
+- Retries transaction conflicts up to three times and recalculates from the
+  newly read balance.
 
 ## Create collector
 

@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  createTenantDocument: vi.fn(),
-  getTenantDocument: vi.fn(),
   listDocuments: vi.fn(),
+  recordTenantLoanPayment: vi.fn(),
   redirect: vi.fn(),
   requireActiveCollectorPrincipal: vi.fn(),
   setCollectorSession: vi.fn(),
-  updateTenantDocument: vi.fn(),
   verifyCollectorPassword: vi.fn(),
 }));
 
@@ -23,22 +21,15 @@ vi.mock("@/backend/appwrite/server-client", async () => {
   const { Query } = await import("node-appwrite");
   return { databases: { listDocuments: mocks.listDocuments }, Query };
 });
-vi.mock("@/backend/modules/payments/controller", () => ({
-  PaymentController: class PaymentController {},
-}));
-vi.mock("@/backend/modules/payments/service", () => ({
-  PaymentService: class PaymentService {},
-}));
 vi.mock("@/backend/services/collector-auth-service", () => ({
   clearCollectorSession: vi.fn(),
   requireActiveCollectorPrincipal: mocks.requireActiveCollectorPrincipal,
   setCollectorSession: mocks.setCollectorSession,
   verifyCollectorPassword: mocks.verifyCollectorPassword,
 }));
-vi.mock("@/backend/services/tenant-data-service", () => ({
-  createTenantDocument: mocks.createTenantDocument,
-  getTenantDocument: mocks.getTenantDocument,
-  updateTenantDocument: mocks.updateTenantDocument,
+vi.mock("@/backend/services/payment-recording-service", () => ({
+  PaymentWriteError: class PaymentWriteError extends Error {},
+  recordTenantLoanPayment: mocks.recordTenantLoanPayment,
 }));
 
 import {
@@ -132,27 +123,25 @@ describe("collectorLoginAction", () => {
       lenderId: "lender_A",
       name: "Jordan Lee",
     });
-    mocks.getTenantDocument.mockImplementation((collection: string) =>
-      Promise.resolve(
-        collection === "collectors"
-          ? { $id: "collector_A", status: "active" }
-          : null,
-      ),
+    mocks.recordTenantLoanPayment.mockRejectedValue(
+      new Error("Loan not found for this lender."),
     );
     const formData = new FormData();
     formData.set("loan_id", "loan_B");
     formData.set("amount", "100");
+    formData.set("payment_request_id", "12345678-1234-1234-1234-123456789012");
 
     await expect(collectScannedPaymentAction(formData)).rejects.toThrow(
-      "redirect:/collector/scan?status=error",
+      "redirect:/collector/scan?loan=loan_B&status=error",
     );
-    expect(mocks.getTenantDocument).toHaveBeenCalledWith(
-      "loans",
-      "lender_A",
-      "loan_B",
-      expect.any(Array),
+    expect(mocks.recordTenantLoanPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lenderId: "lender_A",
+        collectorId: "collector_A",
+        loanId: "loan_B",
+        amount: 100,
+        requestId: "12345678-1234-1234-1234-123456789012",
+      }),
     );
-    expect(mocks.createTenantDocument).not.toHaveBeenCalled();
-    expect(mocks.updateTenantDocument).not.toHaveBeenCalled();
   });
 });

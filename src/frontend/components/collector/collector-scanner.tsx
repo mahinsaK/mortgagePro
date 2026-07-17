@@ -32,6 +32,7 @@ export function CollectorScanner({
   const [cameraMessage, setCameraMessage] = useState("");
   const [loan, setLoan] = useState<LoanPreview | null>(null);
   const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentRequestId, setPaymentRequestId] = useState("");
   const [lookupError, setLookupError] = useState("");
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -62,6 +63,7 @@ export function CollectorScanner({
     setLookupError("");
     setLoan(null);
     setPaymentAmount("");
+    setPaymentRequestId("");
     setIsScanning(true);
 
     const scanner = new QrScanner(
@@ -132,6 +134,7 @@ export function CollectorScanner({
 
       setLoan(data.loan);
       setPaymentAmount("");
+      setPaymentRequestId(crypto.randomUUID());
     } catch (error) {
       setLookupError(
         error instanceof Error ? error.message : "Could not validate this QR code.",
@@ -182,6 +185,7 @@ export function CollectorScanner({
           if (!open) {
             setLoan(null);
             setPaymentAmount("");
+            setPaymentRequestId("");
           }
         }}
         open={loan !== null}
@@ -212,6 +216,11 @@ export function CollectorScanner({
 
               <form action={collectAction} className="p-5">
                 <input name="loan_id" type="hidden" value={loan.id} />
+                <input
+                  name="payment_request_id"
+                  type="hidden"
+                  value={paymentRequestId}
+                />
                 <dl className="grid gap-4 rounded-lg bg-[#f8fafc] p-4 sm:grid-cols-2">
                   <Detail label="Borrower" value={loan.borrowerName} />
                   <Detail label="Status" value={loan.status} />
@@ -225,6 +234,7 @@ export function CollectorScanner({
                   Payment amount
                   <input
                     className="mt-2 h-11 w-full rounded-md border border-[#cfd8e3] px-3 text-base outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#dbeafe]"
+                    max={loan.remainingAmount}
                     min="0.01"
                     name="amount"
                     onChange={(event) => setPaymentAmount(event.target.value)}
@@ -238,15 +248,21 @@ export function CollectorScanner({
 
                 <button
                   className="mt-3 h-11 w-full rounded-md border border-[#93c5fd] bg-[#eff6ff] px-4 text-sm font-semibold text-[#1d4ed8] transition hover:bg-[#dbeafe] disabled:cursor-not-allowed disabled:border-[#dfe5ec] disabled:bg-[#f8fafc] disabled:text-[#9aa6b2]"
-                  disabled={loan.dailyPayment <= 0}
-                  onClick={() => setPaymentAmount(String(loan.dailyPayment))}
+                  disabled={loan.dailyPayment <= 0 || loan.remainingAmount <= 0}
+                  onClick={() =>
+                    setPaymentAmount(
+                      String(Math.min(loan.dailyPayment, loan.remainingAmount)),
+                    )
+                  }
                   type="button"
                 >
-                  Use daily payment · {formatMoney(loan.dailyPayment)}
+                  Use scheduled amount ·{" "}
+                  {formatMoney(Math.min(loan.dailyPayment, loan.remainingAmount))}
                 </button>
 
                 <button
                   className="mt-4 h-11 w-full rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8]"
+                  disabled={!paymentRequestId}
                   type="submit"
                 >
                   Collect payment

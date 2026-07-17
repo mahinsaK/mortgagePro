@@ -7,6 +7,13 @@ type LoanPaymentTotalsInput = {
   currentStatus: string;
 };
 
+export class PaymentExceedsRemainingBalanceError extends Error {
+  constructor() {
+    super("Payment amount cannot exceed the remaining loan balance.");
+    this.name = "PaymentExceedsRemainingBalanceError";
+  }
+}
+
 export class PaymentService {
   prepareRecord(dto: RecordPaymentDto) {
     if (dto.loanLenderId !== dto.collectorLenderId) {
@@ -25,8 +32,19 @@ export class PaymentService {
   }
 
   calculateLoanTotals(input: LoanPaymentTotalsInput) {
-    const totalPaid = Number(input.currentTotalPaid) + Number(input.paymentAmount);
-    const remainingAmount = Math.max(Number(input.loanAmount) - totalPaid, 0);
+    const loanAmount = roundMoney(input.loanAmount);
+    const currentTotalPaid = roundMoney(input.currentTotalPaid);
+    const paymentAmount = roundMoney(input.paymentAmount);
+    const remainingBeforePayment = roundMoney(
+      Math.max(loanAmount - currentTotalPaid, 0),
+    );
+
+    if (paymentAmount > remainingBeforePayment) {
+      throw new PaymentExceedsRemainingBalanceError();
+    }
+
+    const totalPaid = roundMoney(currentTotalPaid + paymentAmount);
+    const remainingAmount = roundMoney(Math.max(loanAmount - totalPaid, 0));
 
     return {
       totalPaid,
@@ -34,4 +52,8 @@ export class PaymentService {
       status: remainingAmount <= 0 ? "completed" : input.currentStatus,
     };
   }
+}
+
+function roundMoney(value: number) {
+  return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
 }

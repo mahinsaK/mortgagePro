@@ -34,7 +34,7 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
                 <td className="px-5 py-4">
                   <a
                     className="inline-flex h-9 items-center rounded-md border border-[#cfd8e3] px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#f8fafc]"
-                    download={`${loan.id}-qr.png`}
+                    download="loan-qr-code.png"
                     href={`/api/loans/${loan.id}/qr`}
                     onClick={(event) => event.stopPropagation()}
                   >

@@ -7,7 +7,7 @@ export function LoanQrPanel({ loanId }: { loanId: string }) {
         {/* The authenticated QR route must load directly in the browser. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          alt={`QR code for loan ${loanId}`}
+          alt="QR code for this loan"
           className="size-44"
           height={176}
           src={`${qrUrl}?display=1`}
@@ -18,11 +18,11 @@ export function LoanQrPanel({ loanId }: { loanId: string }) {
       <div className="text-center sm:text-left">
         <h3 className="text-base font-semibold text-[#15191f]">Loan QR code</h3>
         <p className="mt-1 text-sm leading-5 text-[#657386]">
-          Scan this code to identify loan {loanId} when collecting a payment.
+          Scan this code to identify the correct loan when collecting a payment.
         </p>
         <a
           className="mt-3 inline-flex h-10 items-center justify-center rounded-md border border-[#cfd8e3] bg-white px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#eef4ff]"
-          download={`${loanId}-qr.png`}
+          download="loan-qr-code.png"
           href={qrUrl}
         >
           Download QR

@@ -36,7 +36,7 @@ export function LoanDetailsDialog({
           <div>
             <p className="text-sm font-medium text-[#657386]">Loan details</p>
             <h2 className="mt-1 text-2xl font-semibold" id="loan-details-title">
-              {loan.id}
+              {loan.borrowerName}
             </h2>
           </div>
           <div className="flex items-center gap-2">
@@ -102,7 +102,6 @@ export function LoanDetailsDialog({
             <Detail label="Interest rate" value={loan.interestRate} />
             <Detail label="Start date" value={loan.startDate} />
             <Detail label="End date" value={loan.endDate} />
-            <Detail label="Borrower ID" value={loan.borrowerId} />
           </dl>
 
           <LoanQrPanel loanId={loan.id} />

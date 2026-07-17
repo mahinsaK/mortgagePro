@@ -72,12 +72,10 @@ export function DailyCollectionsTable({
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[880px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[680px] border-collapse text-left text-sm">
           <thead className="bg-[#f8fafc] text-[#657386]">
             <tr>
-              <th className="px-5 py-3 font-semibold">Payment</th>
               <th className="px-5 py-3 font-semibold">Borrower</th>
-              <th className="px-5 py-3 font-semibold">Loan</th>
               <th className="px-5 py-3 font-semibold">Collector</th>
               <th className="px-5 py-3 font-semibold">Amount</th>
               <th className="px-5 py-3 font-semibold">Method</th>
@@ -86,9 +84,7 @@ export function DailyCollectionsTable({
           <tbody>
             {filteredPayments.map((payment) => (
               <tr className="border-t border-[#eef2f6]" key={payment.id}>
-                <td className="px-5 py-4 font-medium">{payment.id}</td>
                 <td className="px-5 py-4">{payment.borrowerName}</td>
-                <td className="px-5 py-4 text-[#657386]">{payment.loanId}</td>
                 <td className="px-5 py-4">{payment.collectorName}</td>
                 <td className="px-5 py-4">{payment.amount}</td>
                 <td className="px-5 py-4">
@@ -100,7 +96,7 @@ export function DailyCollectionsTable({
             ))}
             {filteredPayments.length === 0 ? (
               <tr className="border-t border-[#eef2f6]">
-                <td className="px-5 py-6 text-[#657386]" colSpan={6}>
+                <td className="px-5 py-6 text-[#657386]" colSpan={4}>
                   No collections found for this filter.
                 </td>
               </tr>

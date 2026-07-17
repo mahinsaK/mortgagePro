@@ -151,7 +151,7 @@ export function LenderDashboardLoansPanel({
                   Loan details
                 </p>
                 <h2 className="mt-1 text-2xl font-semibold">
-                  {selectedLoan.id}
+                  {selectedLoan.borrower}
                 </h2>
               </div>
               <button

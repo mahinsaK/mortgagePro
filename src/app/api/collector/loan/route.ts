@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   const loanId = String(url.searchParams.get("loanId") ?? "").trim();
 
   if (!loanId) {
-    return Response.json({ error: "Loan ID is required." }, { status: 400 });
+    return Response.json({ error: "A loan reference is required." }, { status: 400 });
   }
 
   const loan = await getTenantDocument("loans", session.lenderId, loanId, [

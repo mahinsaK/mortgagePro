@@ -16,7 +16,7 @@ export function BorrowerLoansGrid({ loans }: { loans: LoanRow[] }) {
             key={loan.id}
           >
             <button
-              aria-label={`View details and payments for loan ${loan.id}`}
+              aria-label="View loan details and payments"
               className="absolute inset-0 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#1d4ed8] focus-visible:ring-offset-2"
               onClick={() => setSelectedLoan(loan)}
               type="button"
@@ -25,7 +25,7 @@ export function BorrowerLoansGrid({ loans }: { loans: LoanRow[] }) {
               <div className="shrink-0">
                 <a
                   className="relative z-10 flex h-10 items-center justify-center rounded-md border border-[#cfd8e3] bg-white px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#eef4ff]"
-                  download={`${loan.id}-qr.png`}
+                  download="loan-qr-code.png"
                   href={`/api/loans/${loan.id}/qr`}
                 >
                   Download QR
@@ -35,7 +35,7 @@ export function BorrowerLoansGrid({ loans }: { loans: LoanRow[] }) {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium text-[#657386]">
-                      {loan.id}
+                      Loan amount
                     </p>
                     <h3 className="mt-1 text-xl font-semibold">{loan.amount}</h3>
                   </div>

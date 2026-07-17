@@ -74,7 +74,7 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
                 Loan payments
               </Dialog.Description>
               <Dialog.Title className="mt-1 text-xl font-semibold">
-                {loanId}
+                Payment history
               </Dialog.Title>
             </div>
             <div className="flex items-center gap-2">
@@ -133,10 +133,9 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
                 </div>
 
                 <div className="overflow-x-auto rounded-lg border border-[#eef2f6]">
-                  <table className="w-full min-w-[620px] border-collapse text-left text-sm">
+                  <table className="w-full min-w-[520px] border-collapse text-left text-sm">
                     <thead className="bg-[#f8fafc] text-[#657386]">
                       <tr>
-                        <th className="px-3 py-3 font-semibold">Payment</th>
                         <th className="px-3 py-3 font-semibold">Collector</th>
                         <th className="px-3 py-3 font-semibold">Amount</th>
                         <th className="px-3 py-3 font-semibold">Method</th>
@@ -149,9 +148,6 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
                           className="border-t border-[#eef2f6]"
                           key={payment.id}
                         >
-                          <td className="break-all px-3 py-3 font-medium">
-                            {payment.id}
-                          </td>
                           <td className="break-words px-3 py-3">
                             {payment.collectorName}
                           </td>
@@ -168,7 +164,7 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
                       ))}
                       {details.payments.length === 0 ? (
                         <tr className="border-t border-[#eef2f6]">
-                          <td className="px-3 py-4 text-[#657386]" colSpan={5}>
+                          <td className="px-3 py-4 text-[#657386]" colSpan={4}>
                             No payments found for this loan.
                           </td>
                         </tr>

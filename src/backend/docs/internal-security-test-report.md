@@ -179,9 +179,11 @@ limiting and monitoring with a stable secret.
 
 Required before merge:
 
-1. Generate one stable 32-byte-or-longer random secret.
-2. Put the same value in local `.env.local` and the Vercel Preview and
-   Production environments as `SECURITY_MONITORING_SECRET`.
+1. Generate stable 32-byte-or-longer random secrets. Each deployment
+   environment may use a different value, but every server instance within one
+   environment must share that environment's value.
+2. Add a local value to `.env.local`, and add stable Vercel Preview and
+   Production values as `SECURITY_MONITORING_SECRET`.
 3. Redeploy `security/critical-tenant-isolation`.
 4. Smoke-test lender login, collector login, Google OAuth start/cancel, stale
    session recovery, QR cross-tenant `404`, one valid payment, one duplicate

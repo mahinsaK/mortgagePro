@@ -1,5 +1,6 @@
 import { getPaymentsExportData } from "@/backend/services/lending-service";
 import { formatMoney } from "@/backend/lib/currency";
+import { escapeCsvCell } from "@/backend/lib/csv";
 
 type CsvValue = string | number | boolean | null | undefined;
 type CsvRow = Record<string, CsvValue>;
@@ -78,13 +79,10 @@ function toCsv(rows: CsvRow[]) {
   ];
   const lines = [
     headers.join(","),
-    ...rows.map((row) => headers.map((header) => escapeCell(row[header])).join(",")),
+    ...rows.map((row) =>
+      headers.map((header) => escapeCsvCell(row[header])).join(","),
+    ),
   ];
 
   return lines.join("\n");
-}
-
-function escapeCell(value: CsvValue) {
-  const cell = String(value ?? "");
-  return `"${cell.replaceAll('"', '""')}"`;
 }

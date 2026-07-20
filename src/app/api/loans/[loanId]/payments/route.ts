@@ -1,4 +1,5 @@
 import { getLoanPaymentDetails } from "@/backend/services/lending-service";
+import { escapeCsvCell } from "@/backend/lib/csv";
 
 export const dynamic = "force-dynamic";
 
@@ -48,13 +49,11 @@ function toCsv(
   return [
     headers.join(","),
     ...rows.map((row) =>
-      headers.map((header) => escapeCell(row[header as keyof typeof row])).join(","),
+      headers
+        .map((header) => escapeCsvCell(row[header as keyof typeof row]))
+        .join(","),
     ),
   ].join("\n");
-}
-
-function escapeCell(value: string) {
-  return `"${value.replaceAll('"', '""')}"`;
 }
 
 function safeFilenamePart(value: string) {

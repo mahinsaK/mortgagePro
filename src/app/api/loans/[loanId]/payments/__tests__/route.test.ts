@@ -19,7 +19,7 @@ const details = {
     {
       id: "payment_1",
       amount: "LKR 2,500.00",
-      collectorName: 'Jordan "Jay" Lee',
+      collectorName: '=HYPERLINK("https://example.invalid","Jordan")',
       method: "cash",
       date: "20 Jul 2026",
       recordedAt: "2026-07-20T08:30:00.000Z",
@@ -57,7 +57,9 @@ describe("loan payment history route", () => {
       'attachment; filename="Amelie _ Stores_payments.csv"; filename*=UTF-8\'\'Am%C3%A9lie%20_%20Stores_payments.csv',
     );
     expect(csv).toContain("date,collected_at,collector,amount,method");
-    expect(csv).toContain('"Jordan ""Jay"" Lee"');
+    expect(csv).toContain(
+      '"\'=HYPERLINK(""https://example.invalid"",""Jordan"")"',
+    );
     expect(csv).not.toContain("payment_1");
     expect(csv).not.toContain("loan_A");
     expect(mocks.getLoanPaymentDetails).toHaveBeenCalledWith("loan_A");

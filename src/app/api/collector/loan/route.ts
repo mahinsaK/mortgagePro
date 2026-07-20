@@ -20,11 +20,8 @@ export async function GET(request: Request) {
   const loan = await getTenantDocument("loans", session.lenderId, loanId, [
     "$id",
     "borrower_id",
-    "amount",
-    "total_paid",
     "remaining_amount",
     "daily_payment",
-    "status",
   ]);
 
   if (!loan) {
@@ -42,14 +39,8 @@ export async function GET(request: Request) {
     loan: {
       id: loan.$id,
       borrowerName: String(borrower?.name ?? "Unknown borrower"),
-      amount: Number(loan.amount ?? 0),
-      totalPaid: Number(loan.total_paid ?? 0),
-      remainingAmount: Number(
-        loan.remaining_amount ??
-          Math.max(Number(loan.amount ?? 0) - Number(loan.total_paid ?? 0), 0),
-      ),
+      remainingAmount: Number(loan.remaining_amount ?? 0),
       dailyPayment: Number(loan.daily_payment ?? 0),
-      status: String(loan.status ?? "active"),
     },
   });
 }

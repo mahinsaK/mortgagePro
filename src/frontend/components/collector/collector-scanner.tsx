@@ -8,11 +8,8 @@ import { useEffect, useRef, useState } from "react";
 type LoanPreview = {
   id: string;
   borrowerName: string;
-  amount: number;
-  totalPaid: number;
   remainingAmount: number;
   dailyPayment: number;
-  status: string;
 };
 
 type CollectorScannerProps = {
@@ -33,6 +30,7 @@ export function CollectorScanner({
   const [loan, setLoan] = useState<LoanPreview | null>(null);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentRequestId, setPaymentRequestId] = useState("");
+  const [showLoanDetails, setShowLoanDetails] = useState(false);
   const [lookupError, setLookupError] = useState("");
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -64,6 +62,7 @@ export function CollectorScanner({
     setLoan(null);
     setPaymentAmount("");
     setPaymentRequestId("");
+    setShowLoanDetails(false);
     setIsScanning(true);
 
     const scanner = new QrScanner(
@@ -118,6 +117,7 @@ export function CollectorScanner({
     setIsLookingUp(true);
     setLookupError("");
     setLoan(null);
+    setShowLoanDetails(false);
 
     try {
       const response = await fetch(
@@ -186,6 +186,7 @@ export function CollectorScanner({
             setLoan(null);
             setPaymentAmount("");
             setPaymentRequestId("");
+            setShowLoanDetails(false);
           }
         }}
         open={loan !== null}
@@ -193,14 +194,14 @@ export function CollectorScanner({
         {loan ? (
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
-            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-32px)] w-[min(560px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-[#dfe5ec] bg-white text-[#15191f] shadow-2xl">
-              <div className="flex items-start justify-between gap-4 border-b border-[#dfe5ec] px-5 py-4">
+            <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 flex max-h-[calc(100dvh-0.75rem)] w-full flex-col overflow-hidden rounded-t-2xl border border-[#dfe5ec] bg-white text-[#15191f] shadow-2xl sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[calc(100dvh-32px)] sm:w-[min(560px,calc(100vw-32px))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl">
+              <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[#dfe5ec] px-5 py-4">
                 <div>
                   <Dialog.Title className="text-xl font-semibold">
-                    Payment details
+                    Record payment
                   </Dialog.Title>
                   <Dialog.Description className="mt-1 text-sm text-[#657386]">
-                    Confirm the loan and enter the amount being collected.
+                    Enter the amount collected for this loan.
                   </Dialog.Description>
                 </div>
                 <Dialog.Close asChild>
@@ -214,26 +215,21 @@ export function CollectorScanner({
                 </Dialog.Close>
               </div>
 
-              <form action={collectAction} className="p-5">
+              <form
+                action={collectAction}
+                className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+              >
                 <input name="loan_id" type="hidden" value={loan.id} />
                 <input
                   name="payment_request_id"
                   type="hidden"
                   value={paymentRequestId}
                 />
-                <dl className="grid gap-4 rounded-lg bg-[#f8fafc] p-4 sm:grid-cols-2">
-                  <Detail label="Borrower" value={loan.borrowerName} />
-                  <Detail label="Status" value={loan.status} />
-                  <Detail label="Loan amount" value={formatMoney(loan.amount)} />
-                  <Detail label="Total paid" value={formatMoney(loan.totalPaid)} />
-                  <Detail label="Remaining" value={formatMoney(loan.remainingAmount)} />
-                  <Detail label="Daily payment" value={formatMoney(loan.dailyPayment)} />
-                </dl>
-
-                <label className="mt-5 block text-sm font-medium text-[#2d3745]">
+                <label className="block text-sm font-medium text-[#2d3745]">
                   Payment amount
                   <input
                     className="mt-2 h-11 w-full rounded-md border border-[#cfd8e3] px-3 text-base outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#dbeafe]"
+                    disabled={loan.remainingAmount <= 0}
                     max={loan.remainingAmount}
                     min="0.01"
                     name="amount"
@@ -261,12 +257,35 @@ export function CollectorScanner({
                 </button>
 
                 <button
-                  className="mt-4 h-11 w-full rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8]"
-                  disabled={!paymentRequestId}
+                  className="mt-4 h-11 w-full rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
+                  disabled={!paymentRequestId || loan.remainingAmount <= 0}
                   type="submit"
                 >
                   Collect payment
                 </button>
+
+                <button
+                  aria-expanded={showLoanDetails}
+                  className="mt-3 h-11 w-full rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc]"
+                  onClick={() => setShowLoanDetails((isVisible) => !isVisible)}
+                  type="button"
+                >
+                  {showLoanDetails ? "Hide loan details" : "View loan details"}
+                </button>
+
+                {showLoanDetails ? (
+                  <dl className="mt-4 grid gap-4 rounded-lg bg-[#f8fafc] p-4 sm:grid-cols-3">
+                    <Detail label="Borrower" value={loan.borrowerName} />
+                    <Detail
+                      label="Daily payment"
+                      value={formatMoney(loan.dailyPayment)}
+                    />
+                    <Detail
+                      label="Remaining"
+                      value={formatMoney(loan.remainingAmount)}
+                    />
+                  </dl>
+                ) : null}
               </form>
             </Dialog.Content>
           </Dialog.Portal>

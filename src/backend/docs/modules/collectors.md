@@ -148,3 +148,10 @@ payment action all use this resolver.
 
 Scanned loan lookup is a combined loan-ID/lender-ID query. Another lender's
 loan is returned as `404`, just like an unknown loan ID.
+
+The lookup response is intentionally limited to the internal loan ID, borrower
+name, daily payment, and remaining balance. After a successful scan, the mobile
+bottom sheet shows the payment controls first. Loan details are hidden until the
+collector selects `View loan details`, which reveals only those three essential
+display values. The loan ID remains a hidden payment-submission value and is
+never displayed.

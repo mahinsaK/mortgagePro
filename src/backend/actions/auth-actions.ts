@@ -4,13 +4,11 @@ import { AppwriteException, type Models } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { appwriteServerConfig } from "@/backend/appwrite/config";
 import {
   createAccountClient,
   createAdminAccountClient,
   databases,
   ID,
-  Query,
   users,
 } from "@/backend/appwrite/server-client";
 import {
@@ -19,6 +17,11 @@ import {
   setAuthSessionSecret,
 } from "@/backend/services/auth-session-service";
 import { AuthController } from "@/backend/modules/auth/controller";
+import {
+  findActiveLenderByAppwriteUserId,
+  revokeAppwriteSessionBestEffort,
+} from "@/backend/services/lender-login-service";
+import { appwriteServerConfig } from "@/backend/appwrite/config";
 
 const authController = new AuthController();
 
@@ -49,21 +52,21 @@ export async function loginAction(formData: FormData) {
   }
 
   if (!session.secret) {
-    await revokeAppwriteSession(session);
+    await revokeAppwriteSessionBestEffort(session);
     redirect("/auth/unavailable");
   }
 
   let lender;
 
   try {
-    lender = await findLenderByAppwriteUserId(session.userId);
+    lender = await findActiveLenderByAppwriteUserId(session.userId);
   } catch {
-    await revokeAppwriteSession(session);
+    await revokeAppwriteSessionBestEffort(session);
     redirect("/auth/unavailable");
   }
 
   if (!lender) {
-    await revokeAppwriteSession(session);
+    await revokeAppwriteSessionBestEffort(session);
     redirectWithAuthStatus(
       "/auth/login",
       "error",
@@ -74,7 +77,7 @@ export async function loginAction(formData: FormData) {
   try {
     await setAuthSessionSecret(session.secret, session.expire);
   } catch {
-    await revokeAppwriteSession(session);
+    await revokeAppwriteSessionBestEffort(session);
     redirect("/auth/unavailable");
   }
 
@@ -154,14 +157,14 @@ async function createAndStoreServerSession(userId: string) {
   const session = await users.createSession({ userId });
 
   if (!session.secret) {
-    await revokeAppwriteSession(session);
+    await revokeAppwriteSessionBestEffort(session);
     throw new Error("Could not create an Appwrite server session.");
   }
 
   try {
     await setAuthSessionSecret(session.secret, session.expire);
   } catch (error) {
-    await revokeAppwriteSession(session);
+    await revokeAppwriteSessionBestEffort(session);
     throw error;
   }
 }
@@ -251,21 +254,6 @@ export async function logoutAction() {
   redirect("/auth/login");
 }
 
-async function findLenderByAppwriteUserId(appwriteUserId: string) {
-  const lenders = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.lenders,
-    queries: [
-      Query.equal("appwrite_user_id", appwriteUserId),
-      Query.equal("status", "active"),
-      Query.limit(1),
-      Query.select(["$id"]),
-    ],
-  });
-
-  return lenders.documents[0] ?? null;
-}
-
 function formDataToRecord(formData: FormData) {
   return Object.fromEntries(formData.entries());
 }
@@ -318,17 +306,4 @@ function isRejectedLogin(error: unknown) {
       error.type,
     )
   );
-}
-
-async function revokeAppwriteSession(
-  session: Pick<Models.Session, "$id" | "userId">,
-) {
-  try {
-    await users.deleteSession({
-      userId: session.userId,
-      sessionId: session.$id,
-    });
-  } catch {
-    // Session cleanup is best-effort and must not expose session details.
-  }
 }

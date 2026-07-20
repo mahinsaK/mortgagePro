@@ -16,3 +16,26 @@ export const appwriteServerConfig = {
       process.env.NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID ?? "payments",
   },
 };
+
+export function getAppBaseUrl() {
+  const configuredUrl = process.env.APP_BASE_URL?.trim();
+
+  if (!configuredUrl) {
+    throw new Error("APP_BASE_URL is required for authentication callbacks.");
+  }
+
+  const url = new URL(configuredUrl);
+
+  if (
+    !["http:", "https:"].includes(url.protocol) ||
+    url.username ||
+    url.password ||
+    url.pathname !== "/" ||
+    url.search ||
+    url.hash
+  ) {
+    throw new Error("APP_BASE_URL must be a valid HTTP(S) origin.");
+  }
+
+  return url.origin;
+}

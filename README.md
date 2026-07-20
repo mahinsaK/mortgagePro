@@ -68,6 +68,7 @@ The app expects these core variables in `.env.local`:
 - `APPWRITE_RUNTIME_API_KEY` - server-only application key with user, session, and document runtime scopes.
 - `APPWRITE_SETUP_API_KEY` - local-only administration key used by setup, seed, and permission commands; do not add this key to Vercel.
 - `COLLECTOR_SESSION_SECRET` - a dedicated random secret containing at least 32 bytes; collector sessions expire after 12 hours.
+- `APP_BASE_URL` - fixed application origin used for authentication callbacks, such as `http://localhost:3000` locally and the canonical HTTPS URL in production.
 - `NEXT_PUBLIC_APPWRITE_ENDPOINT`
 - `NEXT_PUBLIC_APPWRITE_PROJECT_ID`
 - `NEXT_PUBLIC_APPWRITE_DATABASE_ID`
@@ -87,6 +88,11 @@ The app expects these core variables in `.env.local`:
 - `DEMO_COLLECTOR_PASSWORD`
 - `DEMO_SECOND_COLLECTOR_ID`
 - `DEMO_SECOND_COLLECTOR_PASSWORD`
+
+Google lender login also requires the Google provider to be enabled in the
+Appwrite console. The Google client secret is stored in Appwrite, not in this
+project's environment variables. See `src/backend/docs/modules/auth.md` for the
+complete setup procedure.
 
 ## Appwrite Setup
 

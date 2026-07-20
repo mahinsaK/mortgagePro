@@ -26,6 +26,8 @@ src/backend
   Creates server-side Appwrite clients and exports `Databases`, `Users`, `Account`, `ID`, and `Query` helpers.
 - `src/backend/actions/auth-actions.ts`
   Handles login, lender registration, password reset, and logout form submissions.
+- `src/app/auth/google/*`
+  Starts and completes server-side Google sign-in for existing lenders.
 - `src/backend/actions/lending-actions.ts`
   Handles form writes: create borrower, create loan, create collector, update lender.
 - `src/backend/services/dashboard-service.ts`
@@ -72,7 +74,8 @@ For form submissions:
 
 ## Auth flow
 
-1. Login creates an Appwrite email/password session.
+1. Login creates an Appwrite email/password session, or Google returns a
+   one-time token that the callback exchanges for an Appwrite session.
 2. The session secret is stored in an HTTP-only cookie.
 3. `getPrimaryLender()` reads the current Appwrite user from that cookie.
 4. The lender document is loaded with `Query.equal("appwrite_user_id", currentUser.$id)`.

@@ -8,6 +8,9 @@ Paths:
 - `src/backend/modules/auth/__tests__/auth.test.ts`
 - `src/backend/actions/auth-actions.ts`
 - `src/backend/services/auth-session-service.ts`
+- `src/app/auth/google/route.ts`
+- `src/app/auth/google/callback/route.ts`
+- `src/app/auth/google/failure/route.ts`
 
 ## Purpose
 
@@ -16,6 +19,9 @@ Validates and prepares login, lender registration, and password reset input.
 ## Current behavior
 
 The pure module files validate and shape auth input. The server actions call Appwrite and handle browser redirects/cookies.
+
+Lenders can also choose Google on the login page. Google sign-in is optional;
+email/password login, registration, and password reset remain available.
 
 The current Appwrite Auth seed user is created by:
 
@@ -54,6 +60,22 @@ Query.equal("status", "active")
 set mortgagepro_session = session.secret
 ```
 
+Google login:
+
+```txt
+Account.createOAuth2Token(google, fixed success URL, fixed failure URL)
+validate short-lived mortgagepro_lender_oauth_state cookie
+Account.createSession(userId, one-time secret)
+Query.equal("appwrite_user_id", session.userId)
+Query.equal("status", "active")
+set mortgagepro_session = session.secret
+```
+
+Google authentication never accepts a lender ID from the browser. Appwrite
+must return the same user ID already stored in the lender's
+`appwrite_user_id`. A Google user without an active lender record is rejected,
+the new session is revoked, and no application cookie is set.
+
 Registration:
 
 ```txt
@@ -90,3 +112,26 @@ Session handling:
 
 Collector authentication is separate from Appwrite Auth. See
 `modules/collectors.md` for collector username login and signed 12-hour sessions.
+
+## Google provider setup
+
+1. Set `APP_BASE_URL=http://localhost:3000` locally. In Vercel, set it to the
+   canonical production HTTPS origin with no trailing path, query, or fragment.
+2. In Google Cloud Console, configure the OAuth consent screen and create an
+   OAuth 2.0 Client ID with application type **Web application**.
+3. In the Appwrite console, open **Auth**, enable the **Google** OAuth provider,
+   and copy the Appwrite callback URL shown there.
+4. Add that exact Appwrite callback URL to Google's **Authorized redirect
+   URIs**, then store the Google client ID and client secret in the Appwrite
+   provider settings. Do not add the Google client secret to `.env.local` or
+   Vercel.
+5. In Appwrite project platforms, register `localhost` for local development
+   and the hostname from `APP_BASE_URL` for production. Register a preview
+   hostname separately before testing OAuth on a Vercel preview deployment.
+6. Sign in using a Google account with the same email as an existing lender's
+   Appwrite Auth account. Appwrite links the OAuth identity to that existing
+   user; the application does not create lender profiles from Google logins.
+
+The success callback receives a one-time Appwrite token, exchanges it on the
+server, clears the OAuth state cookie, and redirects to a clean dashboard URL.
+The token and resulting session secret must never be logged.

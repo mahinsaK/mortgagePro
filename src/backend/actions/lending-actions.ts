@@ -221,6 +221,11 @@ export type CreateCollectorActionState = {
   };
 };
 
+export type UpdateCollectorActionState = {
+  status: "idle" | "error" | "success";
+  message: string;
+};
+
 export async function createCollectorAction(
   _previousState: CreateCollectorActionState,
   formData: FormData,
@@ -301,7 +306,9 @@ export async function createCollectorAction(
   };
 }
 
-export async function updateCollectorAction(formData: FormData) {
+export async function updateCollectorAction(
+  formData: FormData,
+): Promise<UpdateCollectorActionState> {
   const lender = await getRequiredLender();
   const collectorId = readRequired(formData, "collector_id");
   const password = readOptional(formData, "password");
@@ -317,7 +324,10 @@ export async function updateCollectorAction(formData: FormData) {
 
   if (password) {
     if (password.length < 8) {
-      throw new Error("Collector password must be at least 8 characters.");
+      return {
+        status: "error",
+        message: "Collector password must be at least 8 characters.",
+      };
     }
 
     data.password_hash = hashCollectorPassword(password);
@@ -327,6 +337,18 @@ export async function updateCollectorAction(formData: FormData) {
 
   revalidatePath("/collectors");
   revalidatePath("/payments");
+
+  return {
+    status: "success",
+    message: "Collector updated successfully.",
+  };
+}
+
+export async function updateCollectorFormAction(
+  _previousState: UpdateCollectorActionState,
+  formData: FormData,
+): Promise<UpdateCollectorActionState> {
+  return updateCollectorAction(formData);
 }
 
 export async function deleteCollectorAction(formData: FormData) {

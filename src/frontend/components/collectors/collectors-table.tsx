@@ -2,12 +2,18 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { Check, Copy, Pencil, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import {
   deleteCollectorAction,
-  updateCollectorAction,
+  updateCollectorFormAction,
+  type UpdateCollectorActionState,
 } from "@/backend/actions/lending-actions";
 import type { CollectorRow } from "@/backend/services/lending-service";
+
+const INITIAL_UPDATE_STATE: UpdateCollectorActionState = {
+  status: "idle",
+  message: "",
+};
 
 export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) {
   const [copiedUsername, setCopiedUsername] = useState("");
@@ -112,8 +118,25 @@ export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) 
 }
 
 function EditCollectorDialog({ collector }: { collector: CollectorRow }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [actionState, formAction, isPending] = useActionState(
+    async (
+      previousState: UpdateCollectorActionState,
+      formData: FormData,
+    ) => {
+      const result = await updateCollectorFormAction(previousState, formData);
+
+      if (result.status === "success") {
+        setIsOpen(false);
+      }
+
+      return result;
+    },
+    INITIAL_UPDATE_STATE,
+  );
+
   return (
-    <Dialog.Root>
+    <Dialog.Root onOpenChange={setIsOpen} open={isOpen}>
       <Dialog.Trigger asChild>
         <button
           aria-label={`Edit ${collector.name}`}
@@ -146,8 +169,16 @@ function EditCollectorDialog({ collector }: { collector: CollectorRow }) {
             </Dialog.Close>
           </div>
 
-          <form action={updateCollectorAction} className="grid gap-4 sm:grid-cols-2">
+          <form action={formAction} className="grid gap-4 sm:grid-cols-2">
             <input name="collector_id" type="hidden" value={collector.id} />
+            {actionState.status === "error" ? (
+              <p
+                aria-live="polite"
+                className="rounded-md border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-sm font-medium text-[#b91c1c] sm:col-span-2"
+              >
+                {actionState.message}
+              </p>
+            ) : null}
             <Field
               defaultValue={collector.name}
               label="Name"
@@ -174,6 +205,7 @@ function EditCollectorDialog({ collector }: { collector: CollectorRow }) {
             <Field
               defaultValue=""
               label="New password"
+              minLength={8}
               name="password"
               placeholder="Leave blank to keep current"
               type="password"
@@ -192,9 +224,10 @@ function EditCollectorDialog({ collector }: { collector: CollectorRow }) {
             <div className="flex items-end sm:col-span-2">
               <button
                 className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
+                disabled={isPending}
                 type="submit"
               >
-                Update collector
+                {isPending ? "Updating collector..." : "Update collector"}
               </button>
             </div>
           </form>
@@ -207,6 +240,7 @@ function EditCollectorDialog({ collector }: { collector: CollectorRow }) {
 function Field({
   defaultValue,
   label,
+  minLength,
   name,
   placeholder,
   required,
@@ -214,6 +248,7 @@ function Field({
 }: {
   defaultValue: string;
   label: string;
+  minLength?: number;
   name: string;
   placeholder?: string;
   required?: boolean;
@@ -225,6 +260,7 @@ function Field({
       <input
         className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
         defaultValue={defaultValue}
+        minLength={minLength}
         name={name}
         placeholder={placeholder}
         required={required}

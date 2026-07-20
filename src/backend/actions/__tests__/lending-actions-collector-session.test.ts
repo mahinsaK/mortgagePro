@@ -185,6 +185,18 @@ describe("collector writes", () => {
     );
   });
 
+  it("returns an inline error for a short replacement password", async () => {
+    const result = await updateCollectorAction(
+      collectorForm("active", "short"),
+    );
+
+    expect(result).toEqual({
+      status: "error",
+      message: "Collector password must be at least 8 characters.",
+    });
+    expect(mocks.updateTenantDocument).not.toHaveBeenCalled();
+  });
+
   it("ignores a manipulated username during collector updates", async () => {
     const formData = collectorForm("active");
     formData.set("username", "attackerchosen9999");

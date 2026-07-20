@@ -179,6 +179,7 @@ describe("recordTenantLoanPayment", () => {
     ).rejects.toMatchObject({ code: "overpayment" });
 
     expect(mocks.createTransaction).toHaveBeenCalledTimes(2);
+    expect(mocks.createTransaction).toHaveBeenCalledWith({ ttl: 60 });
     expect(mocks.createDocument).toHaveBeenCalledTimes(1);
     expect(mocks.updateDocument).toHaveBeenCalledTimes(1);
   });

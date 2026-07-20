@@ -121,6 +121,7 @@ describe("authentication rate limiting", () => {
       consumeAuthenticationAttempt({ flow: "google_login", headers, now }),
     ).rejects.toMatchObject({ code: 409 });
     expect(mocks.createTransaction).toHaveBeenCalledTimes(3);
+    expect(mocks.createTransaction).toHaveBeenCalledWith({ ttl: 60 });
   });
 
   it("best-effort clears the successful identity counter", async () => {

@@ -80,7 +80,7 @@ export async function recordTenantLoanPayment(
   const paymentId = createPaymentId(input);
 
   for (let attempt = 1; attempt <= MAX_TRANSACTION_ATTEMPTS; attempt += 1) {
-    const transaction = await databases.createTransaction({ ttl: 30 });
+    const transaction = await databases.createTransaction({ ttl: 60 });
     const transactionId = transaction.$id;
 
     try {
@@ -248,7 +248,7 @@ export async function deleteTenantLoanPayment(
   }
 
   for (let attempt = 1; attempt <= MAX_TRANSACTION_ATTEMPTS; attempt += 1) {
-    const transaction = await databases.createTransaction({ ttl: 30 });
+    const transaction = await databases.createTransaction({ ttl: 60 });
     const transactionId = transaction.$id;
 
     try {

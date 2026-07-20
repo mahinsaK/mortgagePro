@@ -127,7 +127,7 @@ async function consumeRateLimit(input: ConsumeRateLimitInput) {
   const documentId = `rl_${subjectHash.slice(0, 32)}`;
 
   for (let attempt = 1; attempt <= MAX_TRANSACTION_ATTEMPTS; attempt += 1) {
-    const transaction = await databases.createTransaction({ ttl: 30 });
+    const transaction = await databases.createTransaction({ ttl: 60 });
     const transactionId = transaction.$id;
 
     try {

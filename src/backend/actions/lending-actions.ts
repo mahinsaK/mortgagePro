@@ -226,6 +226,11 @@ export type UpdateCollectorActionState = {
   message: string;
 };
 
+export type UpdateLenderPasswordActionState = {
+  status: "idle" | "error" | "success";
+  message: string;
+};
+
 export async function createCollectorAction(
   _previousState: CreateCollectorActionState,
   formData: FormData,
@@ -383,29 +388,59 @@ export async function updateLenderProfileAction(formData: FormData) {
   revalidatePath("/dashboard/lender");
 }
 
-export async function updateLenderPasswordAction(formData: FormData) {
+export async function updateLenderPasswordAction(
+  formData: FormData,
+): Promise<UpdateLenderPasswordActionState> {
   const lender = await getRequiredLender();
   const password = readRequired(formData, "password");
   const confirmPassword = readRequired(formData, "confirm_password");
 
   if (password.length < 8) {
-    throw new Error("Password must be at least 8 characters.");
+    return {
+      status: "error",
+      message: "Password must be at least 8 characters.",
+    };
   }
 
   if (password !== confirmPassword) {
-    throw new Error("Password and confirmation do not match.");
+    return {
+      status: "error",
+      message: "Password and confirmation do not match.",
+    };
   }
 
   if (!lender.appwriteUserId) {
-    throw new Error("This lender profile is not linked to an Appwrite Auth user.");
+    return {
+      status: "error",
+      message: "This lender account cannot update its password.",
+    };
   }
 
-  await users.updatePassword({
-    userId: lender.appwriteUserId,
-    password,
-  });
+  try {
+    await users.updatePassword({
+      userId: lender.appwriteUserId,
+      password,
+    });
+  } catch {
+    return {
+      status: "error",
+      message: "Password could not be updated. Please try again.",
+    };
+  }
 
   revalidatePath("/settings");
+
+  return {
+    status: "success",
+    message: "Password updated successfully.",
+  };
+}
+
+export async function updateLenderPasswordFormAction(
+  _previousState: UpdateLenderPasswordActionState,
+  formData: FormData,
+): Promise<UpdateLenderPasswordActionState> {
+  return updateLenderPasswordAction(formData);
 }
 
 async function getRequiredLender() {

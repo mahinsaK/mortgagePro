@@ -88,6 +88,7 @@ export function RegisterLenderForm({
           <Field
             inputRef={passwordRef}
             label="Password"
+            minLength={8}
             name="password"
             placeholder="Create password"
             type="password"
@@ -95,6 +96,7 @@ export function RegisterLenderForm({
           <Field
             inputRef={confirmPasswordRef}
             label="Confirm password"
+            minLength={8}
             name="confirmPassword"
             placeholder="Confirm password"
             type="password"
@@ -152,6 +154,7 @@ function Field({
   className = "",
   inputRef,
   label,
+  minLength,
   name,
   placeholder,
   type = "text",
@@ -159,6 +162,7 @@ function Field({
   className?: string;
   inputRef?: Ref<HTMLInputElement>;
   label: string;
+  minLength?: number;
   name: string;
   placeholder: string;
   type?: "email" | "password" | "text";
@@ -168,6 +172,7 @@ function Field({
       {label}
       <input
         className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
+        minLength={minLength}
         name={name}
         placeholder={placeholder}
         ref={inputRef}

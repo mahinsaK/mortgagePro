@@ -58,12 +58,14 @@ export default async function PasswordResetPage({
               <input name="secret" type="hidden" value={secret} />
               <Field
                 label="New password"
+                minLength={8}
                 name="password"
                 placeholder="Create password"
                 type="password"
               />
               <Field
                 label="Confirm password"
+                minLength={8}
                 name="confirmPassword"
                 placeholder="Confirm password"
                 type="password"
@@ -102,11 +104,13 @@ export default async function PasswordResetPage({
 
 function Field({
   label,
+  minLength,
   name,
   placeholder,
   type,
 }: {
   label: string;
+  minLength?: number;
   name: string;
   placeholder: string;
   type: "email" | "password";
@@ -116,6 +120,7 @@ function Field({
       <span className="text-sm font-medium text-[#2d3745]">{label}</span>
       <input
         className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
+        minLength={minLength}
         name={name}
         placeholder={placeholder}
         required

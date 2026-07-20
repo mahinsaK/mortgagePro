@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   listDocuments: vi.fn(),
   requireTenantDocument: vi.fn(),
   updateTenantDocument: vi.fn(),
+  updateUserPassword: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -25,7 +26,7 @@ vi.mock("@/backend/appwrite/server-client", async () => {
       updateDocument: vi.fn(),
     },
     Query,
-    users: { updatePassword: vi.fn() },
+    users: { updatePassword: mocks.updateUserPassword },
   };
 });
 vi.mock("@/backend/lib/currency", () => ({
@@ -55,6 +56,7 @@ vi.mock("@/backend/services/tenant-data-service", () => ({
 import {
   createCollectorAction,
   updateCollectorAction,
+  updateLenderPasswordAction,
   type CreateCollectorActionState,
 } from "../lending-actions";
 
@@ -86,7 +88,10 @@ function newCollectorForm(username = "jordanlee4821") {
 describe("collector writes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getPrimaryLender.mockResolvedValue({ id: "lender_A" });
+    mocks.getPrimaryLender.mockResolvedValue({
+      id: "lender_A",
+      appwriteUserId: "user_A",
+    });
     mocks.listDocuments.mockResolvedValue({ documents: [], total: 0 });
     mocks.requireTenantDocument.mockResolvedValue({ $id: "collector_A" });
     mocks.hashCollectorPassword.mockReturnValue("new-hash");
@@ -209,5 +214,36 @@ describe("collector writes", () => {
       "collector_A",
       expect.not.objectContaining({ username: expect.anything() }),
     );
+  });
+
+  it("returns inline lender password validation errors", async () => {
+    const formData = new FormData();
+    formData.set("password", "NewPassword123!");
+    formData.set("confirm_password", "DifferentPassword123!");
+
+    const result = await updateLenderPasswordAction(formData);
+
+    expect(result).toEqual({
+      status: "error",
+      message: "Password and confirmation do not match.",
+    });
+    expect(mocks.updateUserPassword).not.toHaveBeenCalled();
+  });
+
+  it("updates a lender password and returns success", async () => {
+    const formData = new FormData();
+    formData.set("password", "NewPassword123!");
+    formData.set("confirm_password", "NewPassword123!");
+
+    const result = await updateLenderPasswordAction(formData);
+
+    expect(result).toEqual({
+      status: "success",
+      message: "Password updated successfully.",
+    });
+    expect(mocks.updateUserPassword).toHaveBeenCalledWith({
+      userId: "user_A",
+      password: "NewPassword123!",
+    });
   });
 });

@@ -305,6 +305,7 @@ export function AddCollectorForm() {
               <Field label="Area" name="area" placeholder="Austin North" />
               <Field
                 label="Collector password"
+                minLength={8}
                 name="password"
                 placeholder="Minimum 8 characters"
                 required
@@ -356,12 +357,14 @@ async function requestUsernameAvailability(username: string) {
 
 function Field({
   label,
+  minLength,
   name,
   placeholder,
   required,
   type = "text",
 }: {
   label: string;
+  minLength?: number;
   name: string;
   placeholder: string;
   required?: boolean;
@@ -372,6 +375,7 @@ function Field({
       {label}
       <input
         className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+        minLength={minLength}
         name={name}
         placeholder={placeholder}
         required={required}

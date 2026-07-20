@@ -1,9 +1,9 @@
 import {
-  updateLenderPasswordAction,
   updateLenderProfileAction,
 } from "@/backend/actions/lending-actions";
 import { currencyOptions } from "@/backend/lib/currency";
 import { getPrimaryLender } from "@/backend/services/lender-service";
+import { LenderPasswordForm } from "@/frontend/components/settings/lender-password-form";
 
 export const dynamic = "force-dynamic";
 
@@ -86,33 +86,7 @@ export default async function SettingsPage() {
           <h2 className="mt-1 text-lg font-semibold">Change password</h2>
         </div>
 
-        <form
-          action={updateLenderPasswordAction}
-          className="grid gap-4 sm:grid-cols-2"
-        >
-          <Field
-            defaultValue=""
-            label="New password"
-            name="password"
-            required
-            type="password"
-          />
-          <Field
-            defaultValue=""
-            label="Confirm password"
-            name="confirm_password"
-            required
-            type="password"
-          />
-          <div className="sm:col-span-2 sm:max-w-xs">
-            <button
-              className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
-              type="submit"
-            >
-              Update password
-            </button>
-          </div>
-        </form>
+        <LenderPasswordForm />
       </section>
     </div>
   );

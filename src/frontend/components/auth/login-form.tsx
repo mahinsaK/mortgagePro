@@ -15,15 +15,17 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
     <div className="mt-8">
       <AuthStatus message={message} status={status} />
 
-      <Link
-        className="mt-5 flex h-12 w-full items-center justify-center gap-3 rounded-md border border-[#cfd8e3] bg-white px-4 text-sm font-semibold text-[#2d3745] transition hover:border-[#aebac8] hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2563eb]/10"
-        href="/auth/google"
-      >
-        <GoogleIcon />
-        Continue with Google
-      </Link>
+      <div className="mt-5 mb-8">
+        <Link
+          className="flex h-12 w-full items-center justify-center gap-3 rounded-md border border-[#cfd8e3] bg-white px-4 text-sm font-semibold text-[#2d3745] transition hover:border-[#aebac8] hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2563eb]/10"
+          href="/auth/google"
+        >
+          <GoogleIcon />
+          Continue with Google
+        </Link>
+      </div>
 
-      <div className="my-6 flex items-center gap-3" aria-hidden="true">
+      <div className="mb-8 flex items-center gap-3" aria-hidden="true">
         <span className="h-px flex-1 bg-[#d9e0e8]" />
         <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#7b8797]">
           or continue with email

@@ -1,3 +1,4 @@
+import { AppwriteException } from "node-appwrite";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -59,5 +60,21 @@ describe("Google OAuth start route", () => {
       "https://mortgagepro.example/auth/unavailable",
     );
     expect(response.cookies.get("mortgagepro_lender_oauth_state")).toBeUndefined();
+  });
+
+  it("explains when Appwrite rejects the configured application address", async () => {
+    mocks.createOAuth2Token.mockRejectedValue(
+      new AppwriteException("Invalid redirect", 412, "general_argument_invalid"),
+    );
+
+    const response = await GET(
+      new NextRequest("https://mortgagepro.example/auth/google"),
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toContain("/auth/login?status=error");
+    expect(response.headers.get("location")).toContain(
+      "Google+sign-in+is+not+configured",
+    );
   });
 });

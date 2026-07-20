@@ -47,9 +47,12 @@ src/backend
   Generates QR code images for download from a loan ID.
 - `src/backend/modules/sms/service.ts`
   Handles first-phase SMS validation, templates, and provider-backed send results.
-- `scripts/setup-appwrite.mjs`
-  Creates/reconciles deny-by-default Appwrite collections, attributes, indexes,
-  seed data, and search-text backfills using the local setup key.
+- `scripts/create-appwrite-tables-and-attributes.mjs`
+  Creates/reconciles the Appwrite database, collections, and attributes using the local setup key.
+- `scripts/create-appwrite-indexes.mjs`
+  Creates/reconciles collection indexes after attributes are available.
+- `scripts/seed-appwrite-demo-data.mjs`
+  Seeds demo users, borrowers, collectors, loans, payments, and search text.
 
 ## Current backend flow
 

@@ -19,7 +19,7 @@ The pure module files validate and shape auth input. The server actions call App
 
 The current Appwrite Auth seed user is created by:
 
-- `scripts/setup-appwrite.mjs`
+- `scripts/seed-appwrite-demo-data.mjs`
 
 ## DTOs
 

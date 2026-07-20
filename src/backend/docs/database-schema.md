@@ -2,7 +2,9 @@
 
 The app uses Appwrite Database with five core collections only.
 
-The setup source is `scripts/setup-appwrite.mjs`.
+The schema sources are `scripts/appwrite-schema-definition.mjs`,
+`scripts/create-appwrite-tables-and-attributes.mjs`, and
+`scripts/create-appwrite-indexes.mjs`.
 
 All five collections are provisioned with empty collection permissions,
 `documentSecurity: false`, and server-only access through the runtime API key.
@@ -143,4 +145,6 @@ Source:
 
 - `src/backend/services/search-text-service.ts`
 - `src/backend/actions/lending-actions.ts`
-- `scripts/setup-appwrite.mjs`
+- `scripts/appwrite-schema-definition.mjs`
+- `scripts/create-appwrite-tables-and-attributes.mjs`
+- `scripts/create-appwrite-indexes.mjs`

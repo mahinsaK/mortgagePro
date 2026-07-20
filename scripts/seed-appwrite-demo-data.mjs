@@ -2,6 +2,19 @@ import { randomBytes, scryptSync } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { Client, Databases, Query, Users } from "node-appwrite";
 
+/*
+Demo login credentials created by this script:
+
+Lenders:
+- demo.northstar@mortgagepro.local / DemoPassword123!
+- demo.rivercity@mortgagepro.local / RiverDemo123!
+
+Collectors:
+- seed_collector_jordan / CollectorPass123!
+- seed_collector_maya / MayaCollect123!
+- seed_collector_nina / NinaCollect123!
+*/
+
 const env = { ...loadEnv([".env.local", ".env.example"]), ...process.env };
 
 const config = {
@@ -219,7 +232,7 @@ async function main() {
   for (const lender of demoLenders) {
     for (const collector of lender.collectors) {
       console.log(
-        `- ${collector.name} / ${collector.password} (${lender.companyName})`,
+        `- ${collector.id} / ${collector.password} (${collector.name}, ${lender.companyName})`,
       );
     }
   }
@@ -379,7 +392,7 @@ async function assertBorrowerSchema() {
 
   if (!contact || !address || oldContactInfo) {
     throw new Error(
-      "Borrower schema is not ready. Run npm run appwrite:setup before seeding.",
+      "Borrower schema is not ready. Run npm run appwrite:tables and npm run appwrite:indexes before seeding.",
     );
   }
 }

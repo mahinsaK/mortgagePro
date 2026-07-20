@@ -1035,9 +1035,13 @@ How it works:
 
 ## Appwrite setup and seed queries
 
-Path: `scripts/setup-appwrite.mjs`
+Paths:
 
-This script runs outside the app to prepare Appwrite.
+- `scripts/create-appwrite-tables-and-attributes.mjs`
+- `scripts/create-appwrite-indexes.mjs`
+- `scripts/seed-appwrite-demo-data.mjs`
+
+These scripts run outside the app to prepare Appwrite.
 
 Main operations:
 

@@ -221,7 +221,8 @@ documentSecurity: false
 
 Original evidence:
 
-- `scripts/setup-appwrite.mjs`
+- `scripts/create-appwrite-tables-and-attributes.mjs`
+- `scripts/create-appwrite-indexes.mjs`
 
 The July 10 live metadata check confirmed the same state for `lenders`, `borrowers`,
 `collectors`, `loans`, and `payments`:
@@ -284,7 +285,7 @@ safest immediate model is server-only database access:
 2. Remove client `create` permission as well unless a documented client-side
    flow genuinely needs it.
 3. Keep all database operations behind authenticated Next.js routes/actions.
-4. Update `scripts/setup-appwrite.mjs`; changing only the live console is not
+4. Update the Appwrite setup scripts; changing only the live console is not
    enough.
 5. Add a migration/reconciliation command. The current `ensureCollection()`
    returns when a collection exists and does not repair existing permissions.

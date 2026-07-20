@@ -90,19 +90,37 @@ The app expects these core variables in `.env.local`:
 
 ## Appwrite Setup
 
-Initialize the database schema and seed the demo data with:
+Create the database, collections, attributes, and indexes with:
 
 ```bash
 npm run appwrite:setup
 ```
 
-To load the sample lender flow separately, run:
+You can also run the schema steps separately:
+
+```bash
+npm run appwrite:tables
+npm run appwrite:indexes
+```
+
+To load demo lenders, collectors, borrowers, loans, and payments, run:
 
 ```bash
 npm run appwrite:seed
 ```
 
-The setup creates or reconciles the `lenders`, `borrowers`, `collectors`, `loans`, and `payments` collections with empty client permissions and `documentSecurity` disabled, then seeds a demo loan workflow with QR code data. Database access is server-only.
+Demo lender logins:
+
+- `demo.northstar@mortgagepro.local` / `DemoPassword123!`
+- `demo.rivercity@mortgagepro.local` / `RiverDemo123!`
+
+Demo collector logins:
+
+- `seed_collector_jordan` / `CollectorPass123!`
+- `seed_collector_maya` / `MayaCollect123!`
+- `seed_collector_nina` / `NinaCollect123!`
+
+The table script creates or reconciles the `lenders`, `borrowers`, `collectors`, `loans`, and `payments` collections with empty client permissions and `documentSecurity` disabled. Database access is server-only.
 
 Inspect collection permission metadata without changing it:
 
@@ -123,7 +141,9 @@ npm run appwrite:permissions:apply
 - `npm run start` - start the production server.
 - `npm run lint` - run ESLint.
 - `npm run test` - run the Vitest test suite.
-- `npm run appwrite:setup` - provision Appwrite collections and seed demo data.
+- `npm run appwrite:setup` - create Appwrite collections, attributes, and indexes.
+- `npm run appwrite:tables` - create Appwrite database, collections, and attributes.
+- `npm run appwrite:indexes` - create Appwrite collection indexes.
 - `npm run appwrite:seed` - seed the demo Appwrite data only.
 - `npm run appwrite:permissions:check` - inspect collection permission metadata without changing it.
 - `npm run appwrite:permissions:apply` - back up, harden, and verify collection permissions.

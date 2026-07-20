@@ -128,6 +128,8 @@ How it works:
 - When `View payments` is clicked, the client calls `/api/loans/{loanId}/payments`.
 - Payment totals and rows open in a right-side drawer instead of expanding the
   loan details card.
+- The circular download button beside `View payments` calls the same protected
+  endpoint with `?format=csv` and downloads only that loan's payment history.
 - The backend verifies `lender_id` and `loan_id`.
 - The response includes payment rows, stored `totalPaid`, and stored `remaining`.
 

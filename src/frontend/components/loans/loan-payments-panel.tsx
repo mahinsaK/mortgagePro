@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { RefreshCw, X } from "lucide-react";
+import { Download, RefreshCw, X } from "lucide-react";
 import { useState } from "react";
 import { LocalTimestamp } from "@/frontend/components/ui/local-timestamp";
 
@@ -56,14 +56,26 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
       <section className="mt-6 border-t border-[#eef2f6] pt-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-base font-semibold">Payments</h3>
-          <Dialog.Trigger asChild>
-            <button
-              className="h-9 rounded-md border border-[#cfd8e3] px-3 text-xs font-semibold text-[#2d3745] transition hover:bg-[#f8fafc]"
-              type="button"
+          <div className="flex items-center gap-2">
+            <a
+              aria-label="Download loan payments as CSV"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#15191f] text-white shadow-sm transition hover:bg-[#2d3745]"
+              download="mortgagepro_loan_payments.csv"
+              href={`/api/loans/${encodeURIComponent(loanId)}/payments?format=csv`}
+              title="Download loan payments as CSV"
             >
-              View payments
-            </button>
-          </Dialog.Trigger>
+              <Download aria-hidden="true" size={16} />
+              <span className="sr-only">Download loan payments as CSV</span>
+            </a>
+            <Dialog.Trigger asChild>
+              <button
+                className="h-9 rounded-md border border-[#cfd8e3] px-3 text-xs font-semibold text-[#2d3745] transition hover:bg-[#f8fafc]"
+                type="button"
+              >
+                View payments
+              </button>
+            </Dialog.Trigger>
+          </div>
         </div>
       </section>
 

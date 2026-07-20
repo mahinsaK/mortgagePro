@@ -480,7 +480,7 @@ Query.select(["$id", "$createdAt", "collector_id", "amount", "method", "date", "
 
 How it works:
 
-- Runs only when the user clicks `View payments` in a loan details popup.
+- Runs when the user views or exports payments from a loan details popup.
 - Retrieves payments only for the selected lender-owned loan.
 - Sums returned payment amounts for `Total paid`.
 - Reads `totalPaid` and `remaining` from the loan document totals.

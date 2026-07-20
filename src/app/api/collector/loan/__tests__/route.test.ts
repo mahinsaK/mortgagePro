@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getTenantDocument: vi.fn(),
   requireActiveCollectorPrincipal: vi.fn(),
+  recordSecurityEvent: vi.fn(),
 }));
 
 vi.mock("@/backend/services/collector-auth-service", () => ({
@@ -10,6 +11,9 @@ vi.mock("@/backend/services/collector-auth-service", () => ({
 }));
 vi.mock("@/backend/services/tenant-data-service", () => ({
   getTenantDocument: mocks.getTenantDocument,
+}));
+vi.mock("@/backend/services/security-event-service", () => ({
+  recordSecurityEvent: mocks.recordSecurityEvent,
 }));
 
 import { GET } from "../route";
@@ -74,6 +78,13 @@ describe("collector loan lookup", () => {
       "lender_A",
       "loan_B",
       expect.any(Array),
+    );
+    expect(mocks.recordSecurityEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "collector_loan_access_denied",
+        outcome: "denied",
+        lenderId: "lender_A",
+      }),
     );
   });
 });

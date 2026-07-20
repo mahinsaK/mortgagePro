@@ -5,12 +5,13 @@ import {
   LENDER_OAUTH_STATE_COOKIE,
   LENDER_OAUTH_STATE_COOKIE_OPTIONS,
 } from "@/backend/services/lender-google-oauth-service";
+import { recordSecurityEvent } from "@/backend/services/security-event-service";
 
 const GOOGLE_LOGIN_FAILED = "Google sign-in was cancelled or failed.";
 
 export const dynamic = "force-dynamic";
 
-export function GET(request: NextRequest) {
+export async function GET(request: NextRequest) {
   let loginUrl: URL;
 
   try {
@@ -27,6 +28,13 @@ export function GET(request: NextRequest) {
     ...LENDER_OAUTH_STATE_COOKIE_OPTIONS,
     expires: new Date(0),
     maxAge: 0,
+  });
+  await recordSecurityEvent({
+    eventType: "google_login_failure",
+    outcome: "failure",
+    principalType: "anonymous",
+    headers: request.headers,
+    reasonCode: "cancelled_or_provider_failure",
   });
   return response;
 }

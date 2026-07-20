@@ -20,23 +20,41 @@ import {
   consumeAuthenticationAttempt,
   RATE_LIMITED_MESSAGE,
 } from "@/backend/services/authentication-rate-limit-service";
+import { recordSecurityEvent } from "@/backend/services/security-event-service";
 
 export async function collectorLoginAction(formData: FormData) {
   const collectorId = readRequired(formData, "username");
   const password = readRequired(formData, "password");
+  const requestHeaders = await headers();
   let rateLimit;
 
   try {
     rateLimit = await consumeAuthenticationAttempt({
       flow: "collector_login",
       identity: collectorId,
-      headers: await headers(),
+      headers: requestHeaders,
     });
   } catch {
+    await recordSecurityEvent({
+      eventType: "collector_login_error",
+      outcome: "error",
+      principalType: "collector",
+      principalIdentifier: collectorId,
+      headers: requestHeaders,
+      reasonCode: "rate_limit_unavailable",
+    });
     redirect("/auth/unavailable");
   }
 
   if (!rateLimit.allowed) {
+    await recordSecurityEvent({
+      eventType: "collector_login_blocked",
+      outcome: "blocked",
+      principalType: "collector",
+      principalIdentifier: collectorId,
+      headers: requestHeaders,
+      reasonCode: "rate_limit",
+    });
     redirectWithStatus(
       "/collector/login",
       "error",
@@ -44,27 +62,49 @@ export async function collectorLoginAction(formData: FormData) {
     );
   }
 
-  const collectors = await databases.listDocuments({
-    databaseId: appwriteServerConfig.databaseId,
-    collectionId: appwriteServerConfig.collections.collectors,
-    queries: [
-      Query.equal("$id", collectorId),
-      Query.equal("status", "active"),
-      Query.limit(1),
-      Query.select([
-        "$id",
-        "lender_id",
-        "name",
-        "password_hash",
-      ]),
-    ],
-  });
+  let collectors;
+
+  try {
+    collectors = await databases.listDocuments({
+      databaseId: appwriteServerConfig.databaseId,
+      collectionId: appwriteServerConfig.collections.collectors,
+      queries: [
+        Query.equal("$id", collectorId),
+        Query.equal("status", "active"),
+        Query.limit(1),
+        Query.select([
+          "$id",
+          "lender_id",
+          "name",
+          "password_hash",
+        ]),
+      ],
+    });
+  } catch {
+    await recordSecurityEvent({
+      eventType: "collector_login_error",
+      outcome: "error",
+      principalType: "collector",
+      principalIdentifier: collectorId,
+      headers: requestHeaders,
+      reasonCode: "collector_lookup_unavailable",
+    });
+    redirect("/auth/unavailable");
+  }
   const collector = collectors.documents[0];
 
   if (
     !collector ||
     !verifyCollectorPassword(password, String(collector.password_hash ?? ""))
   ) {
+    await recordSecurityEvent({
+      eventType: "collector_login_failure",
+      outcome: "failure",
+      principalType: "collector",
+      principalIdentifier: collectorId,
+      headers: requestHeaders,
+      reasonCode: "invalid_credentials",
+    });
     redirectWithStatus(
       "/collector/login",
       "error",
@@ -72,13 +112,34 @@ export async function collectorLoginAction(formData: FormData) {
     );
   }
 
-  await setCollectorSession({
-    collectorId: collector.$id,
-    lenderId: String(collector.lender_id ?? ""),
-    name: String(collector.name ?? collectorId),
-    passwordHash: String(collector.password_hash ?? ""),
-  });
+  try {
+    await setCollectorSession({
+      collectorId: collector.$id,
+      lenderId: String(collector.lender_id ?? ""),
+      name: String(collector.name ?? collectorId),
+      passwordHash: String(collector.password_hash ?? ""),
+    });
+  } catch {
+    await recordSecurityEvent({
+      eventType: "collector_login_error",
+      outcome: "error",
+      principalType: "collector",
+      principalIdentifier: collectorId,
+      lenderId: String(collector.lender_id ?? ""),
+      headers: requestHeaders,
+      reasonCode: "session_storage_failed",
+    });
+    redirect("/auth/unavailable");
+  }
   await clearAuthenticationIdentityLimit("collector_login", collectorId);
+  await recordSecurityEvent({
+    eventType: "collector_login_success",
+    outcome: "success",
+    principalType: "collector",
+    principalIdentifier: collectorId,
+    lenderId: String(collector.lender_id ?? ""),
+    headers: requestHeaders,
+  });
   redirect("/collector/scan");
 }
 

@@ -14,7 +14,9 @@
     "appwrite:seed": "node scripts/seed-appwrite-demo-data.mjs",
     "appwrite:permissions:check": "node scripts/manage-appwrite-permissions.mjs --check",
     "appwrite:permissions:apply": "node scripts/manage-appwrite-permissions.mjs --apply",
-    "appwrite:isolation:verify": "node scripts/verify-appwrite-isolation.mjs"
+    "appwrite:isolation:verify": "node scripts/verify-appwrite-isolation.mjs",
+    "security:report": "node scripts/security-report.mjs",
+    "security:cleanup": "node scripts/security-cleanup.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.18",

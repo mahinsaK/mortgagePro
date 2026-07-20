@@ -16,6 +16,7 @@ import {
   findActiveLenderByAppwriteUserId,
   revokeAppwriteSessionBestEffort,
 } from "@/backend/services/lender-login-service";
+import { recordSecurityEvent } from "@/backend/services/security-event-service";
 
 const GOOGLE_LOGIN_FAILED = "Google sign-in could not be completed. Please try again.";
 const NO_LENDER_PROFILE =
@@ -29,6 +30,13 @@ export async function GET(request: NextRequest) {
   const receivedState = callbackUrl.searchParams.get("state");
 
   if (!matchesLenderOAuthState(expectedState, receivedState)) {
+    await recordSecurityEvent({
+      eventType: "google_login_failure",
+      outcome: "failure",
+      principalType: "anonymous",
+      headers: request.headers,
+      reasonCode: "state_mismatch",
+    });
     return loginErrorResponse(request, GOOGLE_LOGIN_FAILED);
   }
 
@@ -36,6 +44,13 @@ export async function GET(request: NextRequest) {
   const secret = callbackUrl.searchParams.get("secret");
 
   if (!isValidCallbackCredential(userId, 36) || !isValidCallbackCredential(secret, 4096)) {
+    await recordSecurityEvent({
+      eventType: "google_login_failure",
+      outcome: "failure",
+      principalType: "anonymous",
+      headers: request.headers,
+      reasonCode: "invalid_callback",
+    });
     return loginErrorResponse(request, GOOGLE_LOGIN_FAILED);
   }
 
@@ -48,14 +63,38 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     if (isRejectedOAuthCallback(error)) {
+      await recordSecurityEvent({
+        eventType: "google_login_failure",
+        outcome: "failure",
+        principalType: "lender",
+        principalIdentifier: userId,
+        headers: request.headers,
+        reasonCode: "callback_rejected",
+      });
       return loginErrorResponse(request, GOOGLE_LOGIN_FAILED);
     }
 
+    await recordSecurityEvent({
+      eventType: "google_login_error",
+      outcome: "error",
+      principalType: "lender",
+      principalIdentifier: userId,
+      headers: request.headers,
+      reasonCode: "session_exchange_unavailable",
+    });
     return unavailableResponse(request);
   }
 
   if (!session.secret || !isValidExpiry(session.expire)) {
     await revokeAppwriteSessionBestEffort(session);
+    await recordSecurityEvent({
+      eventType: "google_login_error",
+      outcome: "error",
+      principalType: "lender",
+      principalIdentifier: session.userId,
+      headers: request.headers,
+      reasonCode: "invalid_session_response",
+    });
     return unavailableResponse(request);
   }
 
@@ -65,11 +104,27 @@ export async function GET(request: NextRequest) {
     lender = await findActiveLenderByAppwriteUserId(session.userId);
   } catch {
     await revokeAppwriteSessionBestEffort(session);
+    await recordSecurityEvent({
+      eventType: "google_login_error",
+      outcome: "error",
+      principalType: "lender",
+      principalIdentifier: session.userId,
+      headers: request.headers,
+      reasonCode: "lender_lookup_unavailable",
+    });
     return unavailableResponse(request);
   }
 
   if (!lender) {
     await revokeAppwriteSessionBestEffort(session);
+    await recordSecurityEvent({
+      eventType: "google_login_denied",
+      outcome: "denied",
+      principalType: "lender",
+      principalIdentifier: session.userId,
+      headers: request.headers,
+      reasonCode: "inactive_or_missing_lender",
+    });
     return loginErrorResponse(request, NO_LENDER_PROFILE);
   }
 
@@ -80,9 +135,26 @@ export async function GET(request: NextRequest) {
       expires: new Date(session.expire),
     });
     clearOAuthState(response);
+    await recordSecurityEvent({
+      eventType: "google_login_success",
+      outcome: "success",
+      principalType: "lender",
+      principalIdentifier: session.userId,
+      lenderId: lender.$id,
+      headers: request.headers,
+    });
     return response;
   } catch {
     await revokeAppwriteSessionBestEffort(session);
+    await recordSecurityEvent({
+      eventType: "google_login_error",
+      outcome: "error",
+      principalType: "lender",
+      principalIdentifier: session.userId,
+      lenderId: lender.$id,
+      headers: request.headers,
+      reasonCode: "session_storage_failed",
+    });
     return unavailableResponse(request);
   }
 }

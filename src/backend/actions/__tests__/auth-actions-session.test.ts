@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   getAuthSessionSecret: vi.fn(),
   listDocuments: vi.fn(),
   redirect: vi.fn(),
+  recordSecurityEvent: vi.fn(),
   setAuthSessionSecret: vi.fn(),
   userCreateSession: vi.fn(),
   userDeleteSession: vi.fn(),
@@ -56,6 +57,9 @@ vi.mock("@/backend/services/authentication-rate-limit-service", () => ({
   consumeAuthenticationAttempt: mocks.consumeAuthAttempt,
   RATE_LIMITED_MESSAGE: "Too many sign-in attempts. Please wait and try again.",
 }));
+vi.mock("@/backend/services/security-event-service", () => ({
+  recordSecurityEvent: mocks.recordSecurityEvent,
+}));
 
 import { loginAction, logoutAction } from "../auth-actions";
 
@@ -100,6 +104,13 @@ describe("lender session actions", () => {
       "lender_login",
       "owner@example.test",
     );
+    expect(mocks.recordSecurityEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "lender_login_success",
+        outcome: "success",
+        lenderId: "lender_A",
+      }),
+    );
   });
 
   it("does not call Appwrite Auth after the lender limit is reached", async () => {
@@ -111,6 +122,9 @@ describe("lender session actions", () => {
 
     expect(mocks.adminCreateSession).not.toHaveBeenCalled();
     expect(mocks.setAuthSessionSecret).not.toHaveBeenCalled();
+    expect(mocks.recordSecurityEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "lender_login_blocked" }),
+    );
   });
 
   it("revokes the new session when no active lender is linked", async () => {

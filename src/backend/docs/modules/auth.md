@@ -113,6 +113,23 @@ Session handling:
 Collector authentication is separate from Appwrite Auth. See
 `modules/collectors.md` for collector username login and signed 12-hour sessions.
 
+## Authentication abuse controls
+
+Authentication attempts use shared Appwrite counters rather than per-server
+memory, so separate Vercel instances see the same windows:
+
+- lender and collector login: 8 attempts per identity and 30 per IP in 15
+  minutes, followed by a 15-minute block;
+- Google OAuth start: 30 requests per IP per hour;
+- password reset: 5 requests per identity and IP per hour; and
+- lender registration: 5 requests per IP per hour.
+
+A successful password or collector login clears the identity counter but keeps
+the IP window. Authentication fails closed when the counter store is
+unavailable. Event recording is best effort and cannot block a valid login.
+Raw IP addresses, emails, and usernames are never stored in the security
+collections; `SECURITY_MONITORING_SECRET` HMAC-hashes them before persistence.
+
 ## Google provider setup
 
 1. Set `APP_BASE_URL=http://localhost:3000` locally. In Vercel, set it to the

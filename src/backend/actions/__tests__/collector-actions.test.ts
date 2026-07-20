@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   listDocuments: vi.fn(),
   recordTenantLoanPayment: vi.fn(),
   redirect: vi.fn(),
+  recordSecurityEvent: vi.fn(),
   requireActiveCollectorPrincipal: vi.fn(),
   setCollectorSession: vi.fn(),
   verifyCollectorPassword: vi.fn(),
@@ -40,6 +41,9 @@ vi.mock("@/backend/services/authentication-rate-limit-service", () => ({
   clearAuthenticationIdentityLimit: mocks.clearIdentityLimit,
   consumeAuthenticationAttempt: mocks.consumeAuthAttempt,
   RATE_LIMITED_MESSAGE: "Too many sign-in attempts. Please wait and try again.",
+}));
+vi.mock("@/backend/services/security-event-service", () => ({
+  recordSecurityEvent: mocks.recordSecurityEvent,
 }));
 
 import {
@@ -93,6 +97,12 @@ describe("collectorLoginAction", () => {
       "collector_login",
       "jordanlee4821",
     );
+    expect(mocks.recordSecurityEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "collector_login_success",
+        lenderId: "lender_A",
+      }),
+    );
   });
 
   it("does not query collectors after the login limit is reached", async () => {
@@ -106,6 +116,9 @@ describe("collectorLoginAction", () => {
     );
     expect(mocks.listDocuments).not.toHaveBeenCalled();
     expect(mocks.setCollectorSession).not.toHaveBeenCalled();
+    expect(mocks.recordSecurityEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "collector_login_blocked" }),
+    );
   });
 
   it("continues to accept an existing legacy collector ID as the username", async () => {

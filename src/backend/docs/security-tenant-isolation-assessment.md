@@ -1,7 +1,7 @@
 # Tenant Isolation, Collector Authorization, and Enterprise Readiness
 
 Assessment date: July 10, 2026  
-Remediation implementation update: July 11, 2026
+Remediation implementation update: July 20, 2026
 
 Status: **Critical remediation is implemented on
 `security/critical-tenant-isolation`, but live Appwrite enforcement and rollout
@@ -20,7 +20,8 @@ The source branch now implements the selected critical release: deny-by-default
 collection provisioning/reconciliation, separate runtime and setup keys,
 shared tenant-aware data helpers, generic not-found behavior for cross-tenant
 IDs, collector username login, dedicated 12-hour signed sessions, active-record
-revalidation, and focused security verification.
+revalidation, distributed authentication rate limiting, sanitized security-event
+monitoring, and focused security verification.
 
 That is a material improvement in the code, but it does not by itself change
 the live Appwrite project. The last read-only live metadata inspection on July
@@ -32,7 +33,8 @@ still be treated as critically vulnerable.
 
 Even after the critical rollout, deferred financial and operational issues
 remain: money uses floating point storage, financial history can be hard
-deleted, and enterprise monitoring/MFA/backup/compliance controls are absent.
+deleted, and MFA, external alerting, backup/restore, independent penetration
+testing, and compliance controls are absent.
 Transactional payment writes, retry idempotency, and overpayment rejection are
 implemented in source but still require deployment smoke verification.
 
@@ -61,8 +63,10 @@ Direct answers:
 | Shared tenant-aware reads/writes | Implemented in `b9cbf2a` | Pending deployment |
 | Collector username login and copy UI | Implemented in source | Pending deployment |
 | 12-hour credential-bound collector sessions | Implemented in source | Pending secret/deployment |
-| Tenant/session automated tests | 85 tests passing | Local/mocked coverage complete |
+| Tenant/session automated tests | Automated suite passing | Local/mocked coverage complete |
 | Direct Appwrite session denial verifier | Implemented in `61e6f08` | Must run after permission apply |
+| Distributed authentication rate limits | Implemented in source | Pending live schema/deployed smoke test |
+| Sanitized security-event monitoring | Implemented in source | Pending live schema/deployed smoke test |
 
 The exact deployment, verification, key rotation, and rollback procedure is in
 `critical-tenant-isolation-rollout.md`.
@@ -358,6 +362,12 @@ client API rate limits will protect it.
 Required change: implement distributed rate limiting by IP and collector/lender
 identifier, alert on abuse, and define lockout/recovery behavior.
 
+Remediation status: **Implemented in source, pending deployed smoke
+verification.** Shared Appwrite counters enforce identity and IP windows for
+collector and lender login, plus limits for Google OAuth start, registration,
+and password reset. Sanitized security events are stored separately and emitted
+as structured server logs. External alerting remains deferred.
+
 #### `COLLECTOR-003`: sessions are long-lived and weakly revocable
 
 Severity: **Medium**
@@ -597,8 +607,8 @@ Dependency audit results are time-sensitive and must be rerun in CI.
    client verifier exist; exhaustive end-to-end route/export tests remain.
 3. **Source complete:** replace collector name-only login with unique collector
    ID login.
-4. **Partially complete:** session revocation/versioning is implemented; login
-   rate limiting remains deferred.
+4. **Source complete, deployment pending:** session revocation/versioning and
+   distributed authentication rate limiting are implemented.
 5. **Source complete:** revalidate the active collector on every protected
    collector route/page/action.
 6. **Source complete:** make payment creation and balance update transactional.
@@ -611,7 +621,9 @@ Dependency audit results are time-sensitive and must be rerun in CI.
 1. MFA/step-up authentication and privileged administrative roles.
 2. Append-only security and financial audit logs with actor, tenant, timestamp,
    request ID, previous value, and reason.
-3. Centralized monitoring, abuse detection, and incident alerting.
+3. Centralized monitoring, abuse detection, and incident alerting. Sanitized
+   Appwrite events and structured logs are implemented; external alerting and
+   incident operations remain deferred.
 4. Security headers/CSP, canonical origin configuration, and automated security
    tests.
 5. Backup, restore, retention, disaster-recovery, and reconciliation drills.
@@ -633,8 +645,9 @@ true:
   records. Source is ready; live apply/verification is pending.
 - [ ] Two-tenant direct API and application tests pass for all resources.
   Critical unit coverage exists; exhaustive live/end-to-end coverage remains.
-- [ ] Collector identities are lender-scoped, rate-limited, and revocable.
-  Unique ID and revocation are implemented; rate limiting remains deferred.
+- [ ] Collector identities are lender-linked, rate-limited, and revocable.
+  Source implementation is complete; deployed concurrency and abuse smoke
+  verification remains.
 - [ ] Disabled collectors cannot view or record any loan data. Source tests
   pass; deployed smoke verification remains.
 - [ ] Payments are atomic, idempotent, exact-precision, and concurrency-safe.
@@ -643,6 +656,8 @@ true:
   concurrency verification remain.
 - [ ] Payment corrections use auditable reversals instead of deletion.
 - [ ] Security events and financial mutations are attributable and monitored.
+  Authentication/security events are implemented; financial audit history and
+  external alerting remain deferred.
 - [ ] MFA, privileged-action controls, backups, restore tests, and incident
   response are operational.
 - [ ] Dependency and penetration-test findings are resolved or formally accepted.
@@ -653,6 +668,7 @@ true:
 MortgagePro now has a substantially stronger critical-release source design:
 deny-by-default provisioning, server-only credential separation, centralized
 tenant helpers, collector username login, signed short-lived collector sessions,
+distributed authentication rate limiting, sanitized security-event monitoring,
 transactional/idempotent payment recording, overpayment rejection, and focused
 isolation verification. The implemented branch is suitable for a controlled
 security rollout using demo data.
@@ -667,5 +683,5 @@ The accurate current label is: **critical isolation code complete; live
 remediation pending; enterprise readiness not achieved.** Do not add real
 financial or personal data until live isolation evidence is recorded, and do
 not make an enterprise claim until exact-money storage, auditable corrections,
-rate limiting, MFA, monitoring, backups,
-incident response, penetration testing, and compliance review are complete.
+exact financial audit history, MFA, external alerting, backups, incident
+response, independent penetration testing, and compliance review are complete.

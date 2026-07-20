@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   createSession: vi.fn(),
   findActiveLender: vi.fn(),
   revokeSession: vi.fn(),
+  recordSecurityEvent: vi.fn(),
 }));
 
 vi.mock("@/backend/appwrite/server-client", () => ({
@@ -17,6 +18,9 @@ vi.mock("@/backend/appwrite/server-client", () => ({
 vi.mock("@/backend/services/lender-login-service", () => ({
   findActiveLenderByAppwriteUserId: mocks.findActiveLender,
   revokeAppwriteSessionBestEffort: mocks.revokeSession,
+}));
+vi.mock("@/backend/services/security-event-service", () => ({
+  recordSecurityEvent: mocks.recordSecurityEvent,
 }));
 
 import { GET } from "../route";
@@ -77,6 +81,13 @@ describe("Google OAuth callback route", () => {
     expect(response.cookies.get("mortgagepro_lender_oauth_state")?.value).toBe("");
     expect(response.headers.get("location")).not.toContain("secret");
     expect(mocks.revokeSession).not.toHaveBeenCalled();
+    expect(mocks.recordSecurityEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "google_login_success",
+        outcome: "success",
+        lenderId: "lender_A",
+      }),
+    );
   });
 
   it("revokes the session and rejects a Google user without a lender profile", async () => {

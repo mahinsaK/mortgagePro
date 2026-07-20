@@ -58,6 +58,10 @@ Store it as `COLLECTOR_SESSION_SECRET` locally and in every Vercel environment
 that runs the app. Do not reuse an Appwrite key, project ID, password, or public
 identifier. Changing this secret invalidates all collector sessions.
 
+Generate a separate monitoring secret the same way and store it as
+`SECURITY_MONITORING_SECRET`. It HMAC-hashes login identifiers and IP addresses;
+changing it prevents old and new rate-limit identities from matching.
+
 ## 3. Prepare local and Vercel configuration
 
 Local `.env.local` must contain:
@@ -66,6 +70,7 @@ Local `.env.local` must contain:
 APPWRITE_RUNTIME_API_KEY=...
 APPWRITE_SETUP_API_KEY=...
 COLLECTOR_SESSION_SECRET=...
+SECURITY_MONITORING_SECRET=...
 ```
 
 Vercel must contain only:
@@ -73,6 +78,7 @@ Vercel must contain only:
 ```txt
 APPWRITE_RUNTIME_API_KEY=...
 COLLECTOR_SESSION_SECRET=...
+SECURITY_MONITORING_SECRET=...
 ```
 
 Keep all existing `NEXT_PUBLIC_APPWRITE_*` identifiers unchanged unless the
@@ -112,7 +118,7 @@ The command:
    file permissions;
 2. applies empty collection permissions;
 3. sets `documentSecurity: false` and keeps each collection enabled; and
-4. re-reads all five collections and fails if any remains noncompliant.
+4. re-reads all seven collections and fails if any remains noncompliant.
 
 Run the check again:
 
@@ -120,7 +126,7 @@ Run the check again:
 npm run appwrite:permissions:check
 ```
 
-All five collections must show empty permissions, disabled document security,
+All seven collections must show empty permissions, disabled document security,
 enabled state, and `compliant: true`.
 
 ## 7. Run direct-client and runtime verification
@@ -140,7 +146,7 @@ npm run appwrite:isolation:verify
 
 The verifier creates uniquely named throwaway records, proves a normal
 Appwrite user session cannot list, create, update, or delete documents in any
-of the five collections, proves the runtime key can perform document CRUD, and
+of the seven collections, proves the runtime key can perform document CRUD, and
 cleans up in a `finally` block. It prints collection IDs/operation results, not
 records, passwords, session secrets, or API keys.
 
@@ -170,6 +176,7 @@ npm test
 npm run lint
 npx tsc --noEmit
 npm run build
+npm run security:report -- --hours 24
 ```
 
 ## 9. Retire the previous key
@@ -200,8 +207,9 @@ Never restore `Role.users()` database access to make a rollback build work.
 
 Even after this rollout passes, the application is not enterprise-ready until
 the deferred roadmap is completed: exact minor-unit money storage, auditable
-voids, financial-history retention, rate limiting, MFA/step-up controls,
-CSP/security headers, monitoring, backup/restore drills, incident response,
+voids, financial-history retention, MFA/step-up controls, CSP/security headers,
+external alerting, backup/restore drills, incident response, independent
 penetration testing, and applicable compliance review. Transactional payment
-writes, retry idempotency, and overpayment rejection are implemented in source
-and must be included in the deployment smoke tests above.
+writes, retry idempotency, overpayment rejection, authentication rate limiting,
+and sanitized security-event monitoring are implemented in source and must be
+included in the deployment smoke tests above.

@@ -1,5 +1,6 @@
 import { requireActiveCollectorPrincipal } from "@/backend/services/collector-auth-service";
 import { getTenantDocument } from "@/backend/services/tenant-data-service";
+import { recordSecurityEvent } from "@/backend/services/security-event-service";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,15 @@ export async function GET(request: Request) {
   ]);
 
   if (!loan) {
+    await recordSecurityEvent({
+      eventType: "collector_loan_access_denied",
+      outcome: "denied",
+      principalType: "collector",
+      principalIdentifier: session.collectorId,
+      lenderId: session.lenderId,
+      headers: request.headers,
+      reasonCode: "loan_not_found_for_tenant",
+    });
     return Response.json({ error: "That QR code is not a valid loan." }, { status: 404 });
   }
 

@@ -26,6 +26,7 @@ import {
   consumeAuthenticationAttempt,
   RATE_LIMITED_MESSAGE,
 } from "@/backend/services/authentication-rate-limit-service";
+import { recordSecurityEvent } from "@/backend/services/security-event-service";
 import { appwriteServerConfig } from "@/backend/appwrite/config";
 
 const authController = new AuthController();
@@ -37,19 +38,36 @@ export async function loginAction(formData: FormData) {
     redirectWithAuthStatus("/auth/login", "error", result.error ?? "Login failed.");
   }
 
+  const requestHeaders = await headers();
   let rateLimit;
 
   try {
     rateLimit = await consumeAuthenticationAttempt({
       flow: "lender_login",
       identity: result.data.email,
-      headers: await headers(),
+      headers: requestHeaders,
     });
   } catch {
+    await recordSecurityEvent({
+      eventType: "lender_login_error",
+      outcome: "error",
+      principalType: "lender",
+      principalIdentifier: result.data.email,
+      headers: requestHeaders,
+      reasonCode: "rate_limit_unavailable",
+    });
     redirect("/auth/unavailable");
   }
 
   if (!rateLimit.allowed) {
+    await recordSecurityEvent({
+      eventType: "lender_login_blocked",
+      outcome: "blocked",
+      principalType: "lender",
+      principalIdentifier: result.data.email,
+      headers: requestHeaders,
+      reasonCode: "rate_limit",
+    });
     redirectWithAuthStatus("/auth/login", "error", RATE_LIMITED_MESSAGE);
   }
 
@@ -62,9 +80,25 @@ export async function loginAction(formData: FormData) {
     });
   } catch (error) {
     if (!isRejectedLogin(error)) {
+      await recordSecurityEvent({
+        eventType: "lender_login_error",
+        outcome: "error",
+        principalType: "lender",
+        principalIdentifier: result.data.email,
+        headers: requestHeaders,
+        reasonCode: "authentication_unavailable",
+      });
       redirect("/auth/unavailable");
     }
 
+    await recordSecurityEvent({
+      eventType: "lender_login_failure",
+      outcome: "failure",
+      principalType: "lender",
+      principalIdentifier: result.data.email,
+      headers: requestHeaders,
+      reasonCode: "invalid_credentials",
+    });
     redirectWithAuthStatus(
       "/auth/login",
       "error",
@@ -74,6 +108,14 @@ export async function loginAction(formData: FormData) {
 
   if (!session.secret) {
     await revokeAppwriteSessionBestEffort(session);
+    await recordSecurityEvent({
+      eventType: "lender_login_error",
+      outcome: "error",
+      principalType: "lender",
+      principalIdentifier: result.data.email,
+      headers: requestHeaders,
+      reasonCode: "missing_session_secret",
+    });
     redirect("/auth/unavailable");
   }
 
@@ -83,11 +125,27 @@ export async function loginAction(formData: FormData) {
     lender = await findActiveLenderByAppwriteUserId(session.userId);
   } catch {
     await revokeAppwriteSessionBestEffort(session);
+    await recordSecurityEvent({
+      eventType: "lender_login_error",
+      outcome: "error",
+      principalType: "lender",
+      principalIdentifier: result.data.email,
+      headers: requestHeaders,
+      reasonCode: "lender_lookup_unavailable",
+    });
     redirect("/auth/unavailable");
   }
 
   if (!lender) {
     await revokeAppwriteSessionBestEffort(session);
+    await recordSecurityEvent({
+      eventType: "lender_login_denied",
+      outcome: "denied",
+      principalType: "lender",
+      principalIdentifier: result.data.email,
+      headers: requestHeaders,
+      reasonCode: "inactive_or_missing_lender",
+    });
     redirectWithAuthStatus(
       "/auth/login",
       "error",
@@ -99,10 +157,26 @@ export async function loginAction(formData: FormData) {
     await setAuthSessionSecret(session.secret, session.expire);
   } catch {
     await revokeAppwriteSessionBestEffort(session);
+    await recordSecurityEvent({
+      eventType: "lender_login_error",
+      outcome: "error",
+      principalType: "lender",
+      principalIdentifier: result.data.email,
+      headers: requestHeaders,
+      reasonCode: "session_storage_failed",
+    });
     redirect("/auth/unavailable");
   }
 
   await clearAuthenticationIdentityLimit("lender_login", result.data.email);
+  await recordSecurityEvent({
+    eventType: "lender_login_success",
+    outcome: "success",
+    principalType: "lender",
+    principalIdentifier: result.data.email,
+    lenderId: lender.$id,
+    headers: requestHeaders,
+  });
 
   redirect("/dashboard/lender");
 }
@@ -137,18 +211,35 @@ export async function registerLenderAction(formData: FormData) {
     );
   }
 
+  const requestHeaders = await headers();
   let rateLimit;
 
   try {
     rateLimit = await consumeAuthenticationAttempt({
       flow: "registration",
-      headers: await headers(),
+      headers: requestHeaders,
     });
   } catch {
+    await recordSecurityEvent({
+      eventType: "lender_registration_error",
+      outcome: "error",
+      principalType: "anonymous",
+      principalIdentifier: result.data.email,
+      headers: requestHeaders,
+      reasonCode: "rate_limit_unavailable",
+    });
     redirect("/auth/unavailable");
   }
 
   if (!rateLimit.allowed) {
+    await recordSecurityEvent({
+      eventType: "lender_registration_blocked",
+      outcome: "blocked",
+      principalType: "anonymous",
+      principalIdentifier: result.data.email,
+      headers: requestHeaders,
+      reasonCode: "rate_limit",
+    });
     redirectWithAuthStatus("/auth/register", "error", RATE_LIMITED_MESSAGE);
   }
 
@@ -187,6 +278,13 @@ export async function registerLenderAction(formData: FormData) {
     );
   }
 
+  await recordSecurityEvent({
+    eventType: "lender_registration_success",
+    outcome: "success",
+    principalType: "lender",
+    principalIdentifier: result.data.email,
+    headers: requestHeaders,
+  });
   revalidatePath("/dashboard/lender");
   redirect("/dashboard/lender");
 }
@@ -218,19 +316,36 @@ export async function requestPasswordResetAction(formData: FormData) {
     );
   }
 
+  const requestHeaders = await headers();
   let rateLimit;
 
   try {
     rateLimit = await consumeAuthenticationAttempt({
       flow: "password_reset",
       identity: result.data.email,
-      headers: await headers(),
+      headers: requestHeaders,
     });
   } catch {
+    await recordSecurityEvent({
+      eventType: "password_reset_error",
+      outcome: "error",
+      principalType: "anonymous",
+      principalIdentifier: result.data.email,
+      headers: requestHeaders,
+      reasonCode: "rate_limit_unavailable",
+    });
     redirect("/auth/unavailable");
   }
 
   if (!rateLimit.allowed) {
+    await recordSecurityEvent({
+      eventType: "password_reset_blocked",
+      outcome: "blocked",
+      principalType: "anonymous",
+      principalIdentifier: result.data.email,
+      headers: requestHeaders,
+      reasonCode: "rate_limit",
+    });
     redirectWithAuthStatus(
       "/auth/password-reset",
       "success",
@@ -246,6 +361,14 @@ export async function requestPasswordResetAction(formData: FormData) {
   } catch {
     // Keep the same user-facing response so the page does not reveal accounts.
   }
+
+  await recordSecurityEvent({
+    eventType: "password_reset_requested",
+    outcome: "success",
+    principalType: "anonymous",
+    principalIdentifier: result.data.email,
+    headers: requestHeaders,
+  });
 
   redirectWithAuthStatus(
     "/auth/password-reset",

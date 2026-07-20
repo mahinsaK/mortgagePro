@@ -1,4 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  recordSecurityEvent: vi.fn(),
+}));
+
+vi.mock("@/backend/services/security-event-service", () => ({
+  recordSecurityEvent: mocks.recordSecurityEvent,
+}));
+
 import { GET } from "../route";
 
 describe("stale lender session cleanup", () => {
@@ -22,5 +31,12 @@ describe("stale lender session cleanup", () => {
     expect(cookie).toContain("Path=/");
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("SameSite=lax");
+    expect(mocks.recordSecurityEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "lender_session_invalid",
+        outcome: "failure",
+        reasonCode: "expired_or_revoked",
+      }),
+    );
   });
 });

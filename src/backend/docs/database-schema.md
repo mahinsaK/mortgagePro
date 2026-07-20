@@ -1,12 +1,13 @@
 # Database Schema
 
-The app uses Appwrite Database with five core collections only.
+The app uses five core business collections and two server-only security
+collections in Appwrite Database.
 
 The schema sources are `scripts/appwrite-schema-definition.mjs`,
 `scripts/create-appwrite-tables-and-attributes.mjs`, and
 `scripts/create-appwrite-indexes.mjs`.
 
-All five collections are provisioned with empty collection permissions,
+All seven collections are provisioned with empty collection permissions,
 `documentSecurity: false`, and server-only access through the runtime API key.
 Normal Appwrite user sessions must not access database documents directly.
 
@@ -132,6 +133,27 @@ Indexes:
 - `idx_payment_date`: helps date filtering.
 - `idx_payment_lender_date`: helps daily collections and exports for one lender.
 - `idx_payment_lender_collector`: helps collector-based payment queries later.
+
+## Authentication Rate Limits
+
+Purpose: stores shared authentication attempt windows and temporary blocks so
+limits remain effective across concurrent server instances.
+
+The collection stores only an HMAC subject hash, scope, counter, timestamps,
+and optional block expiry. It never stores raw IP addresses, emails, usernames,
+passwords, or session values. Records older than 7 days are removed by
+`npm run security:cleanup`.
+
+## Security Events
+
+Purpose: stores sanitized lender, collector, Google-login, invalid-session, and
+authorization-denial events for operational review.
+
+Raw login identifiers and IP addresses are HMAC-hashed. Event records include
+an event type, outcome, principal type, optional lender ID, request ID, reason
+code, safe metadata, and timestamp. Records older than 90 days are removed by
+`npm run security:cleanup`; aggregate counts are available through
+`npm run security:report -- --hours 24`.
 
 ## Why `search_text` exists
 

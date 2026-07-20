@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   consumeAuthAttempt: vi.fn(),
   createOAuth2Token: vi.fn(),
+  recordSecurityEvent: vi.fn(),
 }));
 
 vi.mock("@/backend/appwrite/server-client", () => ({
@@ -15,6 +16,9 @@ vi.mock("@/backend/appwrite/server-client", () => ({
 vi.mock("@/backend/services/authentication-rate-limit-service", () => ({
   consumeAuthenticationAttempt: mocks.consumeAuthAttempt,
   RATE_LIMITED_MESSAGE: "Too many sign-in attempts. Please wait and try again.",
+}));
+vi.mock("@/backend/services/security-event-service", () => ({
+  recordSecurityEvent: mocks.recordSecurityEvent,
 }));
 
 import { GET } from "../route";
@@ -39,6 +43,12 @@ describe("Google OAuth start route", () => {
     expect(response.headers.get("location")).toContain("/auth/login?status=error");
     expect(response.headers.get("location")).toContain("Too+many+sign-in+attempts");
     expect(mocks.createOAuth2Token).not.toHaveBeenCalled();
+    expect(mocks.recordSecurityEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "google_login_blocked",
+        outcome: "blocked",
+      }),
+    );
   });
 
   it("uses fixed callbacks and stores a protected state cookie", async () => {
@@ -64,6 +74,12 @@ describe("Google OAuth start route", () => {
     expect(stateCookie?.httpOnly).toBe(true);
     expect(stateCookie?.sameSite).toBe("lax");
     expect(stateCookie?.path).toBe("/auth/google");
+    expect(mocks.recordSecurityEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "google_login_started",
+        outcome: "success",
+      }),
+    );
   });
 
   it("fails closed when OAuth configuration is unavailable", async () => {

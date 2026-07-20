@@ -13,6 +13,7 @@ import {
   consumeAuthenticationAttempt,
   RATE_LIMITED_MESSAGE,
 } from "@/backend/services/authentication-rate-limit-service";
+import { recordSecurityEvent } from "@/backend/services/security-event-service";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +25,26 @@ export async function GET(request: NextRequest) {
     });
 
     if (!rateLimit.allowed) {
+      await recordSecurityEvent({
+        eventType: "google_login_blocked",
+        outcome: "blocked",
+        principalType: "anonymous",
+        headers: request.headers,
+        reasonCode: "rate_limit",
+      });
       const loginUrl = getFixedAuthUrl("/auth/login");
       loginUrl.searchParams.set("status", "error");
       loginUrl.searchParams.set("message", RATE_LIMITED_MESSAGE);
       return NextResponse.redirect(loginUrl, 303);
     }
   } catch {
+    await recordSecurityEvent({
+      eventType: "google_login_error",
+      outcome: "error",
+      principalType: "anonymous",
+      headers: request.headers,
+      reasonCode: "rate_limit_unavailable",
+    });
     return NextResponse.redirect(new URL("/auth/unavailable", request.url), 303);
   }
 
@@ -48,6 +63,12 @@ export async function GET(request: NextRequest) {
       state,
       LENDER_OAUTH_STATE_COOKIE_OPTIONS,
     );
+    await recordSecurityEvent({
+      eventType: "google_login_started",
+      outcome: "success",
+      principalType: "anonymous",
+      headers: request.headers,
+    });
     return response;
   } catch (error) {
     if (
@@ -55,6 +76,13 @@ export async function GET(request: NextRequest) {
       error.code >= 400 &&
       error.code < 500
     ) {
+      await recordSecurityEvent({
+        eventType: "google_login_failure",
+        outcome: "failure",
+        principalType: "anonymous",
+        headers: request.headers,
+        reasonCode: "provider_configuration",
+      });
       const loginUrl = getFixedAuthUrl("/auth/login");
       loginUrl.searchParams.set("status", "error");
       loginUrl.searchParams.set(
@@ -64,6 +92,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(loginUrl, 303);
     }
 
+    await recordSecurityEvent({
+      eventType: "google_login_error",
+      outcome: "error",
+      principalType: "anonymous",
+      headers: request.headers,
+      reasonCode: "provider_unavailable",
+    });
     return NextResponse.redirect(new URL("/auth/unavailable", request.url), 303);
   }
 }

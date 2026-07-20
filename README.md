@@ -45,6 +45,9 @@ MortgagePro is a Next.js application for managing a small lending operation end 
 
 ## Getting Started
 
+For a complete new-computer and new-Appwrite-project walkthrough, follow
+[`SETUP.md`](./SETUP.md).
+
 1. Install dependencies.
 
 ```bash

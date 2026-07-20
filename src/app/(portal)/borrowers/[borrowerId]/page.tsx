@@ -12,15 +12,17 @@ export default async function BorrowerProfilePage({
   searchParams,
 }: {
   params: Promise<{ borrowerId: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; status?: string }>;
 }) {
   const { borrowerId } = await params;
-  const { page } = await searchParams;
+  const { page, status } = await searchParams;
+  const loanStatus = status === "completed" ? "completed" : undefined;
   const { borrower, loans, pageInfo } = await getBorrowerProfileData(
     borrowerId,
     {
       page: Number(page) || 1,
-      pageSize: 8,
+      pageSize: 5,
+      loanStatus,
     },
   );
 
@@ -51,11 +53,21 @@ export default async function BorrowerProfilePage({
         </div>
       </div>
 
-      <div className="mb-6 grid gap-4 md:grid-cols-3">
+      <div className="mb-6 grid gap-4 md:grid-cols-4">
         <SummaryCard label="Total loans" value={String(borrower.loanCount ?? 0)} />
         <SummaryCard
           label="Active loans"
           value={String(borrower.activeLoanCount ?? 0)}
+        />
+        <SummaryCardLink
+          active={loanStatus === "completed"}
+          href={
+            loanStatus === "completed"
+              ? `/borrowers/${borrower.id}`
+              : `/borrowers/${borrower.id}?status=completed`
+          }
+          label="Completed loans"
+          value={String(borrower.completedLoanCount ?? 0)}
         />
         <SummaryCard label="Status" value={borrower.status} />
       </div>
@@ -68,6 +80,7 @@ export default async function BorrowerProfilePage({
         <PaginationControls
           basePath={`/borrowers/${borrower.id}`}
           pageInfo={pageInfo}
+          query={{ status: loanStatus }}
         />
       </section>
     </div>
@@ -80,5 +93,32 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
       <p className="text-sm font-medium text-[#657386]">{label}</p>
       <p className="mt-3 text-2xl font-semibold">{value}</p>
     </article>
+  );
+}
+
+function SummaryCardLink({
+  active,
+  href,
+  label,
+  value,
+}: {
+  active: boolean;
+  href: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <Link
+      aria-current={active ? "page" : undefined}
+      className={`rounded-lg border p-5 shadow-sm transition ${
+        active
+          ? "border-[#1d4ed8] bg-[#eef4ff]"
+          : "border-[#dfe5ec] bg-white hover:border-[#b9c7d8] hover:bg-[#f8fafc]"
+      }`}
+      href={href}
+    >
+      <p className="text-sm font-medium text-[#657386]">{label}</p>
+      <p className="mt-3 text-2xl font-semibold text-[#15191f]">{value}</p>
+    </Link>
   );
 }

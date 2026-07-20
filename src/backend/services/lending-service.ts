@@ -16,6 +16,7 @@ export type BorrowerRow = {
   createdAt: string;
   loanCount?: number;
   activeLoanCount?: number;
+  completedLoanCount?: number;
 };
 
 export type LoanRow = {
@@ -92,8 +93,12 @@ type PaginationOptions = {
   pageSize?: number;
 };
 
+type BorrowerProfileOptions = PaginationOptions & {
+  loanStatus?: "completed";
+};
+
 const DEFAULT_PAGE_SIZE = 10;
-const BORROWER_PROFILE_LOAN_PAGE_SIZE = 8;
+const BORROWER_PROFILE_LOAN_PAGE_SIZE = 5;
 const MAX_LOOKUP_LIMIT = 5000;
 
 export async function getBorrowersPageData(options: PaginationOptions = {}) {
@@ -141,7 +146,7 @@ export async function getBorrowersPageData(options: PaginationOptions = {}) {
 
 export async function getBorrowerProfileData(
   borrowerId: string,
-  options: PaginationOptions = {},
+  options: BorrowerProfileOptions = {},
 ): Promise<BorrowerProfileData> {
   const lender = await getPrimaryLender();
   const pagination = normalizePagination({
@@ -173,12 +178,18 @@ export async function getBorrowerProfileData(
     return { borrower: null, loans: [], pageInfo: emptyPageInfo(pagination) };
   }
 
-  const [loans, activeLoans] = await Promise.all([
-    listTenantDocuments("loans", lender.id, [
-      Query.equal("borrower_id", borrowerId),
-      Query.limit(pagination.pageSize),
-      Query.offset((pagination.page - 1) * pagination.pageSize),
-      Query.select([
+  const loanFilters = [
+    Query.equal("borrower_id", borrowerId),
+    ...(options.loanStatus ? [Query.equal("status", options.loanStatus)] : []),
+  ];
+
+  const [loans, totalLoans, activeLoans, completedLoans] = await Promise.all([
+    listForLender("loans", lender.id, {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      orderBy: "created_at",
+      extraQueries: loanFilters,
+      select: [
         "$id",
         "borrower_id",
         "amount",
@@ -189,11 +200,22 @@ export async function getBorrowerProfileData(
         "start_date",
         "end_date",
         "status",
-      ]),
+      ],
+    }),
+    listTenantDocuments("loans", lender.id, [
+      Query.equal("borrower_id", borrowerId),
+      Query.limit(1),
+      Query.select(["$id"]),
     ]),
     listTenantDocuments("loans", lender.id, [
       Query.equal("borrower_id", borrowerId),
       Query.equal("status", "active"),
+      Query.limit(1),
+      Query.select(["$id"]),
+    ]),
+    listTenantDocuments("loans", lender.id, [
+      Query.equal("borrower_id", borrowerId),
+      Query.equal("status", "completed"),
       Query.limit(1),
       Query.select(["$id"]),
     ]),
@@ -212,8 +234,9 @@ export async function getBorrowerProfileData(
       addressInfo: String(borrower.address ?? ""),
       status: String(borrower.status ?? "active"),
       createdAt: formatDate(String(borrower.created_at ?? borrower.$createdAt)),
-      loanCount: loans.total,
+      loanCount: totalLoans.total,
       activeLoanCount: activeLoans.total,
+      completedLoanCount: completedLoans.total,
     },
     loans: loanRows,
     pageInfo: toPageInfo(loans.total, pagination),

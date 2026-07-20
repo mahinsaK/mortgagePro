@@ -32,7 +32,8 @@ const setupDatabases = createDatabasesWithKey(config.setupKey);
 const runtimeDatabases = createDatabasesWithKey(config.runtimeKey);
 const loginClient = new Client()
   .setEndpoint(config.endpoint)
-  .setProject(config.projectId);
+  .setProject(config.projectId)
+  .setKey(config.runtimeKey);
 const loginAccount = new Account(loginClient);
 let sessionAccount;
 let guardProbe;

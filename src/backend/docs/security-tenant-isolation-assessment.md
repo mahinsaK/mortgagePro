@@ -480,10 +480,12 @@ type with explicit currency precision and rounding policy.
 
 Severity: **High**
 
-Deleting a loan or borrower permanently deletes related payments. There is no
-append-only audit trail, reversal record, approval workflow, or immutable event
-log. Deleting a collector can also remove the name source used to display old
-payments.
+Deleting a loan or borrower permanently deletes related payments. Lenders can
+also permanently delete an individual mistaken payment after a confirmation
+warning; the source now restores the loan balance atomically with that deletion,
+but it does not retain an audit record. There is no append-only audit trail,
+reversal record, approval workflow, or immutable event log. Deleting a collector
+can also remove the name source used to display old payments.
 
 Required change: treat recorded payments as immutable ledger entries. Use
 reversal/correction entries, retain historical actor snapshots, and restrict

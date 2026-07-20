@@ -1,6 +1,7 @@
 import { getPaymentsPageData } from "@/backend/services/lending-service";
 import { LocalTimestamp } from "@/frontend/components/ui/local-timestamp";
 import { PaginationControls } from "@/frontend/components/ui/pagination-controls";
+import { DeletePaymentButton } from "@/frontend/components/payments/delete-payment-button";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,7 @@ export default async function PaymentsPage({
                 <th className="px-5 py-3 font-semibold">Amount</th>
                 <th className="px-5 py-3 font-semibold">Method</th>
                 <th className="px-5 py-3 font-semibold">Collected at</th>
+                <th className="px-5 py-3 text-right font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -50,11 +52,16 @@ export default async function PaymentsPage({
                   <td className="px-5 py-4 text-[#657386]">
                     <LocalTimestamp value={payment.recordedAt} />
                   </td>
+                  <td className="px-5 py-4">
+                    <div className="flex justify-end">
+                      <DeletePaymentButton paymentId={payment.id} />
+                    </div>
+                  </td>
                 </tr>
               ))}
               {payments.length === 0 ? (
                 <tr className="border-t border-[#eef2f6]">
-                  <td className="px-5 py-6 text-[#657386]" colSpan={5}>
+                  <td className="px-5 py-6 text-[#657386]" colSpan={6}>
                     No payments found.
                   </td>
                 </tr>

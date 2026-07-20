@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { PaymentRow } from "@/backend/services/lending-service";
 import { CsvExportButton } from "@/frontend/components/export/csv-export-button";
 import { LocalTimestamp } from "@/frontend/components/ui/local-timestamp";
+import { DeletePaymentButton } from "@/frontend/components/payments/delete-payment-button";
 
 export function DailyCollectionsTable({
   payments,
@@ -82,6 +83,7 @@ export function DailyCollectionsTable({
               <th className="px-5 py-3 font-semibold">Amount</th>
               <th className="px-5 py-3 font-semibold">Method</th>
               <th className="px-5 py-3 font-semibold">Time</th>
+              <th className="px-5 py-3 text-right font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -98,11 +100,16 @@ export function DailyCollectionsTable({
                 <td className="px-5 py-4 text-[#657386]">
                   <LocalTimestamp timeOnly value={payment.recordedAt} />
                 </td>
+                <td className="px-5 py-4">
+                  <div className="flex justify-end">
+                    <DeletePaymentButton paymentId={payment.id} />
+                  </div>
+                </td>
               </tr>
             ))}
             {filteredPayments.length === 0 ? (
               <tr className="border-t border-[#eef2f6]">
-                <td className="px-5 py-6 text-[#657386]" colSpan={5}>
+                <td className="px-5 py-6 text-[#657386]" colSpan={6}>
                   No collections found for this filter.
                 </td>
               </tr>

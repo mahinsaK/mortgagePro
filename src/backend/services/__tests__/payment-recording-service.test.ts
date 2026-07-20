@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   createDocument: vi.fn(),
   createTransaction: vi.fn(),
+  deleteDocument: vi.fn(),
   getDocument: vi.fn(),
   listDocuments: vi.fn(),
   updateDocument: vi.fn(),
@@ -26,6 +27,7 @@ vi.mock("@/backend/appwrite/server-client", async () => {
     databases: {
       createDocument: mocks.createDocument,
       createTransaction: mocks.createTransaction,
+      deleteDocument: mocks.deleteDocument,
       getDocument: mocks.getDocument,
       listDocuments: mocks.listDocuments,
       updateDocument: mocks.updateDocument,
@@ -38,7 +40,10 @@ vi.mock("@/backend/services/lender-service", () => ({
   getPrimaryLender: vi.fn(),
 }));
 
-import { recordTenantLoanPayment } from "../payment-recording-service";
+import {
+  deleteTenantLoanPayment,
+  recordTenantLoanPayment,
+} from "../payment-recording-service";
 
 const baseInput = {
   lenderId: "lender_A",
@@ -176,5 +181,122 @@ describe("recordTenantLoanPayment", () => {
     expect(mocks.createTransaction).toHaveBeenCalledTimes(2);
     expect(mocks.createDocument).toHaveBeenCalledTimes(1);
     expect(mocks.updateDocument).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("deleteTenantLoanPayment", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.createTransaction.mockResolvedValue({ $id: "transaction_1" });
+    mocks.listDocuments.mockImplementation(
+      ({ collectionId }: { collectionId: string }) =>
+        Promise.resolve({
+          documents:
+            collectionId === "payments"
+              ? [{ $id: "payment_A", loan_id: "loan_A", amount: 100 }]
+              : [
+                  {
+                    $id: "loan_A",
+                    amount: 1000,
+                    total_paid: 1000,
+                    status: "completed",
+                  },
+                ],
+        }),
+    );
+    mocks.deleteDocument.mockResolvedValue({});
+    mocks.updateDocument.mockResolvedValue({ $id: "loan_A" });
+    mocks.updateTransaction.mockResolvedValue({ $id: "transaction_1" });
+  });
+
+  it("deletes the payment and restores the loan balance in one transaction", async () => {
+    const result = await deleteTenantLoanPayment("lender_A", "payment_A");
+
+    expect(mocks.deleteDocument).toHaveBeenCalledWith({
+      databaseId: "database",
+      collectionId: "payments",
+      documentId: "payment_A",
+      transactionId: "transaction_1",
+    });
+    expect(mocks.updateDocument).toHaveBeenCalledWith({
+      databaseId: "database",
+      collectionId: "loans",
+      documentId: "loan_A",
+      data: {
+        total_paid: 900,
+        remaining_amount: 100,
+        status: "active",
+      },
+      transactionId: "transaction_1",
+    });
+    expect(mocks.updateTransaction).toHaveBeenCalledWith({
+      transactionId: "transaction_1",
+      commit: true,
+    });
+    expect(result).toEqual({
+      paymentId: "payment_A",
+      loanId: "loan_A",
+      totalPaid: 900,
+      remainingAmount: 100,
+      status: "active",
+    });
+  });
+
+  it("does not reveal or delete a payment outside the lender", async () => {
+    mocks.listDocuments.mockResolvedValue({ documents: [] });
+
+    await expect(
+      deleteTenantLoanPayment("lender_A", "payment_B"),
+    ).rejects.toMatchObject({ code: "payment_not_found" });
+
+    expect(mocks.deleteDocument).not.toHaveBeenCalled();
+    expect(mocks.updateDocument).not.toHaveBeenCalled();
+    expect(mocks.updateTransaction).toHaveBeenCalledWith({
+      transactionId: "transaction_1",
+      rollback: true,
+    });
+  });
+
+  it("rolls back if the loan balance cannot be restored", async () => {
+    mocks.updateDocument.mockRejectedValue(new Error("staging failed"));
+
+    await expect(
+      deleteTenantLoanPayment("lender_A", "payment_A"),
+    ).rejects.toThrow("staging failed");
+
+    expect(mocks.updateTransaction).toHaveBeenCalledWith({
+      transactionId: "transaction_1",
+      rollback: true,
+    });
+    expect(mocks.updateTransaction).not.toHaveBeenCalledWith({
+      transactionId: "transaction_1",
+      commit: true,
+    });
+  });
+
+  it("rejects deletion when the stored loan total is inconsistent", async () => {
+    mocks.listDocuments.mockImplementation(
+      ({ collectionId }: { collectionId: string }) =>
+        Promise.resolve({
+          documents:
+            collectionId === "payments"
+              ? [{ $id: "payment_A", loan_id: "loan_A", amount: 100 }]
+              : [
+                  {
+                    $id: "loan_A",
+                    amount: 1000,
+                    total_paid: 50,
+                    status: "active",
+                  },
+                ],
+        }),
+    );
+
+    await expect(
+      deleteTenantLoanPayment("lender_A", "payment_A"),
+    ).rejects.toMatchObject({ code: "invalid_payment" });
+
+    expect(mocks.deleteDocument).not.toHaveBeenCalled();
+    expect(mocks.updateDocument).not.toHaveBeenCalled();
   });
 });

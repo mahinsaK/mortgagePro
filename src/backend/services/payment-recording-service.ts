@@ -35,12 +35,21 @@ export type RecordedLoanPayment = {
   duplicate: boolean;
 };
 
+export type DeletedLoanPayment = {
+  paymentId: string;
+  loanId: string;
+  totalPaid: number;
+  remainingAmount: number;
+  status: string;
+};
+
 export type PaymentWriteErrorCode =
   | "collector_not_found"
   | "invalid_payment"
   | "invalid_request_id"
   | "loan_not_found"
   | "overpayment"
+  | "payment_not_found"
   | "request_reused"
   | "transaction_conflict";
 
@@ -220,6 +229,135 @@ export async function recordTenantLoanPayment(
   );
 }
 
+export async function deleteLoanPayment(paymentId: string) {
+  const lender = await getPrimaryLender();
+
+  if (!lender) {
+    throw new Error("No lender exists in Appwrite yet.");
+  }
+
+  return deleteTenantLoanPayment(lender.id, paymentId);
+}
+
+export async function deleteTenantLoanPayment(
+  lenderId: string,
+  paymentId: string,
+): Promise<DeletedLoanPayment> {
+  if (!paymentId) {
+    throw new PaymentWriteError("payment_not_found", "Payment not found.");
+  }
+
+  for (let attempt = 1; attempt <= MAX_TRANSACTION_ATTEMPTS; attempt += 1) {
+    const transaction = await databases.createTransaction({ ttl: 30 });
+    const transactionId = transaction.$id;
+
+    try {
+      const paymentResult = await databases.listDocuments({
+        databaseId: appwriteServerConfig.databaseId,
+        collectionId: appwriteServerConfig.collections.payments,
+        queries: [
+          Query.equal("$id", paymentId),
+          Query.equal("lender_id", lenderId),
+          Query.limit(1),
+          Query.select(["$id", "loan_id", "amount"]),
+        ],
+        transactionId,
+      });
+      const payment = paymentResult.documents[0];
+
+      if (!payment) {
+        throw new PaymentWriteError("payment_not_found", "Payment not found.");
+      }
+
+      const loanId = String(payment.loan_id ?? "");
+      const loanResult = await databases.listDocuments({
+        databaseId: appwriteServerConfig.databaseId,
+        collectionId: appwriteServerConfig.collections.loans,
+        queries: [
+          Query.equal("$id", loanId),
+          Query.equal("lender_id", lenderId),
+          Query.limit(1),
+          Query.select(["$id", "amount", "total_paid", "status"]),
+        ],
+        transactionId,
+      });
+      const loan = loanResult.documents[0];
+
+      if (!loan) {
+        throw new PaymentWriteError("loan_not_found", "Loan not found.");
+      }
+
+      const loanAmount = moneyValue(loan.amount);
+      const paymentAmount = moneyValue(payment.amount);
+      const currentTotalPaid = moneyValue(loan.total_paid);
+
+      if (paymentAmount > currentTotalPaid) {
+        throw new PaymentWriteError(
+          "invalid_payment",
+          "The loan balance does not match this payment. It cannot be deleted safely.",
+        );
+      }
+
+      const totalPaid = roundMoney(
+        currentTotalPaid - paymentAmount,
+      );
+      const remainingAmount = roundMoney(Math.max(loanAmount - totalPaid, 0));
+      const currentStatus = String(loan.status ?? "active");
+      const status =
+        currentStatus === "completed" && remainingAmount > 0
+          ? "active"
+          : currentStatus;
+
+      await databases.deleteDocument({
+        databaseId: appwriteServerConfig.databaseId,
+        collectionId: appwriteServerConfig.collections.payments,
+        documentId: paymentId,
+        transactionId,
+      });
+      await databases.updateDocument({
+        databaseId: appwriteServerConfig.databaseId,
+        collectionId: appwriteServerConfig.collections.loans,
+        documentId: loanId,
+        data: {
+          total_paid: totalPaid,
+          remaining_amount: remainingAmount,
+          status,
+        },
+        transactionId,
+      });
+      await databases.updateTransaction({ transactionId, commit: true });
+
+      return {
+        paymentId,
+        loanId,
+        totalPaid,
+        remainingAmount,
+        status,
+      };
+    } catch (error) {
+      await rollbackTransaction(transactionId);
+
+      if (isConflict(error) && attempt < MAX_TRANSACTION_ATTEMPTS) {
+        continue;
+      }
+
+      if (isConflict(error)) {
+        throw new PaymentWriteError(
+          "transaction_conflict",
+          "The loan changed while this payment was being deleted. Please try again.",
+        );
+      }
+
+      throw error;
+    }
+  }
+
+  throw new PaymentWriteError(
+    "transaction_conflict",
+    "The payment could not be deleted safely. Please try again.",
+  );
+}
+
 function validateRequestId(requestId: string) {
   if (!PAYMENT_REQUEST_ID_PATTERN.test(requestId)) {
     throw new PaymentWriteError(
@@ -326,4 +464,21 @@ function errorCode(error: unknown) {
   }
 
   return Number(error.code);
+}
+
+function moneyValue(value: unknown) {
+  const amount = Number(value ?? 0);
+
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw new PaymentWriteError(
+      "invalid_payment",
+      "This payment has an invalid amount and cannot be deleted safely.",
+    );
+  }
+
+  return amount;
+}
+
+function roundMoney(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }

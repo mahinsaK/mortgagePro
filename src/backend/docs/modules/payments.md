@@ -52,6 +52,32 @@ How it works:
 No new payment attribute or database migration is needed because the unique,
 deterministic Appwrite document ID is the idempotency boundary.
 
+## Delete a mistaken payment
+
+Paths:
+
+- `src/backend/actions/payment-actions.ts`
+- `src/backend/services/payment-recording-service.ts`
+- `src/frontend/components/payments/delete-payment-button.tsx`
+
+How it works:
+
+- Only an authenticated lender can request deletion, and the payment lookup is
+  restricted to that lender.
+- The payments page, daily collections page, and loan payment drawer show the
+  delete control.
+- A confirmation warning explains that deletion is permanent, should only be
+  used for a mistaken entry, changes the loan balance, and cannot be undone.
+- The payment deletion and restoration of the loan's `total_paid`,
+  `remaining_amount`, and `status` are committed in one Appwrite transaction.
+- Deleting the payment that completed a loan changes the loan back to `active`.
+- A mismatched or invalid stored balance is rejected instead of being silently
+  recalculated.
+
+This is a permanent correction mechanism, not an audit-preserving reversal.
+Enterprise financial use still requires immutable reversal records, actors,
+reasons, timestamps, and an approval policy.
+
 ## Collector loan ownership validation
 
 Path: `src/backend/services/payment-validation-service.ts`

@@ -529,6 +529,23 @@ How it works:
 - Maps loan/collector/borrower names using `mapPaymentDocuments()`.
 - Returns a CSV response.
 
+## Individual payment deletion
+
+Paths:
+
+- `src/backend/actions/payment-actions.ts`
+- `src/backend/services/payment-recording-service.ts`
+
+How it works:
+
+- Starts an Appwrite transaction.
+- Finds the payment using both its document ID and the authenticated lender ID.
+- Finds the attached loan using both its document ID and the same lender ID.
+- Stages deletion of the payment and restoration of the loan totals in the same
+  transaction.
+- Commits both changes together, or rolls back both when either operation fails.
+- Returns the same not-found result for missing and cross-tenant payment IDs.
+
 ## Collectors page
 
 Path: `src/backend/services/lending-service.ts`

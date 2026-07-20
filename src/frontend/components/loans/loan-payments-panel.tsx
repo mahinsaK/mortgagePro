@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Download, RefreshCw, X } from "lucide-react";
 import { useState } from "react";
 import { LocalTimestamp } from "@/frontend/components/ui/local-timestamp";
+import { DeletePaymentButton } from "@/frontend/components/payments/delete-payment-button";
 
 type LoanPaymentDetails = {
   loanId: string;
@@ -154,6 +155,9 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
                         <th className="px-3 py-3 font-semibold">Amount</th>
                         <th className="px-3 py-3 font-semibold">Method</th>
                         <th className="px-3 py-3 font-semibold">Collected at</th>
+                        <th className="px-3 py-3 text-right font-semibold">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -174,11 +178,19 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
                           <td className="break-words px-3 py-3 text-[#657386]">
                             <LocalTimestamp value={payment.recordedAt} />
                           </td>
+                          <td className="px-3 py-3">
+                            <div className="flex justify-end">
+                              <DeletePaymentButton
+                                onDeleted={loadPayments}
+                                paymentId={payment.id}
+                              />
+                            </div>
+                          </td>
                         </tr>
                       ))}
                       {details.payments.length === 0 ? (
                         <tr className="border-t border-[#eef2f6]">
-                          <td className="px-3 py-4 text-[#657386]" colSpan={4}>
+                          <td className="px-3 py-4 text-[#657386]" colSpan={5}>
                             No payments found for this loan.
                           </td>
                         </tr>

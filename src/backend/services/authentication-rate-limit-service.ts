@@ -63,6 +63,10 @@ const FLOW_POLICIES: Record<
 export async function consumeAuthenticationAttempt(
   input: ConsumeAuthenticationAttemptInput,
 ) {
+  if (!authenticationSecurityControlsEnabled()) {
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+
   const now = input.now ?? new Date();
   const policies = FLOW_POLICIES[input.flow];
   const ipResult = await consumeRateLimit({
@@ -88,6 +92,10 @@ export async function clearAuthenticationIdentityLimit(
   flow: "collector_login" | "lender_login",
   identity: string,
 ) {
+  if (!authenticationSecurityControlsEnabled()) {
+    return;
+  }
+
   const documentId = rateLimitDocumentId(
     `${flow}_identity`,
     normalizeIdentity(identity),
@@ -110,6 +118,10 @@ export function hashSecuritySubject(value: string) {
   return createHmac("sha256", securityMonitoringSecret())
     .update(value)
     .digest("hex");
+}
+
+export function authenticationSecurityControlsEnabled() {
+  return process.env.AUTH_SECURITY_CONTROLS_ENABLED?.trim().toLowerCase() === "true";
 }
 
 export function clientAddress(headers: Headers) {

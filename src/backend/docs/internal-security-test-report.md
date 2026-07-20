@@ -93,7 +93,7 @@ rate-limit store is unavailable; monitoring writes remain best effort.
 
 ### Automated security coverage
 
-The complete test suite passed: 35 files and 132 tests. Focused security tests
+The complete test suite passed: 35 files and 134 tests. Focused security tests
 also passed for:
 
 - mandatory lender ownership on borrower, collector, loan, and payment reads;
@@ -146,7 +146,7 @@ IP, password, API key, OAuth token, or session secret.
 
 - ESLint: Pass.
 - TypeScript `npx tsc --noEmit`: Pass.
-- Vitest: Pass, 132/132.
+- Vitest: Pass, 134/134.
 - Next.js production build: Pass.
 - `npm audit --omit=dev --audit-level=high`: no Critical or High advisory;
   two Moderate findings represent the same bundled PostCSS advisory through
@@ -172,24 +172,24 @@ available. Re-run the audit before every release.
 
 ### Merge-gate blocker: preview configuration and smoke test
 
-`SECURITY_MONITORING_SECRET` is currently missing from `.env.local`; this
-workspace has no Vercel CLI metadata/token to configure or inspect the preview
-environment. The preview branch therefore has not demonstrated live login rate
-limiting and monitoring with a stable secret.
+After the successful live probes, the owner chose to freeze authentication rate
+limiting and security-event execution to avoid Appwrite operation costs.
+`AUTH_SECURITY_CONTROLS_ENABLED` now defaults to `false`. While frozen, both
+services return before any security-collection read, write, or structured event
+log. The implementation, collections, scripts, and historical evidence remain
+available for later reactivation.
 
-Required before merge:
+This changes the release posture: active application-level login rate limiting
+and security monitoring are deferred controls, not current protections.
 
-1. Generate stable 32-byte-or-longer random secrets. Each deployment
-   environment may use a different value, but every server instance within one
-   environment must share that environment's value.
-2. Add a local value to `.env.local`, and add stable Vercel Preview and
-   Production values as `SECURITY_MONITORING_SECRET`.
-3. Redeploy `security/critical-tenant-isolation`.
-4. Smoke-test lender login, collector login, Google OAuth start/cancel, stale
+Remaining preview checks before merge:
+
+1. Keep `AUTH_SECURITY_CONTROLS_ENABLED=false` in the preview and production
+   environments, or leave it unset because false is the default.
+2. Redeploy `security/critical-tenant-isolation`.
+3. Smoke-test lender login, collector login, Google OAuth start/cancel, stale
    session recovery, QR cross-tenant `404`, one valid payment, one duplicate
    retry, and one overpayment rejection.
-5. Run `npm run security:report -- --hours 24` and confirm corresponding
-   sanitized events.
 
 ### Test limitation: no connected visual browser
 
@@ -205,6 +205,8 @@ The requested plan defers these controls:
 - exact minor-unit/decimal money storage;
 - auditable payment void/correction instead of hard deletion;
 - MFA and step-up authentication;
+- active application-level authentication rate limiting;
+- active security-event monitoring;
 - external alerts and a staffed incident-response process;
 - backup/restore and disaster-recovery drills;
 - full financial mutation audit history;
@@ -218,8 +220,9 @@ financial operation even if the remaining preview merge gate passes.
 ## Merge decision
 
 **Do not merge yet.** Live Appwrite tenant isolation has passed and no
-completed-scope Critical/High finding remains, but the stable monitoring secret,
-preview deployment smoke test, and visual browser smoke test are outstanding.
+completed-scope Critical/High finding remains, but the preview deployment smoke
+test and visual browser smoke test are outstanding. Rate limiting and security
+events are explicitly deferred while the cost-control freeze is active.
 After those checks pass and the Moderate/deferred risks are explicitly accepted
 for controlled demo/testing, recheck branch ancestry, fast-forward `main`, and
 rerun the complete verification suite on `main`.

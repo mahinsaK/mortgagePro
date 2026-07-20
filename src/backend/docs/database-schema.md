@@ -139,6 +139,10 @@ Indexes:
 Purpose: stores shared authentication attempt windows and temporary blocks so
 limits remain effective across concurrent server instances.
 
+Runtime use is currently frozen by the default-off
+`AUTH_SECURITY_CONTROLS_ENABLED` switch. The dormant collection remains
+server-only and receives no application operations while the switch is off.
+
 The collection stores only an HMAC subject hash, scope, counter, timestamps,
 and optional block expiry. It never stores raw IP addresses, emails, usernames,
 passwords, or session values. Records older than 7 days are removed by
@@ -148,6 +152,9 @@ passwords, or session values. Records older than 7 days are removed by
 
 Purpose: stores sanitized lender, collector, Google-login, invalid-session, and
 authorization-denial events for operational review.
+
+Runtime use is currently frozen by the same default-off switch, so the
+application does not insert events while disabled.
 
 Raw login identifiers and IP addresses are HMAC-hashed. Event records include
 an event type, outcome, principal type, optional lender ID, request ID, reason

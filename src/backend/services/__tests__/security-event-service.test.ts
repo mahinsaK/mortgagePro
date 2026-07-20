@@ -23,6 +23,7 @@ import { recordSecurityEvent } from "../security-event-service";
 describe("security event monitoring", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.AUTH_SECURITY_CONTROLS_ENABLED = "true";
     process.env.SECURITY_MONITORING_SECRET = "m".repeat(32);
     mocks.createDocument.mockResolvedValue({ $id: "event_1" });
     vi.spyOn(console, "info").mockImplementation(mocks.info);
@@ -90,5 +91,20 @@ describe("security event monitoring", () => {
     expect(mocks.warn).toHaveBeenCalledWith(
       expect.not.stringContaining("owner@example.test"),
     );
+  });
+
+  it("does not store or log events while security controls are frozen", async () => {
+    process.env.AUTH_SECURITY_CONTROLS_ENABLED = "false";
+
+    await recordSecurityEvent({
+      eventType: "lender_login_success",
+      outcome: "success",
+      principalType: "lender",
+      principalIdentifier: "owner@example.test",
+    });
+
+    expect(mocks.createDocument).not.toHaveBeenCalled();
+    expect(mocks.info).not.toHaveBeenCalled();
+    expect(mocks.warn).not.toHaveBeenCalled();
   });
 });

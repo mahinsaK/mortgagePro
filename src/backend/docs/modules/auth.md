@@ -115,6 +115,15 @@ Collector authentication is separate from Appwrite Auth. See
 
 ## Authentication abuse controls
 
+These controls are currently frozen to avoid Appwrite operation costs.
+`AUTH_SECURITY_CONTROLS_ENABLED` defaults to `false`; in that state every
+authentication attempt is allowed past this optional layer and security-event
+recording returns immediately without database reads, writes, or structured
+event logs. The collections and implementation remain available for later use.
+
+The behavior below applies only when `AUTH_SECURITY_CONTROLS_ENABLED=true` and
+a valid `SECURITY_MONITORING_SECRET` is configured.
+
 Authentication attempts use shared Appwrite counters rather than per-server
 memory, so separate Vercel instances see the same windows:
 

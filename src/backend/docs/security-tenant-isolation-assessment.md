@@ -20,8 +20,9 @@ The source branch now implements the selected critical release: deny-by-default
 collection provisioning/reconciliation, separate runtime and setup keys,
 shared tenant-aware data helpers, generic not-found behavior for cross-tenant
 IDs, collector username login, dedicated 12-hour signed sessions, active-record
-revalidation, distributed authentication rate limiting, sanitized security-event
-monitoring, and focused security verification.
+revalidation, optional authentication rate limiting and security-event
+monitoring that are currently frozen for cost control, and focused security
+verification.
 
 The July 10 baseline found all five original collections granted `Role.users()`
 read/create/update/delete access. On July 20 the setup reconciliation removed
@@ -67,8 +68,8 @@ Direct answers:
 | 12-hour credential-bound collector sessions | Implemented in source | Pending secret/deployment |
 | Tenant/session automated tests | Automated suite passing | Local/mocked coverage complete |
 | Direct Appwrite session denial verifier | Implemented in `61e6f08`, corrected in `8c7d9a8` | 28 denial checks passed July 20 |
-| Distributed authentication rate limits | Implemented in source | Live local threshold/concurrency probe passed; preview pending |
-| Sanitized security-event monitoring | Implemented in source | Live persistence/report passed; preview pending |
+| Distributed authentication rate limits | Implemented but frozen by default | Historical live local probe passed; no runtime protection while frozen |
+| Sanitized security-event monitoring | Implemented but frozen by default | Historical persistence/report probe passed; no runtime events while frozen |
 
 The exact deployment, verification, key rotation, and rollback procedure is in
 `critical-tenant-isolation-rollout.md`.
@@ -364,11 +365,16 @@ client API rate limits will protect it.
 Required change: implement distributed rate limiting by IP and collector/lender
 identifier, alert on abuse, and define lockout/recovery behavior.
 
-Remediation status: **Implemented in source, pending deployed smoke
-verification.** Shared Appwrite counters enforce identity and IP windows for
+Remediation status: **Implemented in source but intentionally frozen.** When
+enabled, shared Appwrite counters enforce identity and IP windows for
 collector and lender login, plus limits for Google OAuth start, registration,
 and password reset. Sanitized security events are stored separately and emitted
 as structured server logs. External alerting remains deferred.
+
+Current runtime decision: **Frozen for cost control.** The default-off
+`AUTH_SECURITY_CONTROLS_ENABLED` switch bypasses this optional layer without any
+security-collection read or write. Login rate limiting and event monitoring
+must therefore be treated as deferred until the switch is deliberately enabled.
 
 #### `COLLECTOR-003`: sessions are long-lived and weakly revocable
 
@@ -610,8 +616,8 @@ Dependency audit results are time-sensitive and must be rerun in CI.
    client verifier exist; exhaustive end-to-end route/export tests remain.
 3. **Source complete:** replace collector name-only login with unique collector
    ID login.
-4. **Source complete, deployment pending:** session revocation/versioning and
-   distributed authentication rate limiting are implemented.
+4. **Partially complete:** session revocation/versioning is active; distributed
+   authentication rate limiting is implemented but intentionally frozen.
 5. **Source complete:** revalidate the active collector on every protected
    collector route/page/action.
 6. **Source complete:** make payment creation and balance update transactional.
@@ -650,8 +656,7 @@ true:
 - [ ] Two-tenant direct API and application tests pass for all resources.
   Critical unit coverage exists; exhaustive live/end-to-end coverage remains.
 - [ ] Collector identities are lender-linked, rate-limited, and revocable.
-  Source implementation is complete; deployed concurrency and abuse smoke
-  verification remains.
+  Identity and revocation are active; rate limiting is currently frozen.
 - [ ] Disabled collectors cannot view or record any loan data. Source tests
   pass; deployed smoke verification remains.
 - [ ] Payments are atomic, idempotent, exact-precision, and concurrency-safe.
@@ -672,15 +677,17 @@ true:
 MortgagePro now has a substantially stronger critical-release source design:
 deny-by-default provisioning, server-only credential separation, centralized
 tenant helpers, collector username login, signed short-lived collector sessions,
-distributed authentication rate limiting, sanitized security-event monitoring,
+optional but currently frozen authentication rate limiting and security-event
+monitoring,
 transactional/idempotent payment recording, overpayment rejection, and focused
 isolation verification. The implemented branch is suitable for a controlled
 security rollout using demo data.
 
 It is **not currently safe to trust as an enterprise lending/payment system**.
 The live database isolation blocker is closed, but the Vercel preview still
-needs the stable monitoring secret and application smoke verification. Even
-after that merge gate passes, the intentionally deferred financial-ledger and
+needs application smoke verification. Authentication rate limiting and
+security-event monitoring are currently frozen for cost control. Even after
+the preview gate passes, the intentionally deferred financial-ledger and
 enterprise-operations blockers remain.
 
 The accurate current label is: **critical isolation verified; preview release

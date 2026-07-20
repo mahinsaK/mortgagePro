@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { appwriteServerConfig } from "@/backend/appwrite/config";
 import { databases, ID } from "@/backend/appwrite/server-client";
 import {
+  authenticationSecurityControlsEnabled,
   clientAddress,
   hashSecuritySubject,
 } from "@/backend/services/authentication-rate-limit-service";
@@ -36,6 +37,10 @@ const FORBIDDEN_METADATA_KEY =
   /(password|secret|token|session|cookie|authorization|api.?key)/i;
 
 export async function recordSecurityEvent(input: SecurityEventInput) {
+  if (!authenticationSecurityControlsEnabled()) {
+    return;
+  }
+
   try {
     await persistSecurityEvent(input);
   } catch {

@@ -31,6 +31,7 @@ const headers = new Headers({ "x-forwarded-for": "203.0.113.7, 10.0.0.1" });
 describe("authentication rate limiting", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.AUTH_SECURITY_CONTROLS_ENABLED = "true";
     process.env.SECURITY_MONITORING_SECRET = "s".repeat(32);
     mocks.createTransaction.mockResolvedValue({ $id: "transaction_1" });
     mocks.getDocument.mockRejectedValue({ code: 404 });
@@ -142,5 +143,20 @@ describe("authentication rate limiting", () => {
       consumeAuthenticationAttempt({ flow: "google_login", headers, now }),
     ).rejects.toThrow("SECURITY_MONITORING_SECRET");
     expect(mocks.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it("performs no database work while security controls are frozen", async () => {
+    process.env.AUTH_SECURITY_CONTROLS_ENABLED = "false";
+    delete process.env.SECURITY_MONITORING_SECRET;
+
+    await expect(
+      consumeAuthenticationAttempt({ flow: "lender_login", headers, now }),
+    ).resolves.toEqual({ allowed: true, retryAfterSeconds: 0 });
+    await expect(
+      clearAuthenticationIdentityLimit("lender_login", "owner@example.test"),
+    ).resolves.toBeUndefined();
+
+    expect(mocks.createTransaction).not.toHaveBeenCalled();
+    expect(mocks.deleteDocument).not.toHaveBeenCalled();
   });
 });

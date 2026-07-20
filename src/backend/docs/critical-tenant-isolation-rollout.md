@@ -21,6 +21,9 @@ pass.
   retention-command smoke checks passed after transaction TTL compatibility was
   corrected in `542f4f9`.
 - Preview configuration and application/browser smoke checks remain pending.
+- Authentication rate-limit and security-event runtime execution was
+  subsequently frozen with `AUTH_SECURITY_CONTROLS_ENABLED=false` to avoid
+  Appwrite operation costs. Their successful probe evidence remains historical.
 
 See `internal-security-test-report.md` for scope, evidence, findings, and
 limitations.
@@ -76,9 +79,10 @@ Store it as `COLLECTOR_SESSION_SECRET` locally and in every Vercel environment
 that runs the app. Do not reuse an Appwrite key, project ID, password, or public
 identifier. Changing this secret invalidates all collector sessions.
 
-Generate a separate monitoring secret the same way and store it as
-`SECURITY_MONITORING_SECRET`. It HMAC-hashes login identifiers and IP addresses;
-changing it prevents old and new rate-limit identities from matching.
+Authentication rate limits and security-event writes are currently frozen. Do
+not configure a monitoring secret unless they are intentionally reactivated.
+To reactivate later, generate a separate secret the same way, store it as
+`SECURITY_MONITORING_SECRET`, and set `AUTH_SECURITY_CONTROLS_ENABLED=true`.
 
 ## 3. Prepare local and Vercel configuration
 
@@ -88,7 +92,7 @@ Local `.env.local` must contain:
 APPWRITE_RUNTIME_API_KEY=...
 APPWRITE_SETUP_API_KEY=...
 COLLECTOR_SESSION_SECRET=...
-SECURITY_MONITORING_SECRET=...
+AUTH_SECURITY_CONTROLS_ENABLED=false
 ```
 
 Vercel must contain only:
@@ -96,7 +100,7 @@ Vercel must contain only:
 ```txt
 APPWRITE_RUNTIME_API_KEY=...
 COLLECTOR_SESSION_SECRET=...
-SECURITY_MONITORING_SECRET=...
+AUTH_SECURITY_CONTROLS_ENABLED=false
 ```
 
 Keep all existing `NEXT_PUBLIC_APPWRITE_*` identifiers unchanged unless the

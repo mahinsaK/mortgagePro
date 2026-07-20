@@ -25,7 +25,6 @@ export function LocalTimestamp({
             : { day: "2-digit", month: "short", year: "numeric" }),
           hour: "numeric",
           minute: "2-digit",
-          timeZoneName: "short",
         }).format(date)
       : "—";
 

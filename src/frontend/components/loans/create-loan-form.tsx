@@ -71,8 +71,20 @@ export function CreateLoanForm({ borrowerId }: { borrowerId: string }) {
               step="0.01"
               type="number"
             />
-            <Field label="Start date" name="start_date" required type="date" />
-            <Field label="End date" name="end_date" required type="date" />
+            <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+              <Field
+                label="Start date"
+                name="start_date"
+                required
+                type="date"
+              />
+              <Field
+                label="End date"
+                name="end_date"
+                required
+                type="date"
+              />
+            </div>
             <div className="flex items-end sm:col-span-2">
               <button
                 className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"

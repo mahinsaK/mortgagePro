@@ -43,6 +43,10 @@ src/backend
 - `src/backend/services/collector-auth-service.ts`
   Resolves active collectors from signed 12-hour sessions and revalidates the
   collector record for every protected collector operation.
+- `src/backend/services/authentication-rate-limit-service.ts`
+  Applies shared Appwrite-backed login, OAuth, registration, and password-reset limits.
+- `src/backend/services/security-event-service.ts`
+  Stores sanitized authentication/security events and emits structured server logs.
 - `src/backend/services/search-text-service.ts`
   Builds searchable text for borrowers and loans from borrower name, phone, and address.
 - `src/backend/services/qr-code-service.ts`
@@ -84,10 +88,12 @@ For form submissions:
 ## Important security note
 
 The critical-release source now uses server-only Appwrite database access,
-empty client collection permissions, shared tenant-aware helpers, collector ID
-login, and signed collector sessions. The last observed live Appwrite
-metadata still had broad `Role.users()` access, so the deployed project remains
-untrusted until the permission apply and direct-client verification steps pass.
+empty client collection permissions, shared tenant-aware helpers, collector
+username login, signed collector sessions, distributed authentication limits,
+and sanitized security events. Live Appwrite permission and direct-session
+verification passed on July 20, 2026. Preview deployment/configuration smoke
+testing remains a merge gate, and the app remains approved for demo/testing
+only.
 
 ## More docs
 
@@ -95,6 +101,8 @@ untrusted until the permission apply and direct-client verification steps pass.
   collector authorization, payment integrity, and enterprise-readiness audit.
 - `critical-tenant-isolation-rollout.md`: exact key, migration, permission,
   verification, rotation, and rollback procedure for this release.
+- `internal-security-test-report.md`: July 20 internal test scope, evidence,
+  findings, limitations, deferred risks, and current merge decision.
 - `database-schema.md`: collections, attributes, and indexes.
 - `database-queries.md`: every Appwrite query/write currently used by the app.
 - `modules/*.md`: module-by-module explanation.

@@ -3,14 +3,14 @@
 Assessment date: July 10, 2026  
 Remediation implementation update: July 20, 2026
 
-Status: **Critical remediation is implemented on
-`security/critical-tenant-isolation`, but live Appwrite enforcement and rollout
-verification are still pending. The app is not approved for enterprise or real
-financial/PII production use.**
+Status: **Critical source remediation and live Appwrite collection isolation
+verification have passed on `security/critical-tenant-isolation`. Preview
+deployment/authentication smoke verification is still pending. The app is not
+approved for enterprise or real financial/PII production use.**
 
 > Security-sensitive document: do not publish this assessment in a public
-> repository or share it outside the remediation team until the live
-> `TENANT-001` permission change and direct-client denial tests are complete.
+> repository or share it outside the remediation team until the preview
+> deployment security smoke tests are complete.
 > The historical baseline below describes a practical bypass path that was
 > confirmed in the last observed live configuration.
 
@@ -23,13 +23,14 @@ IDs, collector username login, dedicated 12-hour signed sessions, active-record
 revalidation, distributed authentication rate limiting, sanitized security-event
 monitoring, and focused security verification.
 
-That is a material improvement in the code, but it does not by itself change
-the live Appwrite project. The last read-only live metadata inspection on July
-10 confirmed all five collections granted `Role.users()` read/create/update/
-delete access with document security disabled. No live permission apply or
-post-change direct-client test has been performed in this implementation
-session. Until the guided rollout passes, the deployed database boundary must
-still be treated as critically vulnerable.
+The July 10 baseline found all five original collections granted `Role.users()`
+read/create/update/delete access. On July 20 the setup reconciliation removed
+those permissions, created the two server-only security collections, and the
+live check confirmed all seven collections have empty client permissions with
+document security disabled. A normal lender session was denied all 28
+list/create/update/delete probes, while the runtime key completed create/update
+probes and cleanup. The database isolation release blocker is therefore closed;
+preview application smoke verification remains open.
 
 Even after the critical rollout, deferred financial and operational issues
 remain: money uses floating point storage, financial history can be hard
@@ -43,8 +44,9 @@ Direct answers:
 - **Do lender pages and mutations now share a mandatory tenant boundary?** Yes,
   in this branch for borrowers, collectors, loans, and payments.
 - **Is cross-lender separation guaranteed against a malicious authenticated
-  Appwrite user in the current live project?** Not until live permissions are
-  applied and the direct-session verifier passes.
+  Appwrite user in the current live project?** Direct collection access is now
+  denied and the live verifier passed. Application-level preview smoke tests
+  remain required before merge.
 - **Does the official collector payment action reject another lender's loan?**
   Yes; lookup and collection query by both loan ID and collector lender ID.
 - **Are collector cookies short-lived and revocable?** Partly in this branch:
@@ -58,15 +60,15 @@ Direct answers:
 
 | Control | Source status | Live status |
 | --- | --- | --- |
-| Empty client collection permissions | Implemented in `0976933` | Pending apply/check |
-| Separate runtime/setup Appwrite keys | Implemented in `0976933` | Pending environment/key rollout |
+| Empty client collection permissions | Implemented in `0976933` | Seven-collection live check passed July 20 |
+| Separate runtime/setup Appwrite keys | Implemented in `0976933` | Runtime CRUD and setup provisioning passed |
 | Shared tenant-aware reads/writes | Implemented in `b9cbf2a` | Pending deployment |
 | Collector username login and copy UI | Implemented in source | Pending deployment |
 | 12-hour credential-bound collector sessions | Implemented in source | Pending secret/deployment |
 | Tenant/session automated tests | Automated suite passing | Local/mocked coverage complete |
-| Direct Appwrite session denial verifier | Implemented in `61e6f08` | Must run after permission apply |
-| Distributed authentication rate limits | Implemented in source | Pending live schema/deployed smoke test |
-| Sanitized security-event monitoring | Implemented in source | Pending live schema/deployed smoke test |
+| Direct Appwrite session denial verifier | Implemented in `61e6f08`, corrected in `8c7d9a8` | 28 denial checks passed July 20 |
+| Distributed authentication rate limits | Implemented in source | Live local threshold/concurrency probe passed; preview pending |
+| Sanitized security-event monitoring | Implemented in source | Live persistence/report passed; preview pending |
 
 The exact deployment, verification, key rotation, and rollback procedure is in
 `critical-tenant-isolation-rollout.md`.
@@ -591,14 +593,15 @@ Dependency audit results are time-sensitive and must be rerun in CI.
 
 ### P0: immediate containment before adding real data
 
-1. **Live pending:** remove `Role.users()` collection-wide CRUD permissions from
-   all five collections.
+1. **Live complete:** removed collection-wide client CRUD permissions from all
+   seven collections and verified the result.
 2. **Source complete:** setup reconciliation plus safe check/apply commands.
-3. **Tool complete, live pending:** run normal-session direct CRUD denial tests.
+3. **Live complete:** normal-session direct CRUD denial tests passed for all
+   seven collections.
 4. **Assumption confirmed:** current records are demo-only; reset/reseed is
    acceptable if rollout validation fails.
-5. **Procedure documented, live pending:** create least-privilege runtime/setup
-   keys, verify, and revoke the prior broad key.
+5. **Partially complete:** runtime/setup access was verified; preview
+   configuration and confirmation that the prior broad key is revoked remain.
 
 ### P1: required before a controlled pilot
 
@@ -641,8 +644,9 @@ Dependency audit results are time-sensitive and must be rerun in CI.
 The application should not be called enterprise-ready until all of these are
 true:
 
-- [ ] Normal Appwrite user sessions have no collection-wide access to tenant
-  records. Source is ready; live apply/verification is pending.
+- [x] Normal Appwrite user sessions have no collection-wide access to tenant
+  records. Live seven-collection apply/check and 28 direct-denial probes passed
+  July 20, 2026.
 - [ ] Two-tenant direct API and application tests pass for all resources.
   Critical unit coverage exists; exhaustive live/end-to-end coverage remains.
 - [ ] Collector identities are lender-linked, rate-limited, and revocable.
@@ -674,14 +678,14 @@ isolation verification. The implemented branch is suitable for a controlled
 security rollout using demo data.
 
 It is **not currently safe to trust as an enterprise lending/payment system**.
-First, the last observed live Appwrite configuration remains a release-blocking
-critical issue until the guided permission apply and direct-client verifier
-pass. Second, successful critical rollout would still leave the intentionally
-deferred financial-ledger and enterprise-operations blockers.
+The live database isolation blocker is closed, but the Vercel preview still
+needs the stable monitoring secret and application smoke verification. Even
+after that merge gate passes, the intentionally deferred financial-ledger and
+enterprise-operations blockers remain.
 
-The accurate current label is: **critical isolation code complete; live
-remediation pending; enterprise readiness not achieved.** Do not add real
-financial or personal data until live isolation evidence is recorded, and do
-not make an enterprise claim until exact-money storage, auditable corrections,
+The accurate current label is: **critical isolation verified; preview release
+gate pending; enterprise readiness not achieved.** Do not add real financial
+or personal data, and do not make an enterprise claim until exact-money
+storage, auditable corrections,
 exact financial audit history, MFA, external alerting, backups, incident
 response, independent penetration testing, and compliance review are complete.

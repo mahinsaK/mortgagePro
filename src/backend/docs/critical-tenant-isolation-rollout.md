@@ -7,6 +7,24 @@ that the deferred financial-ledger and enterprise-operations work is complete.
 Keep the security assessment private until the live permission denial tests
 pass.
 
+## July 20, 2026 verification record
+
+- Tables/attributes and indexes were reconciled successfully for all seven
+  collections.
+- The permission check reported empty permissions, `documentSecurity: false`,
+  enabled state, and compliance for all seven collections.
+- A normal lender session was denied list/create/update/delete on all seven
+  collections (28 checks).
+- The runtime key completed create/update and cleanup probes on all seven
+  collections.
+- Local Appwrite-backed rate-limit threshold, concurrency, event report, and
+  retention-command smoke checks passed after transaction TTL compatibility was
+  corrected in `542f4f9`.
+- Preview configuration and application/browser smoke checks remain pending.
+
+See `internal-security-test-report.md` for scope, evidence, findings, and
+limitations.
+
 ## Before starting
 
 - Schedule a short maintenance window.

@@ -130,6 +130,8 @@ How it works:
   loan details card.
 - The circular download button beside `View payments` calls the same protected
   endpoint with `?format=csv` and downloads only that loan's payment history.
+- The downloaded file uses the borrower name, for example
+  `Jordan Lee_payments.csv`.
 - The backend verifies `lender_id` and `loan_id`.
 - The response includes payment rows, stored `totalPaid`, and stored `remaining`.
 

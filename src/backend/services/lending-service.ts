@@ -69,6 +69,7 @@ export type PaymentRow = {
 
 export type LoanPaymentDetails = {
   loanId: string;
+  borrowerName: string;
   totalPaid: string;
   remaining: string;
   payments: Array<{
@@ -520,7 +521,13 @@ export async function getLoanPaymentDetails(
   const loans = await listTenantDocuments("loans", lender.id, [
     Query.equal("$id", loanId),
     Query.limit(1),
-    Query.select(["$id", "amount", "total_paid", "remaining_amount"]),
+    Query.select([
+      "$id",
+      "borrower_id",
+      "amount",
+      "total_paid",
+      "remaining_amount",
+    ]),
   ]);
   const loan = loans.documents[0];
 
@@ -528,18 +535,26 @@ export async function getLoanPaymentDetails(
     return null;
   }
 
-  const payments = await listTenantDocuments("payments", lender.id, [
-    Query.equal("loan_id", loanId),
-    Query.orderDesc("$createdAt"),
-    Query.limit(MAX_LOOKUP_LIMIT),
-    Query.select([
-      "$id",
-      "$createdAt",
-      "collector_id",
-      "amount",
-      "method",
-      "date",
-      "created_at",
+  const borrowerId = String(loan.borrower_id ?? "");
+  const [payments, borrowers] = await Promise.all([
+    listTenantDocuments("payments", lender.id, [
+      Query.equal("loan_id", loanId),
+      Query.orderDesc("$createdAt"),
+      Query.limit(MAX_LOOKUP_LIMIT),
+      Query.select([
+        "$id",
+        "$createdAt",
+        "collector_id",
+        "amount",
+        "method",
+        "date",
+        "created_at",
+      ]),
+    ]),
+    listTenantDocuments("borrowers", lender.id, [
+      Query.equal("$id", borrowerId),
+      Query.limit(1),
+      Query.select(["$id", "name"]),
     ]),
   ]);
   const collectorIds = uniqueStrings(
@@ -567,6 +582,7 @@ export async function getLoanPaymentDetails(
 
   return {
     loanId,
+    borrowerName: String(borrowers.documents[0]?.name ?? "Borrower"),
     totalPaid: formatMoney(totalPaid, lender.currency),
     remaining: formatMoney(remainingAmount, lender.currency),
     payments: payments.documents.map((payment) => ({

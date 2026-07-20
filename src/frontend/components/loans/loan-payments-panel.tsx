@@ -7,6 +7,7 @@ import { LocalTimestamp } from "@/frontend/components/ui/local-timestamp";
 
 type LoanPaymentDetails = {
   loanId: string;
+  borrowerName: string;
   totalPaid: string;
   remaining: string;
   payments: Array<{
@@ -60,7 +61,6 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
             <a
               aria-label="Download loan payments as CSV"
               className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#15191f] text-white shadow-sm transition hover:bg-[#2d3745]"
-              download="mortgagepro_loan_payments.csv"
               href={`/api/loans/${encodeURIComponent(loanId)}/payments?format=csv`}
               title="Download loan payments as CSV"
             >

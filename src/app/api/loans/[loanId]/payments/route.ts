@@ -14,10 +14,11 @@ export async function GET(
   }
 
   if (new URL(request.url).searchParams.get("format") === "csv") {
+    const filename = `${safeFilenamePart(details.borrowerName)}_payments.csv`;
+
     return new Response(toCsv(details.payments), {
       headers: {
-        "Content-Disposition":
-          'attachment; filename="mortgagepro_loan_payments.csv"',
+        "Content-Disposition": contentDisposition(filename),
         "Content-Type": "text/csv; charset=utf-8",
       },
     });
@@ -54,4 +55,25 @@ function toCsv(
 
 function escapeCell(value: string) {
   return `"${value.replaceAll('"', '""')}"`;
+}
+
+function safeFilenamePart(value: string) {
+  const cleaned = value
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_")
+    .replace(/\s+/g, " ")
+    .replace(/_+/g, "_")
+    .trim()
+    .replace(/^\.+|\.+$/g, "")
+    .slice(0, 80);
+
+  return cleaned || "Borrower";
+}
+
+function contentDisposition(filename: string) {
+  const asciiFilename = filename
+    .normalize("NFKD")
+    .replace(/[^\x20-\x7e]/g, "")
+    .replace(/["\\]/g, "_");
+
+  return `attachment; filename="${asciiFilename || "borrower_payments.csv"}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
 }

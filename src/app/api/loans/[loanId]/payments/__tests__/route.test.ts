@@ -12,6 +12,7 @@ import { GET } from "../route";
 
 const details = {
   loanId: "loan_A",
+  borrowerName: "Amélie / Stores",
   totalPaid: "LKR 3,500.00",
   remaining: "LKR 6,500.00",
   payments: [
@@ -52,7 +53,9 @@ describe("loan payment history route", () => {
     const csv = await response.text();
 
     expect(response.headers.get("content-type")).toContain("text/csv");
-    expect(response.headers.get("content-disposition")).toContain("attachment");
+    expect(response.headers.get("content-disposition")).toBe(
+      'attachment; filename="Amelie _ Stores_payments.csv"; filename*=UTF-8\'\'Am%C3%A9lie%20_%20Stores_payments.csv',
+    );
     expect(csv).toContain("date,collected_at,collector,amount,method");
     expect(csv).toContain('"Jordan ""Jay"" Lee"');
     expect(csv).not.toContain("payment_1");

@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  clearIdentityLimit: vi.fn(),
+  consumeAuthAttempt: vi.fn(),
   listDocuments: vi.fn(),
   recordTenantLoanPayment: vi.fn(),
   redirect: vi.fn(),
@@ -10,6 +12,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(async () => new Headers()),
+}));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/backend/appwrite/config", () => ({
   appwriteServerConfig: {
@@ -30,6 +35,11 @@ vi.mock("@/backend/services/collector-auth-service", () => ({
 vi.mock("@/backend/services/payment-recording-service", () => ({
   PaymentWriteError: class PaymentWriteError extends Error {},
   recordTenantLoanPayment: mocks.recordTenantLoanPayment,
+}));
+vi.mock("@/backend/services/authentication-rate-limit-service", () => ({
+  clearAuthenticationIdentityLimit: mocks.clearIdentityLimit,
+  consumeAuthenticationAttempt: mocks.consumeAuthAttempt,
+  RATE_LIMITED_MESSAGE: "Too many sign-in attempts. Please wait and try again.",
 }));
 
 import {
@@ -52,6 +62,7 @@ describe("collectorLoginAction", () => {
       total: 1,
     });
     mocks.verifyCollectorPassword.mockReturnValue(true);
+    mocks.consumeAuthAttempt.mockResolvedValue({ allowed: true });
     mocks.redirect.mockImplementation((path: string) => {
       throw new Error(`redirect:${path}`);
     });
@@ -78,6 +89,23 @@ describe("collectorLoginAction", () => {
       name: "Jordan Lee",
       passwordHash: "stored",
     });
+    expect(mocks.clearIdentityLimit).toHaveBeenCalledWith(
+      "collector_login",
+      "jordanlee4821",
+    );
+  });
+
+  it("does not query collectors after the login limit is reached", async () => {
+    mocks.consumeAuthAttempt.mockResolvedValue({ allowed: false });
+    const formData = new FormData();
+    formData.set("username", "jordanlee4821");
+    formData.set("password", "CollectorPass123!");
+
+    await expect(collectorLoginAction(formData)).rejects.toThrow(
+      "redirect:/collector/login?status=error",
+    );
+    expect(mocks.listDocuments).not.toHaveBeenCalled();
+    expect(mocks.setCollectorSession).not.toHaveBeenCalled();
   });
 
   it("continues to accept an existing legacy collector ID as the username", async () => {

@@ -21,6 +21,11 @@ import {
   findActiveLenderByAppwriteUserId,
   revokeAppwriteSessionBestEffort,
 } from "@/backend/services/lender-login-service";
+import {
+  clearAuthenticationIdentityLimit,
+  consumeAuthenticationAttempt,
+  RATE_LIMITED_MESSAGE,
+} from "@/backend/services/authentication-rate-limit-service";
 import { appwriteServerConfig } from "@/backend/appwrite/config";
 
 const authController = new AuthController();
@@ -30,6 +35,22 @@ export async function loginAction(formData: FormData) {
 
   if (!result.ok || !result.data) {
     redirectWithAuthStatus("/auth/login", "error", result.error ?? "Login failed.");
+  }
+
+  let rateLimit;
+
+  try {
+    rateLimit = await consumeAuthenticationAttempt({
+      flow: "lender_login",
+      identity: result.data.email,
+      headers: await headers(),
+    });
+  } catch {
+    redirect("/auth/unavailable");
+  }
+
+  if (!rateLimit.allowed) {
+    redirectWithAuthStatus("/auth/login", "error", RATE_LIMITED_MESSAGE);
   }
 
   let session: Models.Session;
@@ -81,6 +102,8 @@ export async function loginAction(formData: FormData) {
     redirect("/auth/unavailable");
   }
 
+  await clearAuthenticationIdentityLimit("lender_login", result.data.email);
+
   redirect("/dashboard/lender");
 }
 
@@ -112,6 +135,21 @@ export async function registerLenderAction(formData: FormData) {
       "error",
       "Password and confirmation do not match.",
     );
+  }
+
+  let rateLimit;
+
+  try {
+    rateLimit = await consumeAuthenticationAttempt({
+      flow: "registration",
+      headers: await headers(),
+    });
+  } catch {
+    redirect("/auth/unavailable");
+  }
+
+  if (!rateLimit.allowed) {
+    redirectWithAuthStatus("/auth/register", "error", RATE_LIMITED_MESSAGE);
   }
 
   try {
@@ -177,6 +215,26 @@ export async function requestPasswordResetAction(formData: FormData) {
       "/auth/password-reset",
       "error",
       result.error ?? "Password reset failed.",
+    );
+  }
+
+  let rateLimit;
+
+  try {
+    rateLimit = await consumeAuthenticationAttempt({
+      flow: "password_reset",
+      identity: result.data.email,
+      headers: await headers(),
+    });
+  } catch {
+    redirect("/auth/unavailable");
+  }
+
+  if (!rateLimit.allowed) {
+    redirectWithAuthStatus(
+      "/auth/password-reset",
+      "success",
+      "If that email exists, a reset link has been sent.",
     );
   }
 

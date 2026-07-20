@@ -5,6 +5,8 @@ const mocks = vi.hoisted(() => ({
   accountDeleteSession: vi.fn(),
   adminCreateSession: vi.fn(),
   clearAuthSession: vi.fn(),
+  clearIdentityLimit: vi.fn(),
+  consumeAuthAttempt: vi.fn(),
   getAuthSessionSecret: vi.fn(),
   listDocuments: vi.fn(),
   redirect: vi.fn(),
@@ -49,6 +51,11 @@ vi.mock("@/backend/services/auth-session-service", () => ({
   getAuthSessionSecret: mocks.getAuthSessionSecret,
   setAuthSessionSecret: mocks.setAuthSessionSecret,
 }));
+vi.mock("@/backend/services/authentication-rate-limit-service", () => ({
+  clearAuthenticationIdentityLimit: mocks.clearIdentityLimit,
+  consumeAuthenticationAttempt: mocks.consumeAuthAttempt,
+  RATE_LIMITED_MESSAGE: "Too many sign-in attempts. Please wait and try again.",
+}));
 
 import { loginAction, logoutAction } from "../auth-actions";
 
@@ -74,6 +81,7 @@ describe("lender session actions", () => {
     });
     mocks.adminCreateSession.mockResolvedValue(createdSession);
     mocks.listDocuments.mockResolvedValue({ documents: [{ $id: "lender_A" }] });
+    mocks.consumeAuthAttempt.mockResolvedValue({ allowed: true });
   });
 
   it("stores the single session returned by Appwrite login", async () => {
@@ -88,6 +96,21 @@ describe("lender session actions", () => {
       "2030-01-02T03:04:05.000Z",
     );
     expect(mocks.userDeleteSession).not.toHaveBeenCalled();
+    expect(mocks.clearIdentityLimit).toHaveBeenCalledWith(
+      "lender_login",
+      "owner@example.test",
+    );
+  });
+
+  it("does not call Appwrite Auth after the lender limit is reached", async () => {
+    mocks.consumeAuthAttempt.mockResolvedValue({ allowed: false });
+
+    await expect(loginAction(loginForm())).rejects.toThrow(
+      "redirect:/auth/login?status=error",
+    );
+
+    expect(mocks.adminCreateSession).not.toHaveBeenCalled();
+    expect(mocks.setAuthSessionSecret).not.toHaveBeenCalled();
   });
 
   it("revokes the new session when no active lender is linked", async () => {

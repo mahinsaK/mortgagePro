@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { appwriteServerConfig } from "@/backend/appwrite/config";
 import { databases, Query } from "@/backend/appwrite/server-client";
@@ -14,10 +15,35 @@ import {
   PaymentWriteError,
   recordTenantLoanPayment,
 } from "@/backend/services/payment-recording-service";
+import {
+  clearAuthenticationIdentityLimit,
+  consumeAuthenticationAttempt,
+  RATE_LIMITED_MESSAGE,
+} from "@/backend/services/authentication-rate-limit-service";
 
 export async function collectorLoginAction(formData: FormData) {
   const collectorId = readRequired(formData, "username");
   const password = readRequired(formData, "password");
+  let rateLimit;
+
+  try {
+    rateLimit = await consumeAuthenticationAttempt({
+      flow: "collector_login",
+      identity: collectorId,
+      headers: await headers(),
+    });
+  } catch {
+    redirect("/auth/unavailable");
+  }
+
+  if (!rateLimit.allowed) {
+    redirectWithStatus(
+      "/collector/login",
+      "error",
+      RATE_LIMITED_MESSAGE,
+    );
+  }
+
   const collectors = await databases.listDocuments({
     databaseId: appwriteServerConfig.databaseId,
     collectionId: appwriteServerConfig.collections.collectors,
@@ -52,6 +78,7 @@ export async function collectorLoginAction(formData: FormData) {
     name: String(collector.name ?? collectorId),
     passwordHash: String(collector.password_hash ?? ""),
   });
+  await clearAuthenticationIdentityLimit("collector_login", collectorId);
   redirect("/collector/scan");
 }
 

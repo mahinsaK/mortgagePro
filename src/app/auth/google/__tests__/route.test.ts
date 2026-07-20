@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  consumeAuthAttempt: vi.fn(),
   createOAuth2Token: vi.fn(),
 }));
 
@@ -11,6 +12,10 @@ vi.mock("@/backend/appwrite/server-client", () => ({
     createOAuth2Token: mocks.createOAuth2Token,
   })),
 }));
+vi.mock("@/backend/services/authentication-rate-limit-service", () => ({
+  consumeAuthenticationAttempt: mocks.consumeAuthAttempt,
+  RATE_LIMITED_MESSAGE: "Too many sign-in attempts. Please wait and try again.",
+}));
 
 import { GET } from "../route";
 
@@ -18,9 +23,22 @@ describe("Google OAuth start route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.APP_BASE_URL = "https://mortgagepro.example";
+    mocks.consumeAuthAttempt.mockResolvedValue({ allowed: true });
     mocks.createOAuth2Token.mockResolvedValue(
       "https://fra.cloud.appwrite.io/v1/account/tokens/oauth2/google",
     );
+  });
+
+  it("does not start Google OAuth after the IP limit is reached", async () => {
+    mocks.consumeAuthAttempt.mockResolvedValue({ allowed: false });
+
+    const response = await GET(
+      new NextRequest("https://mortgagepro.example/auth/google"),
+    );
+
+    expect(response.headers.get("location")).toContain("/auth/login?status=error");
+    expect(response.headers.get("location")).toContain("Too+many+sign-in+attempts");
+    expect(mocks.createOAuth2Token).not.toHaveBeenCalled();
   });
 
   it("uses fixed callbacks and stores a protected state cookie", async () => {

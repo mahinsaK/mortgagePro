@@ -14,6 +14,10 @@ export const appwriteServerConfig = {
     loans: process.env.NEXT_PUBLIC_APPWRITE_LOANS_COLLECTION_ID ?? "loans",
     payments:
       process.env.NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID ?? "payments",
+    authRateLimits:
+      process.env.APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID ?? "auth_rate_limits",
+    securityEvents:
+      process.env.APPWRITE_SECURITY_EVENTS_COLLECTION_ID ?? "security_events",
   },
 };
 

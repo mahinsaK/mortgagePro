@@ -1,8 +1,8 @@
 import { randomBytes } from "node:crypto";
-import { readFileSync } from "node:fs";
 import { Account, Client, Databases } from "node-appwrite";
+import { loadScriptEnv } from "./lib/load-env.mjs";
 
-const env = { ...loadEnv([".env.local", ".env.example"]), ...process.env };
+const env = loadScriptEnv();
 const config = {
   endpoint: requireEnv("NEXT_PUBLIC_APPWRITE_ENDPOINT"),
   projectId: requireEnv("NEXT_PUBLIC_APPWRITE_PROJECT_ID"),
@@ -23,6 +23,8 @@ const config = {
     collectors: requireEnv("NEXT_PUBLIC_APPWRITE_COLLECTORS_COLLECTION_ID"),
     loans: requireEnv("NEXT_PUBLIC_APPWRITE_LOANS_COLLECTION_ID"),
     payments: requireEnv("NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID"),
+    authRateLimits: requireEnv("APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID"),
+    securityEvents: requireEnv("APPWRITE_SECURITY_EVENTS_COLLECTION_ID"),
   },
 };
 
@@ -131,7 +133,15 @@ function createDatabasesWithKey(key) {
 }
 
 function collectionNames() {
-  return ["lenders", "borrowers", "collectors", "loans", "payments"];
+  return [
+    "lenders",
+    "borrowers",
+    "collectors",
+    "loans",
+    "payments",
+    "authRateLimits",
+    "securityEvents",
+  ];
 }
 
 function makeProbe(prefix, appwriteUserId) {
@@ -209,6 +219,31 @@ function makeProbe(prefix, appwriteUserId) {
         created_at: now,
       },
     },
+    authRateLimits: {
+      id: id(`${prefix}_r`),
+      data: {
+        scope: "isolation_probe",
+        subject_hash: "a".repeat(64),
+        attempt_count: 1,
+        window_started_at: now,
+        blocked_until: new Date(Date.now() + 60_000).toISOString(),
+        updated_at: now,
+      },
+    },
+    securityEvents: {
+      id: id(`${prefix}_s`),
+      data: {
+        event_type: "isolation_probe",
+        outcome: "success",
+        principal_type: "system",
+        principal_hash: "b".repeat(64),
+        ip_hash: "c".repeat(64),
+        request_id: id(`${prefix}_request`),
+        reason_code: "isolation_probe",
+        metadata: "{}",
+        created_at: now,
+      },
+    },
   };
 }
 
@@ -275,6 +310,14 @@ function harmlessUpdate(collection) {
     return { status: "active" };
   }
 
+  if (collection === "authRateLimits") {
+    return { attempt_count: 2 };
+  }
+
+  if (collection === "securityEvents") {
+    return { outcome: "success" };
+  }
+
   return { method: "cash" };
 }
 
@@ -289,27 +332,4 @@ function requireEnv(name) {
   }
 
   return value;
-}
-
-function loadEnv(files) {
-  const values = {};
-
-  for (const file of files) {
-    try {
-      const content = readFileSync(file, "utf8");
-      for (const line of content.split(/\r?\n/)) {
-        const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
-        if (!match) {
-          continue;
-        }
-
-        const [, key, rawValue] = match;
-        values[key] = rawValue.replace(/^["']|["']$/g, "");
-      }
-    } catch {
-      // Missing local environment files are fine.
-    }
-  }
-
-  return values;
 }

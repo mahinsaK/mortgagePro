@@ -1,8 +1,8 @@
-import { readFileSync } from "node:fs";
 import { Client, Databases } from "node-appwrite";
 import { createAppwriteSchema } from "./appwrite-schema-definition.mjs";
+import { loadScriptEnv } from "./lib/load-env.mjs";
 
-const env = { ...loadEnv([".env.local", ".env.example"]), ...process.env };
+const env = loadScriptEnv();
 
 const config = {
   endpoint: requireEnv("NEXT_PUBLIC_APPWRITE_ENDPOINT"),
@@ -15,6 +15,8 @@ const config = {
     collectors: requireEnv("NEXT_PUBLIC_APPWRITE_COLLECTORS_COLLECTION_ID"),
     loans: requireEnv("NEXT_PUBLIC_APPWRITE_LOANS_COLLECTION_ID"),
     payments: requireEnv("NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID"),
+    authRateLimits: requireEnv("APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID"),
+    securityEvents: requireEnv("APPWRITE_SECURITY_EVENTS_COLLECTION_ID"),
   },
 };
 
@@ -118,27 +120,4 @@ function requireEnv(name) {
   }
 
   return value;
-}
-
-function loadEnv(files) {
-  const values = {};
-
-  for (const file of files) {
-    try {
-      const content = readFileSync(file, "utf8");
-      for (const line of content.split(/\r?\n/)) {
-        const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
-        if (!match) {
-          continue;
-        }
-
-        const [, key, rawValue] = match;
-        values[key] = rawValue.replace(/^["']|["']$/g, "");
-      }
-    } catch {
-      // Missing env files are fine during index creation.
-    }
-  }
-
-  return values;
 }

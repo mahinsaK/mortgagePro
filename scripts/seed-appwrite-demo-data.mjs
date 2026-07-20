@@ -1,6 +1,6 @@
 import { randomBytes, scryptSync } from "node:crypto";
-import { readFileSync } from "node:fs";
 import { Client, Databases, Query, Users } from "node-appwrite";
+import { loadScriptEnv } from "./lib/load-env.mjs";
 
 /*
 Demo login credentials created by this script:
@@ -15,7 +15,7 @@ Collectors:
 - seed_collector_nina / NinaCollect123!
 */
 
-const env = { ...loadEnv([".env.local", ".env.example"]), ...process.env };
+const env = loadScriptEnv();
 
 const config = {
   endpoint: requireEnv("NEXT_PUBLIC_APPWRITE_ENDPOINT"),
@@ -474,27 +474,4 @@ function requireEnv(name) {
   }
 
   return value;
-}
-
-function loadEnv(files) {
-  const values = {};
-
-  for (const file of files) {
-    try {
-      const content = readFileSync(file, "utf8");
-      for (const line of content.split(/\r?\n/)) {
-        const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
-        if (!match) {
-          continue;
-        }
-
-        const [, key, rawValue] = match;
-        values[key] = rawValue.replace(/^["']|["']$/g, "");
-      }
-    } catch {
-      // Missing env files are fine during seeding.
-    }
-  }
-
-  return values;
 }

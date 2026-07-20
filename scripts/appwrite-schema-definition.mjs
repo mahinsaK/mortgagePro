@@ -110,6 +110,53 @@ export function createAppwriteSchema(collections) {
         keyIndex("idx_payment_lender_collector", ["lender_id", "collector_id"]),
       ],
     },
+    {
+      id: collections.authRateLimits,
+      name: "Authentication Rate Limits",
+      attributes: [
+        stringAttr("scope", 48, true),
+        stringAttr("subject_hash", 64, true),
+        integerAttr("attempt_count", true, 0),
+        datetimeAttr("window_started_at", true),
+        datetimeAttr("blocked_until", false),
+        datetimeAttr("updated_at", true),
+      ],
+      indexes: [
+        keyIndex("idx_rate_limit_scope", ["scope"]),
+        keyIndex("idx_rate_limit_updated", ["updated_at"]),
+        keyIndex("idx_rate_limit_blocked", ["blocked_until"]),
+      ],
+    },
+    {
+      id: collections.securityEvents,
+      name: "Security Events",
+      attributes: [
+        stringAttr("event_type", 64, true),
+        enumAttr(
+          "outcome",
+          ["success", "failure", "blocked", "denied", "error"],
+          true,
+        ),
+        enumAttr(
+          "principal_type",
+          ["lender", "collector", "anonymous", "system"],
+          true,
+        ),
+        stringAttr("principal_hash", 64, false),
+        stringAttr("lender_id", 64, false),
+        stringAttr("ip_hash", 64, false),
+        stringAttr("request_id", 64, true),
+        stringAttr("reason_code", 64, false),
+        stringAttr("metadata", 2000, false),
+        datetimeAttr("created_at", true),
+      ],
+      indexes: [
+        keyIndex("idx_security_event_created", ["created_at"]),
+        keyIndex("idx_security_event_type", ["event_type"]),
+        keyIndex("idx_security_event_outcome", ["outcome"]),
+        keyIndex("idx_security_event_type_created", ["event_type", "created_at"]),
+      ],
+    },
   ];
 }
 
@@ -119,6 +166,10 @@ function stringAttr(key, size, required, xdefault) {
 
 function floatAttr(key, required, min, max, xdefault) {
   return { type: "float", key, required, min, max, xdefault };
+}
+
+function integerAttr(key, required, min, max, xdefault) {
+  return { type: "integer", key, required, min, max, xdefault };
 }
 
 function enumAttr(key, elements, required, xdefault) {

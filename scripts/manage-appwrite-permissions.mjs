@@ -1,6 +1,7 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Client, Databases } from "node-appwrite";
+import { loadScriptEnv } from "./lib/load-env.mjs";
 
 const mode = process.argv[2];
 
@@ -10,7 +11,7 @@ if (mode !== "--check" && mode !== "--apply") {
   );
 }
 
-const env = { ...loadEnv([".env.local", ".env.example"]), ...process.env };
+const env = loadScriptEnv();
 const config = {
   endpoint: requireEnv("NEXT_PUBLIC_APPWRITE_ENDPOINT"),
   projectId: requireEnv("NEXT_PUBLIC_APPWRITE_PROJECT_ID"),
@@ -22,6 +23,8 @@ const config = {
     requireEnv("NEXT_PUBLIC_APPWRITE_COLLECTORS_COLLECTION_ID"),
     requireEnv("NEXT_PUBLIC_APPWRITE_LOANS_COLLECTION_ID"),
     requireEnv("NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID"),
+    requireEnv("APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID"),
+    requireEnv("APPWRITE_SECURITY_EVENTS_COLLECTION_ID"),
   ],
 };
 
@@ -159,27 +162,4 @@ function requireEnv(name) {
   }
 
   return value;
-}
-
-function loadEnv(files) {
-  const values = {};
-
-  for (const file of files) {
-    try {
-      const content = readFileSync(file, "utf8");
-      for (const line of content.split(/\r?\n/)) {
-        const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
-        if (!match) {
-          continue;
-        }
-
-        const [, key, rawValue] = match;
-        values[key] = rawValue.replace(/^["']|["']$/g, "");
-      }
-    } catch {
-      // Missing local environment files are fine.
-    }
-  }
-
-  return values;
 }

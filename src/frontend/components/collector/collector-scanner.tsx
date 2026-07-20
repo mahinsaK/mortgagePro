@@ -24,6 +24,7 @@ export function CollectorScanner({
   status,
 }: CollectorScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const paymentDialogCloseRef = useRef<HTMLButtonElement>(null);
   const scannerRef = useRef<QrScanner | null>(null);
   const isMountedRef = useRef(true);
   const [cameraMessage, setCameraMessage] = useState("");
@@ -194,7 +195,13 @@ export function CollectorScanner({
         {loan ? (
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
-            <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 flex max-h-[calc(100dvh-0.75rem)] w-full flex-col overflow-hidden rounded-t-2xl border border-[#dfe5ec] bg-white text-[#15191f] shadow-2xl sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[calc(100dvh-32px)] sm:w-[min(560px,calc(100vw-32px))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl">
+            <Dialog.Content
+              className="fixed inset-x-0 bottom-0 z-50 flex max-h-[calc(100dvh-0.75rem)] w-full flex-col overflow-hidden rounded-t-2xl border border-[#dfe5ec] bg-white text-[#15191f] shadow-2xl sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[calc(100dvh-32px)] sm:w-[min(560px,calc(100vw-32px))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl"
+              onOpenAutoFocus={(event) => {
+                event.preventDefault();
+                paymentDialogCloseRef.current?.focus({ preventScroll: true });
+              }}
+            >
               <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[#dfe5ec] px-5 py-4">
                 <div>
                   <Dialog.Title className="text-xl font-semibold">
@@ -208,6 +215,7 @@ export function CollectorScanner({
                   <button
                     aria-label="Close payment details"
                     className="flex size-9 shrink-0 items-center justify-center rounded-md border border-[#dfe5ec] text-[#657386] transition hover:bg-[#f8fafc]"
+                    ref={paymentDialogCloseRef}
                     type="button"
                   >
                     <X aria-hidden="true" size={17} />

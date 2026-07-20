@@ -32,7 +32,7 @@ export default async function CollectorLoginPage({
           <label className="block text-sm font-medium text-[#2d3745]">
             Username
             <input
-              className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
+              className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-base text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
               autoCapitalize="none"
               autoComplete="username"
               autoCorrect="off"
@@ -44,7 +44,7 @@ export default async function CollectorLoginPage({
           <label className="block text-sm font-medium text-[#2d3745]">
             Password
             <input
-              className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
+              className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-base text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
               name="password"
               placeholder="Collector password"
               required

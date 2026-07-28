@@ -7,12 +7,15 @@ const mocks = vi.hoisted(() => ({
   clearAuthSession: vi.fn(),
   clearIdentityLimit: vi.fn(),
   consumeAuthAttempt: vi.fn(),
+  createDocument: vi.fn(),
   getAuthSessionSecret: vi.fn(),
   listDocuments: vi.fn(),
   redirect: vi.fn(),
   recordSecurityEvent: vi.fn(),
   setAuthSessionSecret: vi.fn(),
   userCreateSession: vi.fn(),
+  userCreate: vi.fn(),
+  userDelete: vi.fn(),
   userDeleteSession: vi.fn(),
 }));
 
@@ -35,14 +38,15 @@ vi.mock("@/backend/appwrite/server-client", async () => {
       createEmailPasswordSession: mocks.adminCreateSession,
     })),
     databases: {
-      createDocument: vi.fn(),
+      createDocument: mocks.createDocument,
       listDocuments: mocks.listDocuments,
     },
     ID,
     Query,
     users: {
-      create: vi.fn(),
+      create: mocks.userCreate,
       createSession: mocks.userCreateSession,
+      delete: mocks.userDelete,
       deleteSession: mocks.userDeleteSession,
     },
   };
@@ -61,7 +65,11 @@ vi.mock("@/backend/services/security-event-service", () => ({
   recordSecurityEvent: mocks.recordSecurityEvent,
 }));
 
-import { loginAction, logoutAction } from "../auth-actions";
+import {
+  loginAction,
+  logoutAction,
+  registerLenderAction,
+} from "../auth-actions";
 
 const createdSession = {
   $id: "session_A",
@@ -77,6 +85,17 @@ function loginForm() {
   return formData;
 }
 
+function registrationForm() {
+  const formData = new FormData();
+  formData.set("companyName", "Pilot Lending");
+  formData.set("email", "pilot@example.test");
+  formData.set("phone", "+94 77 123 4567");
+  formData.set("address", "Test address");
+  formData.set("password", "Password123!");
+  formData.set("confirmPassword", "Password123!");
+  return formData;
+}
+
 describe("lender session actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -86,6 +105,8 @@ describe("lender session actions", () => {
     mocks.adminCreateSession.mockResolvedValue(createdSession);
     mocks.listDocuments.mockResolvedValue({ documents: [{ $id: "lender_A" }] });
     mocks.consumeAuthAttempt.mockResolvedValue({ allowed: true });
+    mocks.userCreate.mockResolvedValue({ $id: "user_new" });
+    mocks.createDocument.mockResolvedValue({ $id: "lender_new" });
   });
 
   it("stores the single session returned by Appwrite login", async () => {
@@ -188,5 +209,46 @@ describe("lender session actions", () => {
 
     await expect(logoutAction()).rejects.toThrow("redirect:/auth/login");
     expect(mocks.clearAuthSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("registers a lender as inactive without creating a session", async () => {
+    await expect(registerLenderAction(registrationForm())).rejects.toThrow(
+      "redirect:/auth/login?status=success",
+    );
+
+    expect(mocks.createDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          appwrite_user_id: "user_new",
+          status: "inactive",
+        }),
+      }),
+    );
+    expect(mocks.userCreateSession).not.toHaveBeenCalled();
+    expect(mocks.setAuthSessionSecret).not.toHaveBeenCalled();
+    expect(mocks.redirect).toHaveBeenCalledWith(
+      expect.stringContaining("account%20is%20awaiting%20approval"),
+    );
+  });
+
+  it("removes the Appwrite user when lender profile creation fails", async () => {
+    mocks.createDocument.mockRejectedValue(new Error("document failure"));
+
+    await expect(registerLenderAction(registrationForm())).rejects.toThrow(
+      "redirect:/auth/register?status=error",
+    );
+
+    expect(mocks.userDelete).toHaveBeenCalledWith({ userId: "user_new" });
+    expect(mocks.userCreateSession).not.toHaveBeenCalled();
+  });
+
+  it("keeps the registration error generic when account cleanup fails", async () => {
+    mocks.createDocument.mockRejectedValue(new Error("document failure"));
+    mocks.userDelete.mockRejectedValue(new Error("cleanup failure"));
+
+    await expect(registerLenderAction(registrationForm())).rejects.toThrow(
+      "redirect:/auth/register?status=error",
+    );
+    expect(mocks.setAuthSessionSecret).not.toHaveBeenCalled();
   });
 });

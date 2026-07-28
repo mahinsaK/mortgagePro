@@ -1,7 +1,6 @@
 "use server";
 
 import { AppwriteException, type Models } from "node-appwrite";
-import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
@@ -243,8 +242,10 @@ export async function registerLenderAction(formData: FormData) {
     redirectWithAuthStatus("/auth/register", "error", RATE_LIMITED_MESSAGE);
   }
 
+  let user: Models.User<Models.Preferences> | null = null;
+
   try {
-    const user = await users.create({
+    user = await users.create({
       userId: ID.unique(),
       email: result.data.email,
       password,
@@ -263,14 +264,20 @@ export async function registerLenderAction(formData: FormData) {
           phone: readOptional(formData, "phone"),
           address: readOptional(formData, "address"),
         }),
-        status: "active",
+        status: "inactive",
         currency: "USD",
         created_at: new Date().toISOString(),
       },
     });
-
-    await createAndStoreServerSession(user.$id);
   } catch (error) {
+    if (user) {
+      try {
+        await users.delete({ userId: user.$id });
+      } catch {
+        // Registration cleanup is best effort and must not expose account details.
+      }
+    }
+
     redirectWithAuthStatus(
       "/auth/register",
       "error",
@@ -285,24 +292,11 @@ export async function registerLenderAction(formData: FormData) {
     principalIdentifier: result.data.email,
     headers: requestHeaders,
   });
-  revalidatePath("/dashboard/lender");
-  redirect("/dashboard/lender");
-}
-
-async function createAndStoreServerSession(userId: string) {
-  const session = await users.createSession({ userId });
-
-  if (!session.secret) {
-    await revokeAppwriteSessionBestEffort(session);
-    throw new Error("Could not create an Appwrite server session.");
-  }
-
-  try {
-    await setAuthSessionSecret(session.secret, session.expire);
-  } catch (error) {
-    await revokeAppwriteSessionBestEffort(session);
-    throw error;
-  }
+  redirectWithAuthStatus(
+    "/auth/login",
+    "success",
+    "Registration received. Your account is awaiting approval.",
+  );
 }
 
 export async function requestPasswordResetAction(formData: FormData) {

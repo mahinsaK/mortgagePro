@@ -1,16 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  appwriteConfig: {
+    apiKey: "runtime-key",
+    databaseId: "database",
+    collections: { lenders: "lenders" },
+  },
   listDocuments: vi.fn(),
   resolveAppwriteSession: vi.fn(),
 }));
 
 vi.mock("@/backend/appwrite/config", () => ({
-  appwriteServerConfig: {
-    apiKey: "runtime-key",
-    databaseId: "database",
-    collections: { lenders: "lenders" },
-  },
+  appwriteServerConfig: mocks.appwriteConfig,
 }));
 
 vi.mock("@/backend/appwrite/server-client", async () => {
@@ -33,6 +34,30 @@ import { resolvePrimaryLender } from "../lender-service";
 describe("lender authentication resolution", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.appwriteConfig.apiKey = "runtime-key";
+  });
+
+  it("returns anonymous without requiring Appwrite configuration", async () => {
+    mocks.appwriteConfig.apiKey = "";
+    mocks.resolveAppwriteSession.mockResolvedValue({ status: "anonymous" });
+
+    await expect(resolvePrimaryLender()).resolves.toEqual({
+      status: "anonymous",
+    });
+    expect(mocks.listDocuments).not.toHaveBeenCalled();
+  });
+
+  it("requires Appwrite configuration only for an authenticated session", async () => {
+    mocks.appwriteConfig.apiKey = "";
+    mocks.resolveAppwriteSession.mockResolvedValue({
+      status: "authenticated",
+      user: { $id: "user_A" },
+    });
+
+    await expect(resolvePrimaryLender()).resolves.toEqual({
+      status: "unavailable",
+    });
+    expect(mocks.listDocuments).not.toHaveBeenCalled();
   });
 
   it("maps a valid session to its active lender", async () => {

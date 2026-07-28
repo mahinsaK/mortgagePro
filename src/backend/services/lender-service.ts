@@ -24,14 +24,14 @@ export type LenderAuthResolution =
   | { status: "authenticated"; lender: LenderProfile };
 
 export async function resolvePrimaryLender(): Promise<LenderAuthResolution> {
-  if (!appwriteServerConfig.apiKey) {
-    return { status: "unavailable" };
-  }
-
   const session = await resolveAppwriteSession();
 
   if (session.status !== "authenticated") {
     return session;
+  }
+
+  if (!appwriteServerConfig.apiKey) {
+    return { status: "unavailable" };
   }
 
   let lenders;

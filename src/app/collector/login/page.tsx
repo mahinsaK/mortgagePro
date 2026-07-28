@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Building2 } from "lucide-react";
 import { collectorLoginAction } from "@/backend/actions/collector-actions";
 import { requireActiveCollectorPrincipal } from "@/backend/services/collector-auth-service";
 
@@ -19,7 +21,18 @@ export default async function CollectorLoginPage({
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#eef2f6] px-5 py-10">
       <section className="w-full max-w-md rounded-lg border border-[#d9e0e8] bg-white p-6 shadow-sm sm:p-8">
-        <p className="text-sm font-medium text-[#657386]">Collector access</p>
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm font-medium text-[#657386]">
+            Collector access
+          </p>
+          <Link
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#dfe5ec] px-2.5 text-xs font-semibold text-[#2d3745] transition hover:bg-[#f8fafc]"
+            href="/auth/login"
+          >
+            <Building2 aria-hidden="true" size={14} />
+            Lender login
+          </Link>
+        </div>
         <h1 className="mt-2 text-3xl font-semibold text-[#15191f]">
           Scan QR code
         </h1>

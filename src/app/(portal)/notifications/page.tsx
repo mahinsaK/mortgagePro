@@ -1,3 +1,3 @@
 export default function NotificationsPage() {
-  return <h1 className="text-3xl font-semibold">Notifications</h1>;
+  return <h1 className="text-2xl font-semibold md:text-3xl">Notifications</h1>;
 }

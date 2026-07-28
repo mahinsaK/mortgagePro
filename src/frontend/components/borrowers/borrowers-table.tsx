@@ -26,7 +26,52 @@ export function BorrowersTable({ borrowers }: { borrowers: BorrowerRow[] }) {
   }
 
   return (
-    <table className="w-full min-w-[860px] border-collapse text-left text-sm">
+    <>
+      <div className="divide-y divide-[#eef2f6] md:hidden">
+        {borrowers.map((borrower) => (
+          <article className="p-4" key={borrower.id}>
+            <div className="flex items-start justify-between gap-3">
+              <button
+                className="min-w-0 flex-1 text-left"
+                onClick={() => openBorrowerProfile(borrower.id)}
+                type="button"
+              >
+                <p className="truncate text-base font-semibold text-[#15191f]">
+                  {borrower.name}
+                </p>
+                <p className="mt-1 truncate text-sm text-[#657386]">
+                  {borrower.businessName || "No business name"}
+                </p>
+              </button>
+              <BorrowerActions borrower={borrower} />
+            </div>
+            <button
+              className="mt-4 grid w-full grid-cols-2 gap-3 rounded-lg bg-[#f8fafc] p-3 text-left"
+              onClick={() => openBorrowerProfile(borrower.id)}
+              type="button"
+            >
+              <MobileDetail
+                label="Contact"
+                value={borrower.contactInfo || "Not set"}
+              />
+              <MobileDetail label="Created" value={borrower.createdAt} />
+              <span className="col-span-2 flex items-center justify-between border-t border-[#e5eaf0] pt-3">
+                <span className="text-xs font-semibold uppercase tracking-wide text-[#657386]">
+                  Status
+                </span>
+                <span className="rounded-full bg-[#e0ecff] px-2.5 py-1 text-xs font-semibold text-[#1d4ed8]">
+                  {borrower.status}
+                </span>
+              </span>
+            </button>
+          </article>
+        ))}
+        {borrowers.length === 0 ? (
+          <p className="p-5 text-sm text-[#657386]">No borrowers found.</p>
+        ) : null}
+      </div>
+
+      <table className="hidden w-full min-w-[860px] border-collapse text-left text-sm md:table">
       <thead className="bg-[#f8fafc] text-[#657386]">
         <tr>
           <th className="px-5 py-3 font-semibold">Name</th>
@@ -68,26 +113,7 @@ export function BorrowersTable({ borrowers }: { borrowers: BorrowerRow[] }) {
             </td>
             <td className="px-5 py-4 text-[#657386]">{borrower.createdAt}</td>
             <td className="px-5 py-4" onClick={(event) => event.stopPropagation()}>
-              <div className="flex items-center gap-2">
-                <EditBorrowerDialog borrower={borrower} />
-                <form
-                  action={deleteBorrowerAction}
-                  onSubmit={(event) => {
-                    if (!confirm("Delete this borrower and their loans?")) {
-                      event.preventDefault();
-                    }
-                  }}
-                >
-                  <input name="borrower_id" type="hidden" value={borrower.id} />
-                  <button
-                    aria-label={`Delete ${borrower.name}`}
-                    className="flex size-9 items-center justify-center rounded-md border border-[#fecaca] text-[#b91c1c] transition hover:bg-[#fef2f2]"
-                    type="submit"
-                  >
-                    <Trash2 aria-hidden="true" size={16} />
-                  </button>
-                </form>
-              </div>
+              <BorrowerActions borrower={borrower} />
             </td>
           </tr>
         ))}
@@ -99,7 +125,46 @@ export function BorrowersTable({ borrowers }: { borrowers: BorrowerRow[] }) {
           </tr>
         ) : null}
       </tbody>
-    </table>
+      </table>
+    </>
+  );
+}
+
+function BorrowerActions({ borrower }: { borrower: BorrowerRow }) {
+  return (
+    <div className="flex shrink-0 items-center gap-2">
+      <EditBorrowerDialog borrower={borrower} />
+      <form
+        action={deleteBorrowerAction}
+        onSubmit={(event) => {
+          if (!confirm("Delete this borrower and their loans?")) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <input name="borrower_id" type="hidden" value={borrower.id} />
+        <button
+          aria-label={`Delete ${borrower.name}`}
+          className="flex size-9 items-center justify-center rounded-md border border-[#fecaca] text-[#b91c1c] transition hover:bg-[#fef2f2]"
+          type="submit"
+        >
+          <Trash2 aria-hidden="true" size={16} />
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function MobileDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="min-w-0">
+      <span className="block text-xs font-semibold uppercase tracking-wide text-[#657386]">
+        {label}
+      </span>
+      <span className="mt-1 block truncate text-sm font-medium text-[#15191f]">
+        {value}
+      </span>
+    </span>
   );
 }
 
@@ -117,7 +182,7 @@ function EditBorrowerDialog({ borrower }: { borrower: BorrowerRow }) {
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(620px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[#dfe5ec] bg-white p-5 text-[#15191f] shadow-xl">
+        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[calc(100dvh-0.75rem)] overflow-y-auto rounded-t-2xl border border-[#dfe5ec] bg-white p-5 text-[#15191f] shadow-xl sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[min(620px,calc(100vw-32px))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg">
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
               <Dialog.Title className="text-lg font-semibold">

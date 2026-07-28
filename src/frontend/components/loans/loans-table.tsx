@@ -9,8 +9,45 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
 
   return (
     <>
+      <div className="divide-y divide-[#eef2f6] md:hidden">
+        {loans.map((loan) => (
+          <button
+            className="block w-full p-4 text-left transition active:bg-[#f8fafc]"
+            key={loan.id}
+            onClick={() => setSelectedLoan(loan)}
+            type="button"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-base font-semibold">
+                  {loan.borrowerName}
+                </p>
+                <p className="mt-1 text-sm text-[#657386]">
+                  Ends {loan.endDate}
+                </p>
+              </div>
+              <span className="rounded-full bg-[#e0ecff] px-2.5 py-1 text-xs font-semibold text-[#1d4ed8]">
+                {loan.status}
+              </span>
+            </div>
+            <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-[#f8fafc] p-3">
+              <MobileDetail label="Amount" value={loan.amount} />
+              <MobileDetail label="Remaining" value={loan.remainingAmount} />
+              <MobileDetail label="Paid" value={loan.totalPaid} />
+              <MobileDetail label="Daily" value={loan.dailyPayment} />
+            </dl>
+            <span className="mt-3 block text-sm font-semibold text-[#1d4ed8]">
+              View loan details
+            </span>
+          </button>
+        ))}
+        {loans.length === 0 ? (
+          <p className="p-5 text-sm text-[#657386]">No loans found.</p>
+        ) : null}
+      </div>
+
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1020px] border-collapse text-left text-sm">
+        <table className="hidden w-full min-w-[1020px] border-collapse text-left text-sm md:table">
           <thead className="bg-[#f8fafc] text-[#657386]">
             <tr>
               <th className="px-5 py-3 font-semibold">QR</th>
@@ -73,5 +110,16 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
         />
       ) : null}
     </>
+  );
+}
+
+function MobileDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs font-semibold uppercase tracking-wide text-[#657386]">
+        {label}
+      </dt>
+      <dd className="mt-1 text-sm font-medium text-[#15191f]">{value}</dd>
+    </div>
   );
 }

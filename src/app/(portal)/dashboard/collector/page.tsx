@@ -1,3 +1,3 @@
 export default function CollectorDashboardPage() {
-  return <h1 className="text-3xl font-semibold">Collector</h1>;
+  return <h1 className="text-2xl font-semibold md:text-3xl">Collector</h1>;
 }

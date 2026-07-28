@@ -27,7 +27,55 @@ export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) 
   }
 
   return (
-    <table className="w-full min-w-[1040px] border-collapse text-left text-sm">
+    <>
+      <div className="divide-y divide-[#eef2f6] md:hidden">
+        {collectors.map((collector) => (
+          <article className="p-4" key={collector.id}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-base font-semibold">
+                  {collector.name}
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <code className="text-sm text-[#657386]">
+                    {collector.username}
+                  </code>
+                  <CopyUsernameButton
+                    copied={copiedUsername === collector.username}
+                    name={collector.name}
+                    onCopy={() => copyUsername(collector.username)}
+                  />
+                </div>
+              </div>
+              <CollectorActions collector={collector} />
+            </div>
+            <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-[#f8fafc] p-3">
+              <MobileDetail
+                label="Contact"
+                value={collector.contactInfo || "Not set"}
+              />
+              <MobileDetail
+                label="Area"
+                value={collector.areaInfo || "Not set"}
+              />
+              <MobileDetail label="Created" value={collector.createdAt} />
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#657386]">
+                  Status
+                </dt>
+                <dd className="mt-1">
+                  <StatusBadge status={collector.status} />
+                </dd>
+              </div>
+            </dl>
+          </article>
+        ))}
+        {collectors.length === 0 ? (
+          <p className="p-5 text-sm text-[#657386]">No collectors found.</p>
+        ) : null}
+      </div>
+
+      <table className="hidden w-full min-w-[1040px] border-collapse text-left text-sm md:table">
       <thead className="bg-[#f8fafc] text-[#657386]">
         <tr>
           <th className="px-5 py-3 font-semibold">Name</th>
@@ -46,19 +94,11 @@ export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) 
             <td className="px-5 py-4">
               <div className="flex items-center gap-2 text-[#657386]">
                 <code>{collector.username}</code>
-                <button
-                  aria-label={`Copy username for ${collector.name}`}
-                  className="inline-flex items-center gap-1 rounded border border-[#dfe5ec] px-1.5 py-1 text-xs font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
-                  onClick={() => copyUsername(collector.username)}
-                  type="button"
-                >
-                  {copiedUsername === collector.username ? (
-                    <Check aria-hidden="true" size={12} />
-                  ) : (
-                    <Copy aria-hidden="true" size={12} />
-                  )}
-                  {copiedUsername === collector.username ? "Copied" : "Copy"}
-                </button>
+                <CopyUsernameButton
+                  copied={copiedUsername === collector.username}
+                  name={collector.name}
+                  onCopy={() => copyUsername(collector.username)}
+                />
               </div>
             </td>
             <td className="px-5 py-4 text-[#657386]">
@@ -68,40 +108,13 @@ export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) 
               {collector.areaInfo || "No area"}
             </td>
             <td className="px-5 py-4">
-              <span
-                className={
-                  collector.status === "active"
-                    ? "rounded-full bg-[#dcfce7] px-3 py-1 text-[13px] font-semibold text-[#166534]"
-                    : "rounded-full bg-[#f1f5f9] px-3 py-1 text-[13px] font-semibold text-[#64748b]"
-                }
-              >
-                {collector.status}
-              </span>
+              <StatusBadge status={collector.status} />
             </td>
             <td className="px-5 py-4 text-[#657386]">
               {collector.createdAt}
             </td>
             <td className="px-5 py-4">
-              <div className="flex items-center gap-2">
-                <EditCollectorDialog collector={collector} />
-                <form
-                  action={deleteCollectorAction}
-                  onSubmit={(event) => {
-                    if (!confirm("Delete this collector?")) {
-                      event.preventDefault();
-                    }
-                  }}
-                >
-                  <input name="collector_id" type="hidden" value={collector.id} />
-                  <button
-                    aria-label={`Delete ${collector.name}`}
-                    className="flex size-9 items-center justify-center rounded-md border border-[#fecaca] text-[#b91c1c] transition hover:bg-[#fef2f2]"
-                    type="submit"
-                  >
-                    <Trash2 aria-hidden="true" size={16} />
-                  </button>
-                </form>
-              </div>
+              <CollectorActions collector={collector} />
             </td>
           </tr>
         ))}
@@ -113,7 +126,86 @@ export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) 
           </tr>
         ) : null}
       </tbody>
-    </table>
+      </table>
+    </>
+  );
+}
+
+function CopyUsernameButton({
+  copied,
+  name,
+  onCopy,
+}: {
+  copied: boolean;
+  name: string;
+  onCopy: () => void;
+}) {
+  return (
+    <button
+      aria-label={`Copy username for ${name}`}
+      className="inline-flex items-center gap-1 rounded border border-[#dfe5ec] px-1.5 py-1 text-xs font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
+      onClick={onCopy}
+      type="button"
+    >
+      {copied ? (
+        <Check aria-hidden="true" size={12} />
+      ) : (
+        <Copy aria-hidden="true" size={12} />
+      )}
+      {copied ? "Copied" : "Copy"}
+    </button>
+  );
+}
+
+function CollectorActions({ collector }: { collector: CollectorRow }) {
+  return (
+    <div className="flex shrink-0 items-center gap-2">
+      <EditCollectorDialog collector={collector} />
+      <form
+        action={deleteCollectorAction}
+        onSubmit={(event) => {
+          if (!confirm("Delete this collector?")) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <input name="collector_id" type="hidden" value={collector.id} />
+        <button
+          aria-label={`Delete ${collector.name}`}
+          className="flex size-9 items-center justify-center rounded-md border border-[#fecaca] text-[#b91c1c] transition hover:bg-[#fef2f2]"
+          type="submit"
+        >
+          <Trash2 aria-hidden="true" size={16} />
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <span
+      className={
+        status === "active"
+          ? "rounded-full bg-[#dcfce7] px-2.5 py-1 text-xs font-semibold text-[#166534]"
+          : "rounded-full bg-[#f1f5f9] px-2.5 py-1 text-xs font-semibold text-[#64748b]"
+      }
+    >
+      {status}
+    </span>
+  );
+}
+
+function MobileDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-xs font-semibold uppercase tracking-wide text-[#657386]">
+        {label}
+      </dt>
+      <dd className="mt-1 truncate text-sm font-medium text-[#15191f]">
+        {value}
+      </dd>
+    </div>
   );
 }
 
@@ -148,7 +240,7 @@ function EditCollectorDialog({ collector }: { collector: CollectorRow }) {
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(620px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[#dfe5ec] bg-white p-5 text-[#15191f] shadow-xl">
+        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[calc(100dvh-0.75rem)] overflow-y-auto rounded-t-2xl border border-[#dfe5ec] bg-white p-5 text-[#15191f] shadow-xl sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[min(620px,calc(100vw-32px))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg">
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
               <Dialog.Title className="text-lg font-semibold">

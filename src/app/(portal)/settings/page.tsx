@@ -13,12 +13,12 @@ export default async function SettingsPage() {
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-6 md:mb-8">
         <p className="text-sm font-medium text-[#657386]">Settings</p>
-        <h1 className="mt-2 text-3xl font-semibold">Lender profile</h1>
+        <h1 className="mt-1 text-2xl font-semibold md:mt-2 md:text-3xl">Lender profile</h1>
       </div>
 
-      <section className="max-w-3xl rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm">
+      <section className="max-w-3xl rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm md:p-5">
         <div className="mb-5">
           <p className="text-sm font-medium text-[#657386]">Business details</p>
           <h2 className="mt-1 text-lg font-semibold">Update profile</h2>
@@ -80,7 +80,7 @@ export default async function SettingsPage() {
         </form>
       </section>
 
-      <section className="mt-6 max-w-3xl rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm">
+      <section className="mt-5 max-w-3xl rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm md:mt-6 md:p-5">
         <div className="mb-5">
           <p className="text-sm font-medium text-[#657386]">Security</p>
           <h2 className="mt-1 text-lg font-semibold">Change password</h2>

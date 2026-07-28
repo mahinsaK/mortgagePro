@@ -18,12 +18,14 @@ export default async function LenderDashboardPage({
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-6 md:mb-8">
         <p className="text-sm font-medium text-[#657386]">Dashboard</p>
-        <h1 className="mt-2 text-3xl font-semibold">Business overview</h1>
+        <h1 className="mt-1 text-2xl font-semibold md:mt-2 md:text-3xl">
+          Business overview
+        </h1>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
         {dashboard.stats.map((stat, index) =>
           stat.label === "Today's collection" ? (
             <Link
@@ -62,12 +64,16 @@ function StatCard({
   stat: { label: string; value: string; change: string };
 }) {
   return (
-    <article className="min-h-36 rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm transition hover:border-[#c7d2fe]">
+    <article className="h-full min-h-28 rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm transition hover:border-[#c7d2fe] md:min-h-36 md:p-5">
       {stat.label ? (
         <>
           <p className="text-sm font-medium text-[#657386]">{stat.label}</p>
-          <p className="mt-3 text-3xl font-semibold">{stat.value}</p>
-          <p className="mt-2 text-sm text-[#166534]">{stat.change}</p>
+          <p className="mt-2 text-2xl font-semibold md:mt-3 md:text-3xl">
+            {stat.value}
+          </p>
+          <p className="mt-2 hidden text-sm text-[#166534] sm:block">
+            {stat.change}
+          </p>
         </>
       ) : null}
     </article>

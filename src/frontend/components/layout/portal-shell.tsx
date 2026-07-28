@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { Menu } from "lucide-react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { HeaderActions } from "@/frontend/components/layout/header-actions";
 import { PortalSidebar } from "@/frontend/components/layout/portal-sidebar";
 
@@ -31,11 +32,20 @@ export function PortalShell({
     getThemeSnapshot,
     getThemeServerSnapshot,
   );
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const collapsed = sidebar === "collapsed";
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
 
   function toggleSidebar() {
     window.localStorage.setItem(
@@ -54,23 +64,46 @@ export function PortalShell({
 
   return (
     <div className="min-h-screen bg-[#f6f7f9] text-[#15191f]">
-      <PortalSidebar collapsed={collapsed} onToggle={toggleSidebar} />
+      {mobileMenuOpen ? (
+        <button
+          aria-label="Close navigation menu"
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+          type="button"
+        />
+      ) : null}
+      <PortalSidebar
+        collapsed={collapsed}
+        mobileOpen={mobileMenuOpen}
+        onMobileClose={() => setMobileMenuOpen(false)}
+        onToggle={toggleSidebar}
+      />
       <div
         className={`min-h-screen transition-[padding] duration-200 ${
-          collapsed ? "pl-20" : "pl-64"
+          collapsed ? "md:pl-20" : "md:pl-64"
         }`}
       >
-        <header className="border-b border-[#dfe5ec] bg-white">
-          <div className="flex min-h-20 items-center justify-between gap-4 px-8">
-            <div>
-              <p className="text-sm font-medium text-[#657386]">
-                {lender?.companyName ?? "MortgagePro"}
-              </p>
-              <p className="mt-1 text-xl font-semibold">
-                {lender?.status === "active" ? "Active lender" : "Lender"}
-              </p>
+        <header className="sticky top-0 z-20 border-b border-[#dfe5ec] bg-white/95 backdrop-blur">
+          <div className="flex min-h-16 items-center justify-between gap-3 px-4 md:min-h-20 md:gap-4 md:px-8">
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                aria-label="Open navigation menu"
+                className="flex size-10 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#2d3745] md:hidden"
+                onClick={() => setMobileMenuOpen(true)}
+                type="button"
+              >
+                <Menu aria-hidden="true" size={20} />
+              </button>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-medium text-[#657386] md:text-sm">
+                  {lender?.companyName ?? "MortgagePro"}
+                </p>
+                <p className="mt-0.5 truncate text-base font-semibold md:mt-1 md:text-xl">
+                  {lender?.status === "active" ? "Active lender" : "Lender"}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex shrink-0 items-center gap-2 md:gap-3">
               <p className="hidden text-sm text-[#657386] sm:block">
                 {lender?.email}
               </p>
@@ -82,7 +115,7 @@ export function PortalShell({
             </div>
           </div>
         </header>
-        <main className="px-8 py-8">{children}</main>
+        <main className="px-4 py-5 md:px-8 md:py-8">{children}</main>
       </div>
     </div>
   );

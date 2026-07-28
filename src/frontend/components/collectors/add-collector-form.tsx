@@ -159,7 +159,7 @@ export function AddCollectorForm() {
     !username;
 
   return (
-    <div className="mb-6 flex justify-end">
+    <div className="mb-5 flex justify-end md:mb-6">
       <Dialog.Root
         onOpenChange={(open) => {
           setIsOpen(open);
@@ -180,7 +180,7 @@ export function AddCollectorForm() {
         </Dialog.Trigger>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(620px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[#dfe5ec] bg-white p-5 text-[#15191f] shadow-xl">
+          <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[100dvh] overflow-y-auto rounded-t-2xl border border-[#dfe5ec] bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-[#15191f] shadow-xl sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:w-[min(620px,calc(100vw-32px))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <Dialog.Title className="text-lg font-semibold">
@@ -249,7 +249,7 @@ export function AddCollectorForm() {
               <Field label="Phone" name="phone" placeholder="+1 555 0102" />
               <label className="text-sm font-medium text-[#2d3745] sm:col-span-2">
                 Username
-                <div className="mt-2 flex gap-2">
+                <div className="mt-2 grid gap-2 sm:flex">
                   <input
                     aria-describedby="collector-username-help collector-username-status"
                     className="h-10 min-w-0 flex-1 rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
@@ -273,7 +273,7 @@ export function AddCollectorForm() {
                     value={username}
                   />
                   <button
-                    className="inline-flex h-10 shrink-0 items-center gap-2 rounded-md border border-[#cfd8e3] px-3 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
+                    className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-[#cfd8e3] px-3 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
                     disabled={!name.trim() || isGenerating || isPending}
                     onClick={() => void generateAvailableUsername()}
                     type="button"

@@ -17,12 +17,12 @@ export default async function CollectorsPage({
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-6 md:mb-8">
         <p className="text-sm font-medium text-[#657386]">Collectors</p>
-        <h1 className="mt-2 text-3xl font-semibold">Collector profiles</h1>
+        <h1 className="mt-1 text-2xl font-semibold md:mt-2 md:text-3xl">Collector profiles</h1>
       </div>
 
-      <div className="mb-6 grid gap-4 md:grid-cols-3">
+      <div className="mb-5 grid grid-cols-3 gap-2 md:mb-6 md:gap-4">
         <SummaryCard label="Total collectors" value={String(summary.total)} />
         <SummaryCard label="Active collectors" value={String(summary.active)} />
         <SummaryCard
@@ -37,7 +37,7 @@ export default async function CollectorsPage({
         <div className="border-b border-[#dfe5ec] px-5 py-4">
           <h2 className="text-lg font-semibold">Collectors list</h2>
         </div>
-        <div className="overflow-x-auto">
+        <div>
           <CollectorsTable collectors={collectors} />
         </div>
         <PaginationControls basePath="/collectors" pageInfo={pageInfo} />
@@ -48,9 +48,9 @@ export default async function CollectorsPage({
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <article className="rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm">
-      <p className="text-sm font-medium text-[#657386]">{label}</p>
-      <p className="mt-3 text-2xl font-semibold">{value}</p>
+    <article className="rounded-lg border border-[#dfe5ec] bg-white p-3 shadow-sm md:p-5">
+      <p className="text-xs font-medium leading-tight text-[#657386] md:text-sm">{label}</p>
+      <p className="mt-2 text-xl font-semibold md:mt-3 md:text-2xl">{value}</p>
     </article>
   );
 }

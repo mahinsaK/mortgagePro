@@ -16,9 +16,9 @@ export default async function SmsPage({
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-6 md:mb-8">
         <p className="text-sm font-medium text-[#657386]">SMS</p>
-        <h1 className="mt-2 text-3xl font-semibold">Send message</h1>
+        <h1 className="mt-1 text-2xl font-semibold md:mt-2 md:text-3xl">Send message</h1>
       </div>
 
       <SmsWorkbench

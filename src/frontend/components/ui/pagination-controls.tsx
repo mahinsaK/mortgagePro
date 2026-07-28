@@ -22,35 +22,35 @@ export function PaginationControls({
   const end = Math.min(pageInfo.page * pageInfo.pageSize, pageInfo.total);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#eef2f6] px-5 py-4 text-sm">
+    <div className="flex flex-col gap-3 border-t border-[#eef2f6] px-4 py-4 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-5">
       <p className="text-[#657386]">
         Showing {start}-{end} of {pageInfo.total}
       </p>
-      <div className="flex items-center gap-2">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:flex">
         {pageInfo.page > 1 ? (
           <Link
-            className="rounded-md border border-[#cfd8e3] px-3 py-2 font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
+            className="rounded-md border border-[#cfd8e3] px-3 py-2 text-center font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
             href={pageHref(basePath, previousPage, query)}
           >
             Previous
           </Link>
         ) : (
-          <span className="cursor-not-allowed rounded-md border border-[#dfe5ec] px-3 py-2 font-medium text-[#9aa6b2]">
+          <span className="cursor-not-allowed rounded-md border border-[#dfe5ec] px-3 py-2 text-center font-medium text-[#9aa6b2]">
             Previous
           </span>
         )}
-        <span className="px-2 font-medium text-[#2d3745]">
+        <span className="whitespace-nowrap px-1 text-center font-medium text-[#2d3745] sm:px-2">
           Page {pageInfo.page} of {pageInfo.totalPages}
         </span>
         {pageInfo.page < pageInfo.totalPages ? (
           <Link
-            className="rounded-md border border-[#cfd8e3] px-3 py-2 font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
+            className="rounded-md border border-[#cfd8e3] px-3 py-2 text-center font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
             href={pageHref(basePath, nextPage, query)}
           >
             Next
           </Link>
         ) : (
-          <span className="cursor-not-allowed rounded-md border border-[#dfe5ec] px-3 py-2 font-medium text-[#9aa6b2]">
+          <span className="cursor-not-allowed rounded-md border border-[#dfe5ec] px-3 py-2 text-center font-medium text-[#9aa6b2]">
             Next
           </span>
         )}

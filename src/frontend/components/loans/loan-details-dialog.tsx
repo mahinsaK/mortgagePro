@@ -22,17 +22,17 @@ export function LoanDetailsDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:px-4"
       onClick={onClose}
     >
       <section
         aria-labelledby="loan-details-title"
         aria-modal="true"
-        className="max-h-[calc(100vh-48px)] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl"
+        className="max-h-[calc(100dvh-0.75rem)] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white shadow-xl sm:max-h-[calc(100vh-48px)] sm:rounded-lg"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
       >
-        <div className="flex items-start justify-between border-b border-[#dfe5ec] px-6 py-5">
+        <div className="flex items-start justify-between border-b border-[#dfe5ec] px-4 py-4 sm:px-6 sm:py-5">
           <div>
             <p className="text-sm font-medium text-[#657386]">Loan details</p>
             <h2 className="mt-1 text-2xl font-semibold" id="loan-details-title">
@@ -91,7 +91,7 @@ export function LoanDetailsDialog({
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6">
           <dl className="grid gap-4 sm:grid-cols-2">
             <Detail label="Borrower" value={loan.borrowerName} />
             <Detail label="Status" value={loan.status} />

@@ -13,6 +13,7 @@ import {
   LogOut,
   MessageSquareText,
   Users,
+  X,
 } from "lucide-react";
 
 const navItems = [
@@ -26,29 +27,41 @@ const navItems = [
 
 export function PortalSidebar({
   collapsed,
+  mobileOpen,
+  onMobileClose,
   onToggle,
 }: {
   collapsed: boolean;
+  mobileOpen: boolean;
+  onMobileClose: () => void;
   onToggle: () => void;
 }) {
   const pathname = usePathname();
 
   return (
     <aside
-      className={`portal-sidebar fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-[#dfe5ec] bg-white transition-[width] duration-200 ${
-        collapsed ? "w-20" : "w-64"
-      }`}
+      className={`portal-sidebar fixed left-0 top-0 z-40 flex h-[100dvh] w-[min(18rem,calc(100vw-3rem))] flex-col border-r border-[#dfe5ec] bg-white transition duration-200 md:z-30 md:h-screen md:translate-x-0 md:transition-[width] ${
+        mobileOpen ? "translate-x-0" : "-translate-x-full"
+      } ${collapsed ? "md:w-20" : "md:w-64"}`}
     >
       <div className="flex h-20 items-center justify-between gap-3 border-b border-[#dfe5ec] px-4">
-        <div className={collapsed ? "sr-only" : ""}>
+        <div className={collapsed ? "md:sr-only" : ""}>
           <p className="text-base font-semibold text-[#2563eb]">MortgagePro</p>
           <p className="mt-1 text-[13px] font-medium uppercase tracking-[0.14em] text-[#657386]">
             Lender portal
           </p>
         </div>
         <button
+          aria-label="Close navigation menu"
+          className="flex size-10 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#2d3745] md:hidden"
+          onClick={onMobileClose}
+          type="button"
+        >
+          <X aria-hidden="true" size={18} />
+        </button>
+        <button
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#2d3745] transition hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#dbeafe]"
+          className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#2d3745] transition hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#dbeafe] md:flex"
           onClick={onToggle}
           type="button"
         >
@@ -69,7 +82,7 @@ export function PortalSidebar({
             <Link
               aria-label={item.label}
               className={`mb-1 flex h-11 items-center rounded-md text-[15px] font-medium transition ${
-                collapsed ? "justify-center px-0" : "px-3"
+                collapsed ? "px-3 md:justify-center md:px-0" : "px-3"
               } ${
                 isActive
                   ? "bg-[#e0ecff] text-[#1d4ed8]"
@@ -77,10 +90,11 @@ export function PortalSidebar({
               }`}
               href={item.href}
               key={item.href}
+              onClick={onMobileClose}
               title={collapsed ? item.label : undefined}
             >
               <Icon aria-hidden="true" className="shrink-0" size={19} />
-              <span className={collapsed ? "sr-only" : "ml-3"}>
+              <span className={collapsed ? "ml-3 md:sr-only" : "ml-3"}>
                 {item.label}
               </span>
             </Link>
@@ -97,7 +111,9 @@ export function PortalSidebar({
             type="submit"
           >
             <LogOut aria-hidden="true" className="shrink-0" size={18} />
-            <span className={collapsed ? "sr-only" : "ml-2"}>Sign out</span>
+            <span className={collapsed ? "ml-2 md:sr-only" : "ml-2"}>
+              Sign out
+            </span>
           </button>
         </form>
       </div>

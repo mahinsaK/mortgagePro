@@ -40,7 +40,7 @@ export function HeaderActions({
 
   return (
     <Tooltip.Provider delayDuration={150}>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 md:gap-3">
         <TooltipButton
           label={theme === "dark" ? "Switch to light mode" : "Switch to night mode"}
           onClick={onToggleTheme}
@@ -59,7 +59,7 @@ export function HeaderActions({
           <Popover.Portal>
             <Popover.Content
               align="end"
-              className="z-50 w-80 rounded-lg border border-[#dfe5ec] bg-white p-4 text-[#15191f] shadow-xl"
+              className="z-50 w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-[#dfe5ec] bg-white p-4 text-[#15191f] shadow-xl"
               sideOffset={10}
             >
               <div className="mb-4 flex items-center justify-between">
@@ -99,7 +99,7 @@ export function HeaderActions({
           <Popover.Portal>
             <Popover.Content
               align="end"
-              className="z-50 w-80 rounded-lg border border-[#dfe5ec] bg-white p-4 text-[#15191f] shadow-xl"
+              className="z-50 w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-[#dfe5ec] bg-white p-4 text-[#15191f] shadow-xl"
               sideOffset={10}
             >
               <div className="mb-4">

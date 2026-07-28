@@ -42,7 +42,7 @@ export function LenderDashboardLoansPanel({
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <form
           action="/dashboard/lender"
-          className="flex w-full max-w-lg gap-2"
+          className="flex w-full max-w-lg flex-col gap-2 min-[380px]:flex-row"
         >
           <span className="sr-only">Search loans</span>
           <div className="flex h-10 min-w-0 flex-1 items-center rounded-md border border-[#cfd8e3] bg-white px-3 transition focus-within:border-[#1d4ed8] focus-within:ring-2 focus-within:ring-[#dbeafe]">
@@ -82,8 +82,43 @@ export function LenderDashboardLoansPanel({
             {loans.length} of {pageInfo.total} shown
           </p>
         </div>
+        <div className="divide-y divide-[#eef2f6] md:hidden">
+          {loans.map((loan) => (
+            <button
+              className="block w-full p-4 text-left transition active:bg-[#f8fafc]"
+              key={loan.id}
+              onClick={() => setSelectedLoan(loan)}
+              type="button"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-base font-semibold">
+                    {loan.borrower}
+                  </p>
+                  <p className="mt-1 truncate text-sm text-[#657386]">
+                    {loan.borrowerContact || "No contact"}
+                  </p>
+                </div>
+                <span className="rounded-full bg-[#e0ecff] px-2.5 py-1 text-xs font-semibold text-[#1d4ed8]">
+                  {loan.status}
+                </span>
+              </div>
+              <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-[#f8fafc] p-3">
+                <MobileDetail label="Amount" value={loan.amount} />
+                <MobileDetail label="Remaining" value={loan.remainingAmount} />
+                <MobileDetail label="Daily" value={loan.dailyPayment} />
+                <MobileDetail label="End date" value={loan.endDate} />
+              </dl>
+            </button>
+          ))}
+          {loans.length === 0 ? (
+            <p className="p-5 text-sm text-[#657386]">
+              No loans match that search.
+            </p>
+          ) : null}
+        </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] border-collapse text-left text-sm">
+          <table className="hidden w-full min-w-[980px] border-collapse text-left text-sm md:table">
             <thead className="bg-[#f8fafc] text-[#657386]">
               <tr>
                 <th className="px-5 py-3 font-semibold">Borrower</th>
@@ -138,14 +173,14 @@ export function LenderDashboardLoansPanel({
 
       {selectedLoan ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:px-4"
           onClick={() => setSelectedLoan(null)}
         >
           <section
-            className="max-h-[calc(100vh-48px)] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl"
+            className="max-h-[calc(100dvh-0.75rem)] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white shadow-xl sm:max-h-[calc(100vh-48px)] sm:rounded-lg"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-start justify-between border-b border-[#dfe5ec] px-6 py-5">
+            <div className="flex items-start justify-between border-b border-[#dfe5ec] px-4 py-4 sm:px-6 sm:py-5">
               <div>
                 <p className="text-sm font-medium text-[#657386]">
                   Loan details
@@ -162,7 +197,7 @@ export function LenderDashboardLoansPanel({
                 Close
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6">
               <dl className="grid gap-4 sm:grid-cols-2">
                 <Detail label="Borrower" value={selectedLoan.borrower} />
                 <Detail
@@ -188,6 +223,17 @@ export function LenderDashboardLoansPanel({
           </section>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function MobileDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs font-semibold uppercase tracking-wide text-[#657386]">
+        {label}
+      </dt>
+      <dd className="mt-1 text-sm font-medium text-[#15191f]">{value}</dd>
     </div>
   );
 }

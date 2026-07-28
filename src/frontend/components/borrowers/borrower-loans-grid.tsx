@@ -12,7 +12,7 @@ export function BorrowerLoansGrid({ loans }: { loans: LoanRow[] }) {
       <div className="grid gap-4 xl:grid-cols-2">
         {loans.map((loan) => (
           <article
-            className="group relative cursor-pointer rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm transition hover:bg-[#f8fafc]"
+            className="group relative cursor-pointer rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm transition hover:bg-[#f8fafc] md:p-5"
             key={loan.id}
           >
             <button
@@ -21,10 +21,10 @@ export function BorrowerLoansGrid({ loans }: { loans: LoanRow[] }) {
               onClick={() => setSelectedLoan(loan)}
               type="button"
             />
-            <div className="flex gap-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:gap-5">
               <div className="shrink-0">
                 <a
-                  className="relative z-10 flex h-10 items-center justify-center rounded-md border border-[#cfd8e3] bg-white px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#eef4ff]"
+                  className="relative z-10 flex h-10 w-full items-center justify-center rounded-md border border-[#cfd8e3] bg-white px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#eef4ff] sm:w-auto"
                   download="loan-qr-code.png"
                   href={`/api/loans/${loan.id}/qr`}
                 >

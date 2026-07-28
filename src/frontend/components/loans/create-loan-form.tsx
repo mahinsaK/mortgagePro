@@ -18,7 +18,7 @@ export function CreateLoanForm({ borrowerId }: { borrowerId: string }) {
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(620px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[#dfe5ec] bg-white p-5 text-[#15191f] shadow-xl">
+        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[100dvh] overflow-y-auto rounded-t-2xl border border-[#dfe5ec] bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-[#15191f] shadow-xl sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:w-[min(620px,calc(100vw-32px))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg">
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
               <Dialog.Title className="text-lg font-semibold">

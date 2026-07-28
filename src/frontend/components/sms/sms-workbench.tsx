@@ -145,7 +145,7 @@ export function SmsWorkbench({ count, message, phone, status }: SmsWorkbenchProp
   return (
     <div className="grid gap-6">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <section className="rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm">
+        <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm md:p-5">
           <div className="mb-5">
             <p className="text-sm font-medium text-[#657386]">Selected SMS</p>
             <h2 className="mt-1 text-lg font-semibold">Message recipients</h2>
@@ -156,7 +156,7 @@ export function SmsWorkbench({ count, message, phone, status }: SmsWorkbenchProp
           <div className="grid gap-5">
             <label className="text-sm font-medium text-[#2d3745]">
               Search borrowers
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <div className="flex h-11 flex-1 items-center rounded-md border border-[#cfd8e3] px-3 transition focus-within:border-[#1d4ed8] focus-within:ring-2 focus-within:ring-[#dbeafe]">
                   <Search
                     aria-hidden="true"
@@ -198,7 +198,7 @@ export function SmsWorkbench({ count, message, phone, status }: SmsWorkbenchProp
 
             <label className="text-sm font-medium text-[#2d3745]">
               Add a custom phone number
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <input
                   className="h-11 min-w-0 flex-1 rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
                   onChange={(event) => {
@@ -253,9 +253,9 @@ export function SmsWorkbench({ count, message, phone, status }: SmsWorkbenchProp
                   value={messageText}
                 />
               </label>
-              <div className="flex flex-wrap justify-end gap-2">
+              <div className="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
                 <button
-                  className="inline-flex h-11 items-center gap-2 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
                   disabled={!messageText.trim()}
                   formAction={sendAllBorrowersSmsAction}
                   onClick={(event) => {
@@ -270,7 +270,7 @@ export function SmsWorkbench({ count, message, phone, status }: SmsWorkbenchProp
                   Send all borrowers
                 </button>
                 <button
-                  className="inline-flex h-11 items-center gap-2 rounded-md bg-[#15191f] px-5 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#15191f] px-5 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
                   disabled={
                     selectedRecipients.length === 0 || !messageText.trim()
                   }

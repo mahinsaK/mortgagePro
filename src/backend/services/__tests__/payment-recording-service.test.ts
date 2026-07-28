@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   createTransaction: vi.fn(),
   deleteDocument: vi.fn(),
   getDocument: vi.fn(),
+  getPrimaryLender: vi.fn(),
   listDocuments: vi.fn(),
   updateDocument: vi.fn(),
   updateTransaction: vi.fn(),
@@ -37,11 +38,14 @@ vi.mock("@/backend/appwrite/server-client", async () => {
   };
 });
 vi.mock("@/backend/services/lender-service", () => ({
-  getPrimaryLender: vi.fn(),
+  getPrimaryLender: mocks.getPrimaryLender,
 }));
 
 import {
+  deleteLoanPayment,
   deleteTenantLoanPayment,
+  PaymentWriteError,
+  recordLoanPayment,
   recordTenantLoanPayment,
 } from "../payment-recording-service";
 
@@ -71,6 +75,7 @@ describe("recordTenantLoanPayment", () => {
     mocks.createDocument.mockResolvedValue({ $id: "payment_staged" });
     mocks.updateDocument.mockResolvedValue({ $id: "loan_A" });
     mocks.updateTransaction.mockResolvedValue({ $id: "transaction_1" });
+    mocks.getPrimaryLender.mockResolvedValue({ id: "lender_A" });
   });
 
   it("commits the payment and loan balance update in one transaction", async () => {
@@ -183,6 +188,85 @@ describe("recordTenantLoanPayment", () => {
     expect(mocks.createDocument).toHaveBeenCalledTimes(1);
     expect(mocks.updateDocument).toHaveBeenCalledTimes(1);
   });
+
+  it("rejects malformed request IDs before opening a transaction", async () => {
+    await expect(
+      recordTenantLoanPayment({ ...baseInput, requestId: "short" }),
+    ).rejects.toMatchObject({ code: "invalid_request_id" });
+    expect(mocks.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects missing loans and inactive collectors without staging writes", async () => {
+    mocks.listDocuments.mockResolvedValueOnce({ documents: [] });
+    await expect(recordTenantLoanPayment(baseInput)).rejects.toMatchObject({
+      code: "loan_not_found",
+    });
+
+    vi.clearAllMocks();
+    mocks.createTransaction.mockResolvedValue({ $id: "transaction_1" });
+    mocks.listDocuments
+      .mockResolvedValueOnce({
+        documents: [{ $id: "loan_A", amount: 1000, total_paid: 0, status: "active" }],
+      })
+      .mockResolvedValueOnce({ documents: [] });
+    mocks.updateTransaction.mockResolvedValue({});
+    await expect(recordTenantLoanPayment(baseInput)).rejects.toMatchObject({
+      code: "collector_not_found",
+    });
+  });
+
+  it("rejects invalid payment domain values", async () => {
+    await expect(
+      recordTenantLoanPayment({ ...baseInput, amount: -1 }),
+    ).rejects.toMatchObject({ code: "invalid_payment" });
+  });
+
+  it("rejects reuse of a request ID with different payment data", async () => {
+    mocks.getDocument.mockResolvedValue({
+      lender_id: "lender_A",
+      loan_id: "loan_A",
+      collector_id: "collector_A",
+      date: "2026-07-17T00:00:00.000Z",
+      amount: 999,
+      method: "cash",
+    });
+
+    await expect(recordTenantLoanPayment(baseInput)).rejects.toMatchObject({
+      code: "request_reused",
+    });
+  });
+
+  it("propagates unexpected existing-payment lookup failures", async () => {
+    mocks.getDocument.mockRejectedValue(new Error("lookup failed"));
+    await expect(recordTenantLoanPayment(baseInput)).rejects.toThrow(
+      "lookup failed",
+    );
+  });
+
+  it("returns a typed conflict after all retries and tolerates rollback failure", async () => {
+    mocks.updateTransaction.mockRejectedValue({ code: 409 });
+
+    await expect(recordTenantLoanPayment(baseInput)).rejects.toMatchObject({
+      code: "transaction_conflict",
+    });
+    expect(mocks.createTransaction).toHaveBeenCalledTimes(3);
+  });
+
+  it("records through the authenticated lender wrapper", async () => {
+    await expect(recordLoanPayment(baseInput)).resolves.toMatchObject({
+      loanId: "loan_A",
+    });
+    mocks.getPrimaryLender.mockResolvedValue(null);
+    await expect(recordLoanPayment(baseInput)).rejects.toThrow(
+      "No lender exists",
+    );
+  });
+
+  it("constructs typed payment errors", () => {
+    const error = new PaymentWriteError("invalid_payment", "invalid");
+    expect(error.name).toBe("PaymentWriteError");
+    expect(error.code).toBe("invalid_payment");
+  });
 });
 
 describe("deleteTenantLoanPayment", () => {
@@ -208,6 +292,7 @@ describe("deleteTenantLoanPayment", () => {
     mocks.deleteDocument.mockResolvedValue({});
     mocks.updateDocument.mockResolvedValue({ $id: "loan_A" });
     mocks.updateTransaction.mockResolvedValue({ $id: "transaction_1" });
+    mocks.getPrimaryLender.mockResolvedValue({ id: "lender_A" });
   });
 
   it("deletes the payment and restores the loan balance in one transaction", async () => {
@@ -299,5 +384,84 @@ describe("deleteTenantLoanPayment", () => {
 
     expect(mocks.deleteDocument).not.toHaveBeenCalled();
     expect(mocks.updateDocument).not.toHaveBeenCalled();
+  });
+
+  it("rejects an empty payment ID before opening a transaction", async () => {
+    await expect(deleteTenantLoanPayment("lender_A", "")).rejects.toMatchObject({
+      code: "payment_not_found",
+    });
+    expect(mocks.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects deletion when the owning loan is missing", async () => {
+    mocks.listDocuments
+      .mockResolvedValueOnce({
+        documents: [{ $id: "payment_A", loan_id: "loan_A", amount: 100 }],
+      })
+      .mockResolvedValueOnce({ documents: [] });
+
+    await expect(
+      deleteTenantLoanPayment("lender_A", "payment_A"),
+    ).rejects.toMatchObject({ code: "loan_not_found" });
+  });
+
+  it.each([Number.NaN, -1])(
+    "rejects an invalid stored money value %s",
+    async (amount) => {
+      mocks.listDocuments.mockImplementation(
+        ({ collectionId }: { collectionId: string }) =>
+          Promise.resolve({
+            documents:
+              collectionId === "payments"
+                ? [{ $id: "payment_A", loan_id: "loan_A", amount }]
+                : [{ $id: "loan_A", amount: 1000, total_paid: 500, status: "active" }],
+          }),
+      );
+      await expect(
+        deleteTenantLoanPayment("lender_A", "payment_A"),
+      ).rejects.toMatchObject({ code: "invalid_payment" });
+    },
+  );
+
+  it("preserves a non-completed loan status and rounds restored money", async () => {
+    mocks.listDocuments.mockImplementation(
+      ({ collectionId }: { collectionId: string }) =>
+        Promise.resolve({
+          documents:
+            collectionId === "payments"
+              ? [{ $id: "payment_A", loan_id: "loan_A", amount: 0.1 }]
+              : [{ $id: "loan_A", amount: 1, total_paid: 0.3, status: "active" }],
+        }),
+    );
+
+    await expect(
+      deleteTenantLoanPayment("lender_A", "payment_A"),
+    ).resolves.toMatchObject({
+      totalPaid: 0.2,
+      remainingAmount: 0.8,
+      status: "active",
+    });
+  });
+
+  it("retries deletion conflicts and fails safely after the final conflict", async () => {
+    mocks.updateTransaction.mockImplementation(
+      ({ commit }: { commit?: boolean }) =>
+        commit ? Promise.reject({ code: 409 }) : Promise.resolve({}),
+    );
+
+    await expect(
+      deleteTenantLoanPayment("lender_A", "payment_A"),
+    ).rejects.toMatchObject({ code: "transaction_conflict" });
+    expect(mocks.createTransaction).toHaveBeenCalledTimes(3);
+  });
+
+  it("deletes through the authenticated lender wrapper", async () => {
+    await expect(deleteLoanPayment("payment_A")).resolves.toMatchObject({
+      paymentId: "payment_A",
+    });
+    mocks.getPrimaryLender.mockResolvedValue(null);
+    await expect(deleteLoanPayment("payment_A")).rejects.toThrow(
+      "No lender exists",
+    );
   });
 });

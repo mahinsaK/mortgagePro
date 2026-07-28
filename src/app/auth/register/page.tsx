@@ -37,8 +37,8 @@ export default async function RegisterPage({
             Create your lender account
           </h1>
           <p className="mt-3 text-sm leading-6 text-[#657386]">
-            Register your business first. Borrowers and collectors can be added
-            after your lender dashboard is ready.
+            Submit your business for approval. You can sign in after the
+            account is reviewed and activated.
           </p>
         </div>
 

@@ -20,6 +20,9 @@ next-env.d.ts
 build/
 dist/
 coverage/
+playwright-report/
+test-results/
+.lighthouseci/
 
 # caches
 .turbo/

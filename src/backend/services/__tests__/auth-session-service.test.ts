@@ -22,6 +22,10 @@ vi.mock("@/backend/appwrite/server-client", () => ({
 }));
 
 import {
+  AuthenticationServiceUnavailableError,
+  clearAuthSession,
+  getAuthSessionSecret,
+  getCurrentAppwriteUser,
   resolveAppwriteSession,
   setAuthSessionSecret,
 } from "../auth-session-service";
@@ -91,6 +95,48 @@ describe("lender Appwrite session lifecycle", () => {
         path: "/",
         sameSite: "lax",
       }),
+    );
+  });
+
+  it("sets a session cookie without an explicit expiry", async () => {
+    await setAuthSessionSecret("new-session");
+
+    expect(mocks.cookieSet).toHaveBeenCalledWith(
+      "mortgagepro_session",
+      "new-session",
+      expect.objectContaining({ expires: undefined }),
+    );
+  });
+
+  it("reads and clears the lender session cookie", async () => {
+    mocks.cookieGet.mockReturnValue({ value: "stored-session" });
+
+    await expect(getAuthSessionSecret()).resolves.toBe("stored-session");
+    await clearAuthSession();
+
+    expect(mocks.cookieDelete).toHaveBeenCalledWith("mortgagepro_session");
+  });
+
+  it("returns the current user only for an authenticated session", async () => {
+    const user = { $id: "user_A", email: "owner@example.test" };
+    mocks.cookieGet.mockReturnValue({ value: "valid-session" });
+    mocks.accountGet.mockResolvedValue(user);
+
+    await expect(getCurrentAppwriteUser()).resolves.toEqual(user);
+
+    mocks.cookieGet.mockReturnValue(undefined);
+    await expect(getCurrentAppwriteUser()).resolves.toBeNull();
+  });
+
+  it("throws a typed error when authentication is unavailable", async () => {
+    mocks.cookieGet.mockReturnValue({ value: "preserved-session" });
+    mocks.accountGet.mockRejectedValue(new Error("network timeout"));
+
+    await expect(getCurrentAppwriteUser()).rejects.toBeInstanceOf(
+      AuthenticationServiceUnavailableError,
+    );
+    expect(new AuthenticationServiceUnavailableError().name).toBe(
+      "AuthenticationServiceUnavailableError",
     );
   });
 });

@@ -27,7 +27,7 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
 
       <div className="mb-8 flex items-center gap-3" aria-hidden="true">
         <span className="h-px flex-1 bg-[#d9e0e8]" />
-        <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#7b8797]">
+        <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#657386]">
           or continue with email
         </span>
         <span className="h-px flex-1 bg-[#d9e0e8]" />

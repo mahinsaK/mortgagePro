@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
@@ -35,10 +35,9 @@ jobs:
       - run: npm run build
       - run: npm run test:security
       - run: npm run test:e2e:public
-      - run: npm run test:lighthouse
       - name: Upload browser evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: public-browser-evidence
           path: |
@@ -47,6 +46,20 @@ jobs:
             coverage
           if-no-files-found: ignore
           retention-days: 14
+
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:lighthouse
 
   dedicated-preview-e2e:
     if: github.event_name == 'workflow_dispatch' && inputs.preview_url != ''
@@ -76,8 +89,8 @@ jobs:
       E2E_COLLECTOR_USERNAME: e2ealpha4821
       E2E_COLLECTOR_PASSWORD: ${{ secrets.E2E_COLLECTOR_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
@@ -91,7 +104,7 @@ jobs:
         run: npm run e2e:cleanup
       - name: Upload dedicated E2E evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: dedicated-preview-e2e-evidence
           path: |

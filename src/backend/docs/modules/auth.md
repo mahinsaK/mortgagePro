@@ -80,9 +80,14 @@ Registration:
 
 ```txt
 Users.create(userId, email, password, companyName)
-databases.createDocument(lenders, ...)
-Users.createSession(userId)
+databases.createDocument(lenders, status = "inactive", ...)
+redirect to login with "awaiting approval"
 ```
+
+Registration creates no application session. The owner must review the lender
+and change its status to `active` in Appwrite Console before email/password or
+Google login is accepted. If lender-document creation fails after the Appwrite
+user was created, the action attempts to remove that orphaned user.
 
 Password reset:
 

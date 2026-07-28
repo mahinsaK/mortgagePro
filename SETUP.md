@@ -297,12 +297,15 @@ http://localhost:3000
 
 Test these flows before continuing:
 
-1. Register or sign in as a lender.
-2. Open the dashboard, borrowers, loans, collectors, and payments pages.
-3. Create a collector and copy its username.
-4. Sign in at `/collector/login` using that username and password.
-5. Scan a loan QR code and record a test payment.
-6. Confirm the payment and remaining loan balance update together.
+1. Register a lender and confirm the account is shown as awaiting approval.
+2. In Appwrite Console, review the new lender document and change `status`
+   from `inactive` to `active`.
+3. Sign in as that lender and open the dashboard, borrowers, loans, collectors,
+   and payments pages.
+4. Create a collector and copy its username.
+5. Sign in at `/collector/login` using that username and password.
+6. Scan a loan QR code and record a test payment.
+7. Confirm the payment and remaining loan balance update together.
 
 ## 13. Optional Google lender login
 

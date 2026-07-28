@@ -48,6 +48,9 @@ MortgagePro is a Next.js application for managing a small lending operation end 
 For a complete new-computer and new-Appwrite-project walkthrough, follow
 [`SETUP.md`](./SETUP.md).
 
+Before any pilot release, follow the automated and manual gate in
+[`TESTING.md`](./TESTING.md).
+
 1. Install dependencies.
 
 ```bash
@@ -156,6 +159,10 @@ npm run appwrite:permissions:apply
 - `npm run start` - start the production server.
 - `npm run lint` - run ESLint.
 - `npm run test` - run the Vitest test suite.
+- `npm run test:coverage` - run the enforced backend coverage gate.
+- `npm run test:e2e:public` - run safe public browser and mobile checks.
+- `npm run test:e2e` - run the guarded dedicated-project browser suite.
+- `npm run test:release` - run the local non-provider release gate.
 - `npm run appwrite:setup` - create Appwrite collections, attributes, and indexes.
 - `npm run appwrite:tables` - create Appwrite database, collections, and attributes.
 - `npm run appwrite:indexes` - create Appwrite collection indexes.

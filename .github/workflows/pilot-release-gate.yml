@@ -1,0 +1,101 @@
+name: Pilot release gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: Dedicated Vercel preview URL for live E2E checks
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  quality-and-public-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm run test:unit
+      - run: npm run test:coverage
+      - run: npm run build
+      - run: npm run test:security
+      - run: npm run test:e2e:public
+      - run: npm run test:lighthouse
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-browser-evidence
+          path: |
+            playwright-report
+            test-results
+            coverage
+          if-no-files-found: ignore
+          retention-days: 14
+
+  dedicated-preview-e2e:
+    if: github.event_name == 'workflow_dispatch' && inputs.preview_url != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: pilot-test
+    env:
+      PLAYWRIGHT_BASE_URL: ${{ inputs.preview_url }}
+      E2E_TEST_PROJECT_MARKER: MORTGAGEPRO_DEDICATED_TEST_PROJECT
+      E2E_APPWRITE_PROJECT_ID: ${{ secrets.E2E_APPWRITE_PROJECT_ID }}
+      PRODUCTION_APPWRITE_PROJECT_ID: ${{ secrets.PRODUCTION_APPWRITE_PROJECT_ID }}
+      NEXT_PUBLIC_APPWRITE_ENDPOINT: ${{ secrets.E2E_APPWRITE_ENDPOINT }}
+      NEXT_PUBLIC_APPWRITE_PROJECT_ID: ${{ secrets.E2E_APPWRITE_PROJECT_ID }}
+      NEXT_PUBLIC_APPWRITE_DATABASE_ID: ${{ secrets.E2E_APPWRITE_DATABASE_ID }}
+      NEXT_PUBLIC_APPWRITE_LENDERS_COLLECTION_ID: ${{ secrets.E2E_LENDERS_COLLECTION_ID }}
+      NEXT_PUBLIC_APPWRITE_BORROWERS_COLLECTION_ID: ${{ secrets.E2E_BORROWERS_COLLECTION_ID }}
+      NEXT_PUBLIC_APPWRITE_COLLECTORS_COLLECTION_ID: ${{ secrets.E2E_COLLECTORS_COLLECTION_ID }}
+      NEXT_PUBLIC_APPWRITE_LOANS_COLLECTION_ID: ${{ secrets.E2E_LOANS_COLLECTION_ID }}
+      NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID: ${{ secrets.E2E_PAYMENTS_COLLECTION_ID }}
+      APPWRITE_RUNTIME_API_KEY: ${{ secrets.E2E_APPWRITE_RUNTIME_API_KEY }}
+      E2E_LENDER_EMAIL: ${{ secrets.E2E_LENDER_EMAIL }}
+      E2E_LENDER_PASSWORD: ${{ secrets.E2E_LENDER_PASSWORD }}
+      E2E_SECOND_LENDER_EMAIL: ${{ secrets.E2E_SECOND_LENDER_EMAIL }}
+      E2E_SECOND_LENDER_PASSWORD: ${{ secrets.E2E_SECOND_LENDER_PASSWORD }}
+      E2E_PENDING_LENDER_EMAIL: ${{ secrets.E2E_PENDING_LENDER_EMAIL }}
+      E2E_PENDING_LENDER_PASSWORD: ${{ secrets.E2E_PENDING_LENDER_PASSWORD }}
+      E2E_COLLECTOR_USERNAME: e2ealpha4821
+      E2E_COLLECTOR_PASSWORD: ${{ secrets.E2E_COLLECTOR_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run e2e:cleanup
+      - run: npm run e2e:seed
+      - run: npm run test:e2e
+      - name: Remove throwaway records
+        if: always()
+        run: npm run e2e:cleanup
+      - name: Upload dedicated E2E evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dedicated-preview-e2e-evidence
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 14

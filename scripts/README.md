@@ -20,6 +20,11 @@ Script jobs:
 - `verify-appwrite-isolation.mjs` verifies direct client access is blocked and server runtime access still works.
 - `security-report.mjs` prints aggregate security-event counts for a selected time window without exposing hashed subjects.
 - `security-cleanup.mjs` removes rate-limit state older than 7 days and security events older than 90 days.
+- `assert-e2e-test-environment.mjs` blocks E2E mutation unless the dedicated-project marker and project IDs match safely.
+- `seed-appwrite-e2e-data.mjs` creates deterministic two-tenant test records using the dedicated runtime key.
+- `cleanup-appwrite-e2e-data.mjs` removes only the reserved E2E records.
+- `security-check.mjs` scans tracked files and Git history without printing matched values.
+- `lighthouse-check.mjs` enforces public-page accessibility and layout-shift budgets.
 
 All scripts load configuration in the same order: `.env.example` defaults,
 then `.env.local`, then non-empty process environment values. Empty process

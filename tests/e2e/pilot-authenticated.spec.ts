@@ -62,6 +62,18 @@ test.describe("dedicated pilot lender journey", () => {
     await expectNoSeriousAccessibilityViolations(page);
   });
 
+  test("loan QR details provide download, share, and print actions", async ({
+    page,
+  }) => {
+    await loginLender(page);
+    await page.goto("/loans");
+    await page.getByRole("cell", { name: "E2E Alpha Borrower" }).click();
+
+    await expect(page.getByRole("link", { name: "Download QR" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Share QR" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Print QR" })).toBeEnabled();
+  });
+
   test("cross-tenant loans, QR codes, and exports remain isolated", async ({
     page,
   }) => {

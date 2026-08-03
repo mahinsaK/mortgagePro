@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { LoanRow } from "@/backend/services/lending-service";
 import { LoanDetailsDialog } from "@/frontend/components/loans/loan-details-dialog";
+import { LoanQrDownloadButton } from "@/frontend/components/loans/loan-qr-download-button";
 
 export function BorrowerLoansGrid({ loans }: { loans: LoanRow[] }) {
   const [selectedLoan, setSelectedLoan] = useState<LoanRow | null>(null);
@@ -23,13 +24,10 @@ export function BorrowerLoansGrid({ loans }: { loans: LoanRow[] }) {
             />
             <div className="flex flex-col gap-4 sm:flex-row sm:gap-5">
               <div className="shrink-0">
-                <a
-                  className="relative z-10 flex h-10 w-full items-center justify-center rounded-md border border-[#cfd8e3] bg-white px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#eef4ff] sm:w-auto"
-                  download="loan-qr-code.png"
-                  href={`/api/loans/${loan.id}/qr`}
-                >
-                  Download QR
-                </a>
+                <LoanQrDownloadButton
+                  className="relative z-10 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#cfd8e3] bg-white px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#eef4ff] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                  loanId={loan.id}
+                />
               </div>
               <div className="pointer-events-none min-w-0 flex-1">
                 <div className="flex flex-wrap items-start justify-between gap-3">

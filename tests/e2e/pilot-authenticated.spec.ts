@@ -69,7 +69,7 @@ test.describe("dedicated pilot lender journey", () => {
     await page.goto("/loans");
     await page.getByRole("cell", { name: "E2E Alpha Borrower" }).click();
 
-    await expect(page.getByRole("link", { name: "Download QR" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Download QR" })).toBeEnabled();
     await expect(page.getByRole("button", { name: "Share QR" })).toBeEnabled();
     await expect(page.getByRole("button", { name: "Print QR" })).toBeEnabled();
   });

@@ -2,6 +2,10 @@
 
 import { Download, LoaderCircle, Printer, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import {
+  downloadLoanQrBlob,
+  fetchLoanQrPng,
+} from "@/frontend/lib/loan-qr-file";
 
 export function LoanQrPanel({ loanId }: { loanId: string }) {
   const qrUrl = `/api/loans/${encodeURIComponent(loanId)}/qr`;
@@ -17,16 +21,10 @@ export function LoanQrPanel({ loanId }: { loanId: string }) {
 
     async function prepareQrFile() {
       try {
-        const response = await fetch(`${qrUrl}?display=1`, {
-          credentials: "same-origin",
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error("QR request failed");
-        }
-
-        const blob = await response.blob();
+        const blob = await fetchLoanQrPng(
+          `${qrUrl}?display=1`,
+          controller.signal,
+        );
         setQrFile(
           new File([blob], "loan-qr-code.png", {
             type: blob.type || "image/png",
@@ -35,7 +33,7 @@ export function LoanQrPanel({ loanId }: { loanId: string }) {
       } catch (error) {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
           setFeedback(
-            "The QR code could not be prepared. Download it and try again.",
+            "The QR code could not be prepared. Close this loan and try again.",
           );
         }
       } finally {
@@ -73,7 +71,7 @@ export function LoanQrPanel({ loanId }: { loanId: string }) {
         await navigator.share(shareData);
         setFeedback("QR code shared.");
       } else {
-        downloadQrFile(qrFile);
+        downloadLoanQrBlob(qrFile);
         setFeedback(
           "This browser cannot open a share menu. The QR code was downloaded so you can attach it in WhatsApp or another app.",
         );
@@ -185,14 +183,15 @@ export function LoanQrPanel({ loanId }: { loanId: string }) {
           Scan this code to identify the correct loan when collecting a payment.
         </p>
         <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
-          <a
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#cfd8e3] bg-white px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#eef4ff]"
-            download="loan-qr-code.png"
-            href={qrUrl}
+          <button
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#cfd8e3] bg-white px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#eef4ff] disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!qrFile}
+            onClick={() => qrFile && downloadLoanQrBlob(qrFile)}
+            type="button"
           >
             <Download aria-hidden="true" size={15} />
             Download QR
-          </a>
+          </button>
           <button
             className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#cfd8e3] bg-white px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#eef4ff] disabled:cursor-not-allowed disabled:opacity-50"
             disabled={!qrFile || activeAction !== null}
@@ -228,13 +227,4 @@ export function LoanQrPanel({ loanId }: { loanId: string }) {
       </div>
     </section>
   );
-}
-
-function downloadQrFile(file: File) {
-  const objectUrl = URL.createObjectURL(file);
-  const anchor = document.createElement("a");
-  anchor.download = file.name;
-  anchor.href = objectUrl;
-  anchor.click();
-  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
 }

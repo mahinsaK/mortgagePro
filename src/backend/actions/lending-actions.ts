@@ -113,7 +113,14 @@ export async function deleteBorrowerAction(formData: FormData) {
   redirect("/borrowers");
 }
 
-export async function createLoanForBorrowerAction(formData: FormData) {
+export type CreateLoanActionState = {
+  status: "idle" | "error" | "success";
+  message: string;
+};
+
+export async function createLoanForBorrowerAction(
+  formData: FormData,
+): Promise<CreateLoanActionState> {
   const lender = await getRequiredLender();
   const borrowerId = readRequired(formData, "borrower_id");
   const borrower = await requireTenantDocument("borrowers", lender.id, borrowerId, [
@@ -149,6 +156,25 @@ export async function createLoanForBorrowerAction(formData: FormData) {
   revalidatePath(`/borrowers/${borrowerId}`);
   revalidatePath("/loans");
   revalidatePath("/dashboard/lender");
+
+  return {
+    status: "success",
+    message: "Loan created successfully.",
+  };
+}
+
+export async function createLoanForBorrowerFormAction(
+  _previousState: CreateLoanActionState,
+  formData: FormData,
+): Promise<CreateLoanActionState> {
+  try {
+    return await createLoanForBorrowerAction(formData);
+  } catch {
+    return {
+      status: "error",
+      message: "Loan could not be created. Check the details and try again.",
+    };
+  }
 }
 
 export async function updateLoanAction(formData: FormData) {

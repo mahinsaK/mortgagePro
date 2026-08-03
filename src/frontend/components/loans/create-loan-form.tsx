@@ -2,11 +2,22 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { Plus, X } from "lucide-react";
-import { createLoanForBorrowerAction } from "@/backend/actions/lending-actions";
+import { useActionState, useRef, useState } from "react";
+import {
+  createLoanForBorrowerFormAction,
+  type CreateLoanActionState,
+} from "@/backend/actions/lending-actions";
+
+const INITIAL_ACTION_STATE: CreateLoanActionState = {
+  status: "idle",
+  message: "",
+};
 
 export function CreateLoanForm({ borrowerId }: { borrowerId: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <Dialog.Root>
+    <Dialog.Root onOpenChange={setIsOpen} open={isOpen}>
       <Dialog.Trigger asChild>
         <button
           className="flex h-10 items-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
@@ -39,64 +50,104 @@ export function CreateLoanForm({ borrowerId }: { borrowerId: string }) {
             </Dialog.Close>
           </div>
 
-          <form
-            action={createLoanForBorrowerAction}
-            className="grid gap-4 sm:grid-cols-2"
-          >
-            <input name="borrower_id" type="hidden" value={borrowerId} />
-            <Field
-              label="Amount"
-              min="1"
-              name="amount"
-              placeholder="2500"
-              required
-              step="0.01"
-              type="number"
-            />
-            <Field
-              label="Interest"
-              min="0"
-              name="interest_rate"
-              placeholder="8"
-              required
-              step="0.01"
-              type="number"
-            />
-            <Field
-              label="Daily payment"
-              min="0"
-              name="daily_payment"
-              placeholder="50"
-              required
-              step="0.01"
-              type="number"
-            />
-            <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
-              <Field
-                label="Start date"
-                name="start_date"
-                required
-                type="date"
-              />
-              <Field
-                label="End date"
-                name="end_date"
-                required
-                type="date"
-              />
-            </div>
-            <div className="flex items-end sm:col-span-2">
-              <button
-                className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
-                type="submit"
-              >
-                Create loan
-              </button>
-            </div>
-          </form>
+          <CreateLoanActionForm
+            borrowerId={borrowerId}
+            onSuccess={() => setIsOpen(false)}
+          />
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+  );
+}
+
+function CreateLoanActionForm({
+  borrowerId,
+  onSuccess,
+}: {
+  borrowerId: string;
+  onSuccess: () => void;
+}) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [actionState, formAction, isPending] = useActionState(
+    async (previousState: CreateLoanActionState, formData: FormData) => {
+      const result = await createLoanForBorrowerFormAction(
+        previousState,
+        formData,
+      );
+
+      if (result.status === "success") {
+        formRef.current?.reset();
+        onSuccess();
+      }
+
+      return result;
+    },
+    INITIAL_ACTION_STATE,
+  );
+
+  return (
+    <form action={formAction} className="grid gap-4 sm:grid-cols-2" ref={formRef}>
+      <input name="borrower_id" type="hidden" value={borrowerId} />
+      <Field
+        label="Amount"
+        min="1"
+        name="amount"
+        placeholder="2500"
+        required
+        step="0.01"
+        type="number"
+      />
+      <Field
+        label="Interest"
+        min="0"
+        name="interest_rate"
+        placeholder="8"
+        required
+        step="0.01"
+        type="number"
+      />
+      <Field
+        label="Daily payment"
+        min="0"
+        name="daily_payment"
+        placeholder="50"
+        required
+        step="0.01"
+        type="number"
+      />
+      <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+        <Field
+          label="Start date"
+          name="start_date"
+          required
+          type="date"
+        />
+        <Field
+          label="End date"
+          name="end_date"
+          required
+          type="date"
+        />
+      </div>
+      {actionState.status === "error" ? (
+        <p
+          aria-live="polite"
+          className="rounded-md border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-sm text-[#b91c1c] sm:col-span-2"
+          role="alert"
+        >
+          {actionState.message}
+        </p>
+      ) : null}
+      <div className="flex items-end sm:col-span-2">
+        <button
+          className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isPending}
+          type="submit"
+        >
+          {isPending ? "Creating loan..." : "Create loan"}
+        </button>
+      </div>
+    </form>
   );
 }
 

@@ -55,12 +55,19 @@ vi.mock("@/backend/services/tenant-data-service", () => ({
 
 import {
   createCollectorAction,
+  createLoanForBorrowerFormAction,
   updateCollectorAction,
   updateLenderPasswordAction,
   type CreateCollectorActionState,
+  type CreateLoanActionState,
 } from "../lending-actions";
 
 const INITIAL_COLLECTOR_STATE: CreateCollectorActionState = {
+  status: "idle",
+  message: "",
+};
+
+const INITIAL_LOAN_STATE: CreateLoanActionState = {
   status: "idle",
   message: "",
 };
@@ -82,6 +89,17 @@ function newCollectorForm(username = "jordanlee4821") {
   formData.set("area", "Austin North");
   formData.set("password", "CollectorPass123!");
   formData.set("status", "active");
+  return formData;
+}
+
+function newLoanForm() {
+  const formData = new FormData();
+  formData.set("borrower_id", "borrower_A");
+  formData.set("amount", "2500");
+  formData.set("interest_rate", "8");
+  formData.set("daily_payment", "50");
+  formData.set("start_date", "2026-08-03");
+  formData.set("end_date", "2026-10-03");
   return formData;
 }
 
@@ -244,6 +262,56 @@ describe("collector writes", () => {
     expect(mocks.updateUserPassword).toHaveBeenCalledWith({
       userId: "user_A",
       password: "NewPassword123!",
+    });
+  });
+});
+
+describe("loan creation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getPrimaryLender.mockResolvedValue({ id: "lender_A" });
+    mocks.requireTenantDocument.mockResolvedValue({
+      $id: "borrower_A",
+      name: "Alex Borrower",
+      contact: "+1 555 0104",
+      address: "Austin",
+    });
+    mocks.createTenantDocument.mockResolvedValue({ $id: "loan_new" });
+  });
+
+  it("returns success after the loan is stored", async () => {
+    const result = await createLoanForBorrowerFormAction(
+      INITIAL_LOAN_STATE,
+      newLoanForm(),
+    );
+
+    expect(result).toEqual({
+      status: "success",
+      message: "Loan created successfully.",
+    });
+    expect(mocks.createTenantDocument).toHaveBeenCalledWith(
+      "loans",
+      "lender_A",
+      expect.stringMatching(/^loan_/),
+      expect.objectContaining({
+        borrower_id: "borrower_A",
+        amount: 2500,
+        remaining_amount: 2500,
+      }),
+    );
+  });
+
+  it("returns an inline error when the loan is not stored", async () => {
+    mocks.createTenantDocument.mockRejectedValue(new Error("Appwrite failure"));
+
+    const result = await createLoanForBorrowerFormAction(
+      INITIAL_LOAN_STATE,
+      newLoanForm(),
+    );
+
+    expect(result).toEqual({
+      status: "error",
+      message: "Loan could not be created. Check the details and try again.",
     });
   });
 });

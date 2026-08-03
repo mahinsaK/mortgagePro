@@ -1,35 +1,50 @@
-# Notifications Module
-
-Paths:
-
-- `src/backend/modules/notifications/dto.ts`
-- `src/backend/modules/notifications/controller.ts`
-- `src/backend/modules/notifications/service.ts`
-- `src/backend/modules/notifications/__tests__/notifications.test.ts`
+# Local Notifications Module
 
 ## Purpose
 
-Prepares notification data for a future notification feature.
+The lender notification bell calculates actionable advice from existing loans,
+payments, and borrowers. It does not create notification documents or perform
+database writes.
 
-## Current behavior
+## Current workflows
 
-This module does not write to Appwrite yet. The project currently keeps only five core collections:
+- Unfinished loans past their end date.
+- Unfinished loans ending today.
+- Unfinished loans ending within the next seven days.
+- No collection recorded during the lender browser's local day while active
+  loans exist.
+- Active borrowers with a missing or unusable phone number.
 
-- `lenders`
-- `borrowers`
-- `collectors`
-- `loans`
-- `payments`
+The API returns aggregate counts and filtered destinations. It does not expose
+borrower names, loan IDs, or lender IDs.
 
-## DTO/controller/service layer
+## Request and data access
 
-- `toCreateNotificationDto(input)` validates lender ID, title, body, and channel.
-- Channel defaults to `in_app` unless it is `email`, `sms`, or `in_app`.
-- `NotificationController.create(input)` returns success or failure.
-- `NotificationService.prepareCreate(dto)` returns a draft notification payload.
+`GET /api/notifications` requires:
 
-## Database queries
+- `localDate` in valid `YYYY-MM-DD` format.
+- `timezoneOffsetMinutes` as an integer from `-840` to `840`.
 
-No runtime database query is used by this module yet.
+The lender is always derived from the authenticated Appwrite session. Every
+record query uses the tenant data helper, and the response is `private,
+no-store`.
 
-When notification storage is added later, create a separate collection only if the product needs saved notification history or templates.
+The generator performs four reads only when requested: relevant loans, the
+active-loan count, the newest payment, and active borrower contacts. The result
+is not polled or persisted in Appwrite.
+
+## Browser state
+
+The browser stores a five-minute aggregate cache and read identities under an
+opaque lender-specific key. Cached advice may be used for up to 24 hours when
+Appwrite is unavailable, and read identities are removed after 30 days.
+
+This state is only a user-interface convenience. It never authorizes access and
+does not follow the lender to another browser or device.
+
+## Deferred scaling
+
+Saved history, cross-device read state, preferences, scheduled generation,
+email, SMS, and push delivery require a later database-backed workflow. No new
+collection, attribute, index, environment variable, or setup step is required
+for the current local workflow.

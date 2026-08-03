@@ -1,5 +1,6 @@
 import { PortalShell } from "@/frontend/components/layout/portal-shell";
 import { resolvePrimaryLender } from "@/backend/services/lender-service";
+import { createNotificationOwnerKey } from "@/backend/services/local-notification-service";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,11 @@ export default async function PortalLayout({
   }
 
   return (
-    <PortalShell lender={auth.lender}>{children}</PortalShell>
+    <PortalShell
+      lender={auth.lender}
+      notificationOwnerKey={createNotificationOwnerKey(auth.lender.id)}
+    >
+      {children}
+    </PortalShell>
   );
 }

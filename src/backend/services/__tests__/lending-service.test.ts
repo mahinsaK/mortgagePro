@@ -39,7 +39,12 @@ vi.mock("@/backend/lib/currency", () => ({
   },
 }));
 
-import { getBorrowerProfileData, getPaymentsPageData } from "../lending-service";
+import {
+  getBorrowerProfileData,
+  getBorrowersPageData,
+  getLoansPageData,
+  getPaymentsPageData,
+} from "../lending-service";
 
 describe("lending-service", () => {
   beforeEach(() => {
@@ -110,7 +115,104 @@ describe("lending-service", () => {
       totalPages: 2,
     });
   });
+
+  it("filters and paginates active borrowers with unusable phone numbers", async () => {
+    mocks.listDocuments.mockResolvedValueOnce({
+      documents: [
+        borrowerDocument("borrower_old", "customer 0771234567", "2026-07-01"),
+        borrowerDocument("borrower_valid", "+94 77 123 4567", "2026-07-03"),
+        borrowerDocument("borrower_new", "", "2026-07-04"),
+      ],
+      total: 3,
+    });
+
+    const result = await getBorrowersPageData({
+      attention: "missing-phone",
+      page: 1,
+      pageSize: 1,
+    });
+
+    expect(result.borrowers.map((borrower) => borrower.id)).toEqual([
+      "borrower_new",
+    ]);
+    expect(result.pageInfo).toMatchObject({ total: 2, totalPages: 2 });
+    const queries = mocks.listDocuments.mock.calls[0][0].queries.join(" ");
+    expect(queries).toContain('"attribute":"lender_id"');
+    expect(queries).toContain('"attribute":"status"');
+    expect(queries).toContain('"values":["active"]');
+  });
+
+  it("filters ending-soon loans with balances and preserves correct pagination", async () => {
+    mocks.listDocuments.mockImplementation((params) => {
+      if (params.collectionId === "loans") {
+        return Promise.resolve({
+          documents: [
+            loanDocument("loan_old", "borrower_1", 100, "2026-07-01"),
+            loanDocument("loan_paid", "borrower_2", 0, "2026-07-05"),
+            loanDocument("loan_new", "borrower_3", 50, "2026-07-06"),
+          ],
+          total: 3,
+        });
+      }
+
+      return Promise.resolve({
+        documents: [{ $id: "borrower_3", name: "Newest Borrower" }],
+        total: 1,
+      });
+    });
+
+    const result = await getLoansPageData({
+      attention: "ending-soon",
+      asOf: "2026-08-04",
+      page: 1,
+      pageSize: 1,
+    });
+
+    expect(result.loans.map((loan) => loan.id)).toEqual(["loan_new"]);
+    expect(result.pageInfo).toMatchObject({ total: 2, totalPages: 2 });
+    const queries = mocks.listDocuments.mock.calls[0][0].queries.join(" ");
+    expect(queries).toContain('"attribute":"lender_id"');
+    expect(queries).toContain('"attribute":"status"');
+    expect(queries).toContain('"attribute":"end_date"');
+    expect(queries).toContain("2026-08-05T00:00:00.000Z");
+    expect(queries).toContain("2026-08-12T00:00:00.000Z");
+  });
 });
+
+function borrowerDocument(id: string, contact: string, createdAt: string) {
+  return {
+    $id: id,
+    $createdAt: `${createdAt}T00:00:00.000Z`,
+    name: id,
+    business_name: "",
+    contact,
+    address: "",
+    status: "active",
+    created_at: `${createdAt}T00:00:00.000Z`,
+  };
+}
+
+function loanDocument(
+  id: string,
+  borrowerId: string,
+  remainingAmount: number,
+  createdAt: string,
+) {
+  return {
+    $id: id,
+    $createdAt: `${createdAt}T00:00:00.000Z`,
+    borrower_id: borrowerId,
+    amount: 1000,
+    interest_rate: 10,
+    daily_payment: 100,
+    total_paid: 1000 - remainingAmount,
+    remaining_amount: remainingAmount,
+    start_date: "2026-07-01T00:00:00.000Z",
+    end_date: "2026-08-10T00:00:00.000Z",
+    status: "active",
+    created_at: `${createdAt}T00:00:00.000Z`,
+  };
+}
 
 function mockBorrowerProfileDocuments() {
   mocks.listDocuments.mockImplementation((params) => {

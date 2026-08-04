@@ -90,7 +90,7 @@ export function PortalShell({
           collapsed ? "md:pl-20" : "md:pl-64"
         }`}
       >
-        <header className="sticky top-0 z-20 border-b border-[#dfe5ec] bg-white/95 backdrop-blur">
+        <header className="portal-topbar sticky top-0 z-20 border-b border-[#dfe5ec] backdrop-blur">
           <div className="flex min-h-16 items-center justify-between gap-3 px-4 md:min-h-20 md:gap-4 md:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <button

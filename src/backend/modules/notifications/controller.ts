@@ -1,20 +1,36 @@
 import { fail, ok } from "../shared";
-import { toCreateNotificationDto } from "./dto";
-import { NotificationService } from "./service";
+import {
+  toNotificationContextDto,
+  type LocalNotificationItem,
+} from "./dto";
+import {
+  NotificationService,
+  type NotificationSource,
+} from "./service";
 
 export class NotificationController {
   constructor(
     private readonly notificationService = new NotificationService(),
   ) {}
 
-  create(input: Record<string, unknown>) {
+  generate(
+    input: Record<string, unknown>,
+    source: NotificationSource,
+    generatedAt?: string,
+  ) {
     try {
-      return ok(
-        this.notificationService.prepareCreate(toCreateNotificationDto(input)),
+      return ok<LocalNotificationItem[]>(
+        this.notificationService.generate(
+          toNotificationContextDto(input),
+          source,
+          generatedAt,
+        ),
       );
     } catch (error) {
-      return fail(
-        error instanceof Error ? error.message : "Notification creation failed.",
+      return fail<LocalNotificationItem[]>(
+        error instanceof Error
+          ? error.message
+          : "Notification generation failed.",
       );
     }
   }

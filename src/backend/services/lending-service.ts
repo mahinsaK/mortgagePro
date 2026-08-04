@@ -1,8 +1,14 @@
 import { Query } from "@/backend/appwrite/server-client";
 import { formatMoney } from "@/backend/lib/currency";
 import {
+  addDaysToDateOnly,
+  isValidDateOnly,
+} from "@/backend/modules/notifications/dto";
+import { isUsablePhoneNumber } from "@/backend/modules/notifications/service";
+import {
   listTenantDocuments,
   type TenantCollection,
+  type TenantDocument,
 } from "./tenant-data-service";
 import { getPrimaryLender } from "./lender-service";
 
@@ -94,6 +100,18 @@ type PaginationOptions = {
   pageSize?: number;
 };
 
+export type BorrowerAttentionFilter = "missing-phone";
+export type LoanAttentionFilter = "overdue" | "ending-today" | "ending-soon";
+
+type BorrowersPageOptions = PaginationOptions & {
+  attention?: BorrowerAttentionFilter;
+};
+
+type LoansPageOptions = PaginationOptions & {
+  attention?: LoanAttentionFilter;
+  asOf?: string;
+};
+
 type BorrowerProfileOptions = PaginationOptions & {
   loanStatus?: "completed";
 };
@@ -102,7 +120,7 @@ const DEFAULT_PAGE_SIZE = 10;
 const BORROWER_PROFILE_LOAN_PAGE_SIZE = 5;
 const MAX_LOOKUP_LIMIT = 5000;
 
-export async function getBorrowersPageData(options: PaginationOptions = {}) {
+export async function getBorrowersPageData(options: BorrowersPageOptions = {}) {
   const lender = await getPrimaryLender();
   const pagination = normalizePagination(options);
 
@@ -114,21 +132,24 @@ export async function getBorrowersPageData(options: PaginationOptions = {}) {
     };
   }
 
-  const borrowers = await listForLender("borrowers", lender.id, {
-    page: pagination.page,
-    pageSize: pagination.pageSize,
-    orderBy: "created_at",
-    select: [
-      "$id",
-      "$createdAt",
-      "name",
-      "business_name",
-      "contact",
-      "address",
-      "status",
-      "created_at",
-    ],
-  });
+  const select = [
+    "$id",
+    "$createdAt",
+    "name",
+    "business_name",
+    "contact",
+    "address",
+    "status",
+    "created_at",
+  ];
+  const borrowers = options.attention === "missing-phone"
+    ? await getBorrowersMissingPhone(lender.id, pagination, select)
+    : await listForLender("borrowers", lender.id, {
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+        orderBy: "created_at",
+        select,
+      });
 
   return {
     lender,
@@ -244,7 +265,7 @@ export async function getBorrowerProfileData(
   };
 }
 
-export async function getLoansPageData(options: PaginationOptions = {}) {
+export async function getLoansPageData(options: LoansPageOptions = {}) {
   const lender = await getPrimaryLender();
   const pagination = normalizePagination(options);
 
@@ -256,23 +277,29 @@ export async function getLoansPageData(options: PaginationOptions = {}) {
     };
   }
 
-  const loans = await listForLender("loans", lender.id, {
-    page: pagination.page,
-    pageSize: pagination.pageSize,
-    orderBy: "created_at",
-    select: [
-      "$id",
-      "borrower_id",
-      "amount",
-      "interest_rate",
-      "daily_payment",
-      "total_paid",
-      "remaining_amount",
-      "start_date",
-      "end_date",
-      "status",
-    ],
-  });
+  const select = [
+    "$id",
+    "$createdAt",
+    "borrower_id",
+    "amount",
+    "interest_rate",
+    "daily_payment",
+    "total_paid",
+    "remaining_amount",
+    "start_date",
+    "end_date",
+    "status",
+    "created_at",
+  ];
+  const attention = normalizeLoanAttention(options.attention, options.asOf);
+  const loans = attention
+    ? await getAttentionLoans(lender.id, pagination, attention, select)
+    : await listForLender("loans", lender.id, {
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+        orderBy: "created_at",
+        select,
+      });
   const borrowerIds = uniqueStrings(
     loans.documents.map((loan) => String(loan.borrower_id ?? "")),
   );
@@ -708,6 +735,101 @@ function listForLender(
   }
 
   return listTenantDocuments(collection, lenderId, queries);
+}
+
+async function getBorrowersMissingPhone(
+  lenderId: string,
+  pagination: { page: number; pageSize: number },
+  select: string[],
+) {
+  const borrowers = await listTenantDocuments("borrowers", lenderId, [
+    Query.equal("status", "active"),
+    Query.limit(MAX_LOOKUP_LIMIT),
+    Query.select(select),
+  ]);
+  const filtered = newestFirst(
+    borrowers.documents.filter((borrower) =>
+      !isUsablePhoneNumber(String(borrower.contact ?? "")),
+    ),
+  );
+
+  return paginatedDocuments(filtered, pagination);
+}
+
+async function getAttentionLoans(
+  lenderId: string,
+  pagination: { page: number; pageSize: number },
+  attention: { kind: LoanAttentionFilter; asOf: string },
+  select: string[],
+) {
+  const start = `${attention.asOf}T00:00:00.000Z`;
+  const tomorrow = `${addDaysToDateOnly(attention.asOf, 1)}T00:00:00.000Z`;
+  const afterSevenDays = `${addDaysToDateOnly(attention.asOf, 8)}T00:00:00.000Z`;
+  const dateQueries =
+    attention.kind === "overdue"
+      ? [Query.lessThan("end_date", start)]
+      : attention.kind === "ending-today"
+        ? [
+            Query.greaterThanEqual("end_date", start),
+            Query.lessThan("end_date", tomorrow),
+          ]
+        : [
+            Query.greaterThanEqual("end_date", tomorrow),
+            Query.lessThan("end_date", afterSevenDays),
+          ];
+  const loans = await listTenantDocuments("loans", lenderId, [
+    Query.equal("status", ["active", "overdue"]),
+    ...dateQueries,
+    Query.limit(MAX_LOOKUP_LIMIT),
+    Query.select(select),
+  ]);
+  const filtered = newestFirst(
+    loans.documents.filter((loan) => remainingLoanAmount(loan) > 0),
+  );
+
+  return paginatedDocuments(filtered, pagination);
+}
+
+function normalizeLoanAttention(
+  attention: LoanAttentionFilter | undefined,
+  asOf: string | undefined,
+) {
+  if (
+    !attention ||
+    !["overdue", "ending-today", "ending-soon"].includes(attention) ||
+    !asOf ||
+    !isValidDateOnly(asOf)
+  ) {
+    return null;
+  }
+
+  return { kind: attention, asOf };
+}
+
+function remainingLoanAmount(loan: TenantDocument) {
+  const amount = Number(loan.amount ?? 0);
+  const totalPaid = Number(loan.total_paid ?? 0);
+  return Number(loan.remaining_amount ?? Math.max(amount - totalPaid, 0));
+}
+
+function newestFirst(documents: TenantDocument[]) {
+  return [...documents].sort((left, right) => {
+    const leftDate = Date.parse(String(left.created_at ?? left.$createdAt ?? ""));
+    const rightDate = Date.parse(String(right.created_at ?? right.$createdAt ?? ""));
+    return (Number.isNaN(rightDate) ? 0 : rightDate) -
+      (Number.isNaN(leftDate) ? 0 : leftDate);
+  });
+}
+
+function paginatedDocuments(
+  documents: TenantDocument[],
+  pagination: { page: number; pageSize: number },
+) {
+  const offset = (pagination.page - 1) * pagination.pageSize;
+  return {
+    documents: documents.slice(offset, offset + pagination.pageSize),
+    total: documents.length,
+  };
 }
 
 function mapLoanDocument(

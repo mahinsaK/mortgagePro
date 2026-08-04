@@ -32,6 +32,7 @@ test.describe("dedicated pilot lender journey", () => {
       "/payments",
       "/payments/daily",
       "/sms",
+      "/notifications",
       "/settings",
     ]) {
       await page.goto(route);
@@ -48,7 +49,6 @@ test.describe("dedicated pilot lender journey", () => {
 
     for (const route of [
       "/analytics",
-      "/notifications",
       "/dashboard/borrower",
       "/dashboard/collector",
     ]) {
@@ -72,6 +72,22 @@ test.describe("dedicated pilot lender journey", () => {
     await expect(page.getByRole("button", { name: "Download QR" })).toBeEnabled();
     await expect(page.getByRole("button", { name: "Share QR" })).toBeEnabled();
     await expect(page.getByRole("button", { name: "Print QR" })).toBeEnabled();
+  });
+
+  test("local notification bell opens the actionable notification workflow", async ({
+    page,
+  }) => {
+    await loginLender(page);
+
+    await page.getByRole("button", { name: "Notifications" }).click();
+    await expect(page.getByRole("heading", { name: "Notifications" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "View all" })).toBeVisible();
+    await page.getByRole("link", { name: "View all" }).click();
+
+    await expect(page).toHaveURL(/\/notifications$/);
+    await expect(page.getByRole("heading", { name: "Local advice" })).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await expectNoSeriousAccessibilityViolations(page);
   });
 
   test("cross-tenant loans, QR codes, and exports remain isolated", async ({

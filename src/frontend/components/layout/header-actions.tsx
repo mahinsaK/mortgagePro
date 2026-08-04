@@ -3,7 +3,8 @@
 import Link from "next/link";
 import * as Popover from "@radix-ui/react-popover";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { Bell, Moon, Settings, Sun } from "lucide-react";
+import { Moon, Settings, Sun } from "lucide-react";
+import { NotificationPopover } from "@/frontend/components/notifications/local-notifications";
 
 type HeaderLender = {
   companyName: string;
@@ -11,21 +12,6 @@ type HeaderLender = {
   contactInfo: string;
   status: string;
 };
-
-const notifications = [
-  {
-    title: "Daily collection ready",
-    body: "Today\'s collection report is available for review.",
-  },
-  {
-    title: "Loan QR generated",
-    body: "New loan QR codes can be downloaded from loan details.",
-  },
-  {
-    title: "Collector validation",
-    body: "Collectors are checked against the lender before payments are accepted.",
-  },
-];
 
 export function HeaderActions({
   lender,
@@ -52,45 +38,7 @@ export function HeaderActions({
           )}
         </TooltipButton>
 
-        <Popover.Root>
-          <PopoverIconButton label="Notifications">
-            <Bell aria-hidden="true" size={18} strokeWidth={2} />
-          </PopoverIconButton>
-          <Popover.Portal>
-            <Popover.Content
-              align="end"
-              className="z-50 w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-[#dfe5ec] bg-white p-4 text-[#15191f] shadow-xl"
-              sideOffset={10}
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-base font-semibold">Notifications</h2>
-                <span className="rounded-full bg-[#e0ecff] px-2.5 py-1 text-xs font-semibold text-[#1d4ed8]">
-                  {notifications.length}
-                </span>
-              </div>
-              <div className="space-y-3">
-                {notifications.map((notification) => (
-                  <article
-                    className="rounded-md border border-[#eef2f6] bg-[#f8fafc] p-3"
-                    key={notification.title}
-                  >
-                    <p className="text-sm font-semibold">{notification.title}</p>
-                    <p className="mt-1 text-xs leading-5 text-[#657386]">
-                      {notification.body}
-                    </p>
-                  </article>
-                ))}
-              </div>
-              <Link
-                className="mt-4 flex h-10 items-center justify-center rounded-md border border-[#cfd8e3] text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc]"
-                href="/notifications"
-              >
-                View all
-              </Link>
-              <Popover.Arrow className="fill-white" />
-            </Popover.Content>
-          </Popover.Portal>
-        </Popover.Root>
+        <NotificationPopover />
 
         <Popover.Root>
           <PopoverIconButton label="Settings and lender profile">

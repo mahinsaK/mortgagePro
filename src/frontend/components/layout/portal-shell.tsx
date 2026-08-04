@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { HeaderActions } from "@/frontend/components/layout/header-actions";
 import { PortalSidebar } from "@/frontend/components/layout/portal-sidebar";
+import { NotificationOwnerProvider } from "@/frontend/components/notifications/notification-owner-context";
 
 type Theme = "light" | "dark";
 type SidebarState = "collapsed" | "expanded";
@@ -18,9 +19,11 @@ const preferencesEvent = "mortgagepro-preferences-change";
 export function PortalShell({
   children,
   lender,
+  notificationOwnerKey,
 }: {
   children: React.ReactNode;
   lender: ShellLender | null;
+  notificationOwnerKey: string;
 }) {
   const sidebar = useSyncExternalStore(
     subscribeToPreferences,
@@ -63,7 +66,11 @@ export function PortalShell({
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f7f9] text-[#15191f]">
+    <NotificationOwnerProvider
+      key={notificationOwnerKey}
+      ownerKey={notificationOwnerKey}
+    >
+      <div className="min-h-screen bg-[#f6f7f9] text-[#15191f]">
       {mobileMenuOpen ? (
         <button
           aria-label="Close navigation menu"
@@ -117,7 +124,8 @@ export function PortalShell({
         </header>
         <main className="px-4 py-5 md:px-8 md:py-8">{children}</main>
       </div>
-    </div>
+      </div>
+    </NotificationOwnerProvider>
   );
 }
 

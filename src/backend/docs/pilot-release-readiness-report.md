@@ -32,8 +32,10 @@ have not been supplied or completed.
 - New lender registration now creates an inactive profile, creates no session,
   cleans up a user after profile failure, and waits for manual Appwrite Console
   activation.
-- Unfinished Analytics, Notifications, Borrower dashboard, and Collector
-  dashboard routes were removed.
+- Unfinished Analytics, Borrower dashboard, and Collector dashboard routes were
+  removed.
+- Lender notifications are calculated on demand from tenant-scoped records,
+  with no notification collection or database writes.
 
 ## Pending release blockers
 

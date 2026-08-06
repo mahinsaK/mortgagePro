@@ -1,7 +1,7 @@
 import { AppwriteException, OAuthProvider } from "node-appwrite";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { createAdminAccountClient } from "@/backend/appwrite/server-client";
+import { createAccountClient } from "@/backend/appwrite/server-client";
 import {
   createLenderOAuthState,
   getFixedAuthUrl,
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
   try {
     const state = createLenderOAuthState();
     const { failure, success } = getLenderGoogleOAuthUrls(state);
-    const providerUrl = await createAdminAccountClient().createOAuth2Token({
+    const providerUrl = await createAccountClient().createOAuth2Token({
       provider: OAuthProvider.Google,
       success,
       failure,

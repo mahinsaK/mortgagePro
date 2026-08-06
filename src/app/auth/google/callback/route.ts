@@ -1,7 +1,7 @@
 import { AppwriteException, type Models } from "node-appwrite";
 import type { NextRequest, NextResponse as NextResponseType } from "next/server";
 import { NextResponse } from "next/server";
-import { createAdminAccountClient } from "@/backend/appwrite/server-client";
+import { createAccountClient } from "@/backend/appwrite/server-client";
 import {
   AUTH_SESSION_COOKIE,
   AUTH_SESSION_COOKIE_OPTIONS,
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
   let session: Models.Session;
 
   try {
-    session = await createAdminAccountClient().createSession({
+    session = await createAccountClient().createSession({
       userId,
       secret,
     });

@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/backend/appwrite/server-client", () => ({
-  createAdminAccountClient: vi.fn(() => ({
+  createAccountClient: vi.fn(() => ({
     createOAuth2Token: mocks.createOAuth2Token,
   })),
 }));

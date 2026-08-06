@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   hashCollectorPassword: vi.fn(),
   listDocuments: vi.fn(),
   requireTenantDocument: vi.fn(),
+  updateDocument: vi.fn(),
   updateTenantDocument: vi.fn(),
   updateUserPassword: vi.fn(),
 }));
@@ -23,7 +24,7 @@ vi.mock("@/backend/appwrite/server-client", async () => {
   return {
     databases: {
       listDocuments: mocks.listDocuments,
-      updateDocument: vi.fn(),
+      updateDocument: mocks.updateDocument,
     },
     Query,
     users: { updatePassword: mocks.updateUserPassword },
@@ -57,6 +58,7 @@ import {
   createCollectorAction,
   createLoanForBorrowerFormAction,
   updateCollectorAction,
+  updateLenderProfileAction,
   updateLenderPasswordAction,
   type CreateCollectorActionState,
   type CreateLoanActionState,
@@ -263,6 +265,41 @@ describe("collector writes", () => {
       userId: "user_A",
       password: "NewPassword123!",
     });
+  });
+});
+
+describe("lender profile updates", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getPrimaryLender.mockResolvedValue({
+      id: "lender_A",
+      appwriteUserId: "user_A",
+    });
+  });
+
+  it("keeps lender email and status read-only for manipulated submissions", async () => {
+    const formData = new FormData();
+    formData.set("company_name", "Updated Company");
+    formData.set("phone", "+94 77 123 4567");
+    formData.set("address", "Colombo");
+    formData.set("currency", "LKR");
+    formData.set("email", "attacker@example.com");
+    formData.set("status", "inactive");
+
+    await updateLenderProfileAction(formData);
+
+    expect(mocks.updateDocument).toHaveBeenCalledWith({
+      databaseId: "database",
+      collectionId: "lenders",
+      documentId: "lender_A",
+      data: expect.objectContaining({
+        company_name: "Updated Company",
+        currency: "LKR",
+      }),
+    });
+    const update = mocks.updateDocument.mock.calls[0][0].data;
+    expect(update).not.toHaveProperty("email");
+    expect(update).not.toHaveProperty("status");
   });
 });
 

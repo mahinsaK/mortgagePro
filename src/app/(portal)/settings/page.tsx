@@ -31,30 +31,17 @@ export default async function SettingsPage() {
             name="company_name"
             required
           />
-          <Field
-            defaultValue={lender?.email ?? ""}
-            label="Email"
-            name="email"
-            required
-            type="email"
-          />
+          <ReadOnlyField label="Email" value={lender?.email || "Not set"} />
           <Field defaultValue={contact.phone} label="Phone" name="phone" />
           <Field
             defaultValue={contact.address}
             label="Address"
             name="address"
           />
-          <label className="text-sm font-medium text-[#2d3745]">
-            Status
-            <select
-              className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] bg-white px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
-              defaultValue={lender?.status ?? "active"}
-              name="status"
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </label>
+          <ReadOnlyField
+            label="Status"
+            value={formatStatus(lender?.status)}
+          />
           <label className="text-sm font-medium text-[#2d3745]">
             App currency
             <select
@@ -117,6 +104,25 @@ function Field({
       />
     </label>
   );
+}
+
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="text-sm font-medium text-[#2d3745]">
+      <p>{label}</p>
+      <p className="mt-2 flex min-h-10 items-center rounded-md border border-[#dfe5ec] bg-[#f6f7f9] px-3 text-sm text-[#657386]">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function formatStatus(status: string | undefined) {
+  if (!status) {
+    return "Unknown";
+  }
+
+  return `${status.charAt(0).toUpperCase()}${status.slice(1)}`;
 }
 
 function parseContactInfo(value: string) {

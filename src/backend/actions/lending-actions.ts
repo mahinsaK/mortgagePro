@@ -400,12 +400,10 @@ export async function updateLenderProfileAction(formData: FormData) {
     documentId: lender.id,
     data: {
       company_name: readRequired(formData, "company_name"),
-      email: readRequired(formData, "email"),
       contact_info: JSON.stringify({
         phone: readOptional(formData, "phone"),
         address: readOptional(formData, "address"),
       }),
-      status: readStatus(formData),
       currency: normalizeCurrency(readOptional(formData, "currency")),
     },
   });

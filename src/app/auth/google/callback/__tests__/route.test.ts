@@ -1,6 +1,6 @@
 import { AppwriteException } from "node-appwrite";
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   createSession: vi.fn(),
@@ -56,9 +56,14 @@ function callbackRequest(overrides: Record<string, string> = {}) {
 describe("Google OAuth callback route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
     process.env.APP_BASE_URL = "https://mortgagepro.example";
     mocks.createSession.mockResolvedValue(createdSession);
     mocks.findActiveLender.mockResolvedValue({ $id: "lender_A" });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("creates an application session only for an active existing lender", async () => {
@@ -138,7 +143,11 @@ describe("Google OAuth callback route", () => {
 
   it("treats a lender lookup authorization error as service unavailability", async () => {
     mocks.findActiveLender.mockRejectedValue(
-      new AppwriteException("Runtime key rejected", 401, "user_unauthorized"),
+      new AppwriteException(
+        "Runtime key rejected secret=must-not-be-logged",
+        401,
+        "user_unauthorized",
+      ),
     );
 
     const response = await GET(callbackRequest());
@@ -146,6 +155,20 @@ describe("Google OAuth callback route", () => {
     expect(mocks.revokeSession).toHaveBeenCalledWith(createdSession);
     expect(response.headers.get("location")).toBe(
       "https://mortgagepro.example/auth/unavailable",
+    );
+    expect(console.warn).toHaveBeenCalledWith(
+      "Google OAuth callback could not complete.",
+      expect.objectContaining({
+        stage: "lender_lookup",
+        code: 401,
+        type: "user_unauthorized",
+        runtimeApiKeyConfigured: expect.any(Boolean),
+        databaseId: expect.any(String),
+        lendersCollectionId: expect.any(String),
+      }),
+    );
+    expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain(
+      "must-not-be-logged",
     );
   });
 });

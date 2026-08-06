@@ -1,6 +1,7 @@
 import { AppwriteException, type Models } from "node-appwrite";
 import type { NextRequest, NextResponse as NextResponseType } from "next/server";
 import { NextResponse } from "next/server";
+import { getSafeAppwriteDiagnostic } from "@/backend/appwrite/safe-appwrite-diagnostic";
 import { createAccountClient } from "@/backend/appwrite/server-client";
 import {
   AUTH_SESSION_COOKIE,
@@ -63,6 +64,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     if (isRejectedOAuthCallback(error)) {
+      logCallbackFailure("session_exchange", error);
       await recordSecurityEvent({
         eventType: "google_login_failure",
         outcome: "failure",
@@ -74,6 +76,7 @@ export async function GET(request: NextRequest) {
       return loginErrorResponse(request, GOOGLE_LOGIN_FAILED);
     }
 
+    logCallbackFailure("session_exchange", error);
     await recordSecurityEvent({
       eventType: "google_login_error",
       outcome: "error",
@@ -86,6 +89,17 @@ export async function GET(request: NextRequest) {
   }
 
   if (!session.secret || !isValidExpiry(session.expire)) {
+    console.warn(
+      "Google OAuth callback could not complete.",
+      getSafeAppwriteDiagnostic(
+        new Error("Appwrite returned an incomplete session response."),
+        {
+          stage: "invalid_session_response",
+          sessionSecretPresent: Boolean(session.secret),
+          sessionExpiryValid: isValidExpiry(session.expire),
+        },
+      ),
+    );
     await revokeAppwriteSessionBestEffort(session);
     await recordSecurityEvent({
       eventType: "google_login_error",
@@ -102,7 +116,14 @@ export async function GET(request: NextRequest) {
 
   try {
     lender = await findActiveLenderByAppwriteUserId(session.userId);
-  } catch {
+  } catch (error) {
+    console.warn(
+      "Google OAuth callback could not complete.",
+      getSafeAppwriteDiagnostic(error, {
+        stage: "lender_lookup",
+        includeDataConfiguration: true,
+      }),
+    );
     await revokeAppwriteSessionBestEffort(session);
     await recordSecurityEvent({
       eventType: "google_login_error",
@@ -144,7 +165,8 @@ export async function GET(request: NextRequest) {
       headers: request.headers,
     });
     return response;
-  } catch {
+  } catch (error) {
+    logCallbackFailure("session_storage", error);
     await revokeAppwriteSessionBestEffort(session);
     await recordSecurityEvent({
       eventType: "google_login_error",
@@ -206,4 +228,14 @@ function clearOAuthState(response: NextResponseType) {
     expires: new Date(0),
     maxAge: 0,
   });
+}
+
+function logCallbackFailure(
+  stage: "session_exchange" | "session_storage",
+  error: unknown,
+) {
+  console.warn(
+    "Google OAuth callback could not complete.",
+    getSafeAppwriteDiagnostic(error, { stage }),
+  );
 }

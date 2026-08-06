@@ -16,13 +16,13 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
       <AuthStatus message={message} status={status} />
 
       <div className="mt-5 mb-8">
-        <Link
+        <a
           className="flex h-12 w-full items-center justify-center gap-3 rounded-md border border-[#cfd8e3] bg-white px-4 text-sm font-semibold text-[#2d3745] transition hover:border-[#aebac8] hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2563eb]/10"
           href="/auth/google"
         >
           <GoogleIcon />
           Continue with Google
-        </Link>
+        </a>
       </div>
 
       <div className="mb-8 flex items-center gap-3" aria-hidden="true">

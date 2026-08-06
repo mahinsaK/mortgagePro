@@ -1,6 +1,10 @@
 import { AppwriteException, OAuthProvider } from "node-appwrite";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import {
+  appwriteServerConfig,
+  getAppBaseUrl,
+} from "@/backend/appwrite/config";
 import { createAccountClient } from "@/backend/appwrite/server-client";
 import {
   createLenderOAuthState,
@@ -89,10 +93,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (error instanceof AppwriteException) {
-      console.warn("Google OAuth start was rejected by Appwrite.", {
-        code: error.code,
-        type: error.type,
-      });
+      console.warn(
+        "Google OAuth start was rejected by Appwrite.",
+        getSafeAppwriteDiagnostic(error),
+      );
     }
 
     await recordSecurityEvent({
@@ -113,4 +117,51 @@ function isApplicationAddressError(error: unknown) {
     error.code < 500 &&
     error.type === "general_argument_invalid"
   );
+}
+
+function getSafeAppwriteDiagnostic(error: AppwriteException) {
+  return {
+    code: error.code,
+    type: error.type || "unknown",
+    message: sanitizeDiagnosticMessage(error.message),
+    endpoint: getSafeEndpoint(),
+    projectId: appwriteServerConfig.projectId || "<missing>",
+    callbackOrigin: getSafeCallbackOrigin(),
+    clientMode: "sessionless",
+  };
+}
+
+function sanitizeDiagnosticMessage(message: string) {
+  return message
+    .replace(
+      /([?&](?:secret|state|userId)=)[^&\s"'<>]*/gi,
+      "$1[redacted]",
+    )
+    .replace(
+      /\b((?:secret|state|userId)\s*[:=]\s*)[^,\s&"'<>]+/gi,
+      "$1[redacted]",
+    )
+    .replace(
+      /\beyJ[A-Za-z0-9_-]*(?:\.[A-Za-z0-9_-]+){1,2}\b/g,
+      "[redacted-token]",
+    )
+    .replace(/\b[a-f0-9]{48,}\b/gi, "[redacted-value]")
+    .slice(0, 300);
+}
+
+function getSafeEndpoint() {
+  try {
+    const endpoint = new URL(appwriteServerConfig.endpoint);
+    return `${endpoint.origin}${endpoint.pathname}`;
+  } catch {
+    return "<invalid>";
+  }
+}
+
+function getSafeCallbackOrigin() {
+  try {
+    return getAppBaseUrl();
+  } catch {
+    return "<invalid>";
+  }
 }

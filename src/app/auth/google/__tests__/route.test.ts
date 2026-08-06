@@ -114,8 +114,13 @@ describe("Google OAuth start route", () => {
 
   it("does not misreport rejected runtime credentials as an address error", async () => {
     const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const oauthState = "a".repeat(64);
     mocks.createOAuth2Token.mockRejectedValue(
-      new AppwriteException("Sensitive provider response", 401, "user_unauthorized"),
+      new AppwriteException(
+        `Request rejected: secret=callback-secret state=${oauthState} token=eyJabc.def.ghi`,
+        401,
+        "user_unauthorized",
+      ),
     );
 
     const response = await GET(
@@ -128,11 +133,20 @@ describe("Google OAuth start route", () => {
     );
     expect(warning).toHaveBeenCalledWith(
       "Google OAuth start was rejected by Appwrite.",
-      { code: 401, type: "user_unauthorized" },
+      expect.objectContaining({
+        code: 401,
+        type: "user_unauthorized",
+        endpoint: expect.any(String),
+        projectId: expect.any(String),
+        callbackOrigin: "https://mortgagepro.example",
+        clientMode: "sessionless",
+      }),
     );
-    expect(JSON.stringify(warning.mock.calls)).not.toContain(
-      "Sensitive provider response",
-    );
+    const loggedDiagnostic = JSON.stringify(warning.mock.calls);
+    expect(loggedDiagnostic).not.toContain("callback-secret");
+    expect(loggedDiagnostic).not.toContain(oauthState);
+    expect(loggedDiagnostic).not.toContain("eyJabc.def.ghi");
+    expect(loggedDiagnostic).not.toContain("APPWRITE_RUNTIME_API_KEY");
     warning.mockRestore();
   });
 });

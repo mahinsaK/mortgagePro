@@ -12,6 +12,7 @@ type OAuthDiagnosticStage =
 
 type OAuthDiagnosticOptions = {
   stage: OAuthDiagnosticStage;
+  clientMode?: "runtime_api_key" | "sessionless";
   includeDataConfiguration?: boolean;
   sessionExpiryValid?: boolean;
   sessionSecretPresent?: boolean;
@@ -34,7 +35,7 @@ export function getSafeAppwriteDiagnostic(
     endpoint: getSafeEndpoint(),
     projectId: appwriteServerConfig.projectId || "<missing>",
     callbackOrigin: getSafeCallbackOrigin(),
-    clientMode: "sessionless",
+    clientMode: options.clientMode ?? "sessionless",
   };
 
   if (options.includeDataConfiguration) {

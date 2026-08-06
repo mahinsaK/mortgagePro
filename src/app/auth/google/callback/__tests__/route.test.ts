@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/backend/appwrite/server-client", () => ({
-  createAccountClient: vi.fn(() => ({
+  createAdminAccountClient: vi.fn(() => ({
     createSession: mocks.createSession,
   })),
 }));
@@ -162,6 +162,7 @@ describe("Google OAuth callback route", () => {
         stage: "lender_lookup",
         code: 401,
         type: "user_unauthorized",
+        clientMode: "runtime_api_key",
         runtimeApiKeyConfigured: expect.any(Boolean),
         databaseId: expect.any(String),
         lendersCollectionId: expect.any(String),

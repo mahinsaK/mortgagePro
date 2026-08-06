@@ -2,7 +2,7 @@ import { AppwriteException, type Models } from "node-appwrite";
 import type { NextRequest, NextResponse as NextResponseType } from "next/server";
 import { NextResponse } from "next/server";
 import { getSafeAppwriteDiagnostic } from "@/backend/appwrite/safe-appwrite-diagnostic";
-import { createAccountClient } from "@/backend/appwrite/server-client";
+import { createAdminAccountClient } from "@/backend/appwrite/server-client";
 import {
   AUTH_SESSION_COOKIE,
   AUTH_SESSION_COOKIE_OPTIONS,
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
   let session: Models.Session;
 
   try {
-    session = await createAccountClient().createSession({
+    session = await createAdminAccountClient().createSession({
       userId,
       secret,
     });
@@ -95,6 +95,7 @@ export async function GET(request: NextRequest) {
         new Error("Appwrite returned an incomplete session response."),
         {
           stage: "invalid_session_response",
+          clientMode: "runtime_api_key",
           sessionSecretPresent: Boolean(session.secret),
           sessionExpiryValid: isValidExpiry(session.expire),
         },
@@ -121,6 +122,7 @@ export async function GET(request: NextRequest) {
       "Google OAuth callback could not complete.",
       getSafeAppwriteDiagnostic(error, {
         stage: "lender_lookup",
+        clientMode: "runtime_api_key",
         includeDataConfiguration: true,
       }),
     );
@@ -236,6 +238,9 @@ function logCallbackFailure(
 ) {
   console.warn(
     "Google OAuth callback could not complete.",
-    getSafeAppwriteDiagnostic(error, { stage }),
+    getSafeAppwriteDiagnostic(error, {
+      stage,
+      clientMode: "runtime_api_key",
+    }),
   );
 }

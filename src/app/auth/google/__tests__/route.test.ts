@@ -111,4 +111,28 @@ describe("Google OAuth start route", () => {
       "Google+sign-in+is+not+configured",
     );
   });
+
+  it("does not misreport rejected runtime credentials as an address error", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    mocks.createOAuth2Token.mockRejectedValue(
+      new AppwriteException("Sensitive provider response", 401, "user_unauthorized"),
+    );
+
+    const response = await GET(
+      new NextRequest("https://mortgagepro.example/auth/google"),
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe(
+      "https://mortgagepro.example/auth/unavailable",
+    );
+    expect(warning).toHaveBeenCalledWith(
+      "Google OAuth start was rejected by Appwrite.",
+      { code: 401, type: "user_unauthorized" },
+    );
+    expect(JSON.stringify(warning.mock.calls)).not.toContain(
+      "Sensitive provider response",
+    );
+    warning.mockRestore();
+  });
 });

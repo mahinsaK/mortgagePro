@@ -17,6 +17,9 @@ import { recordSecurityEvent } from "@/backend/services/security-event-service";
 
 export const dynamic = "force-dynamic";
 
+const GOOGLE_ADDRESS_NOT_CONFIGURED =
+  "Google sign-in is not configured for this application address. Please use email and password for now.";
+
 export async function GET(request: NextRequest) {
   try {
     const rateLimit = await consumeAuthenticationAttempt({
@@ -71,11 +74,7 @@ export async function GET(request: NextRequest) {
     });
     return response;
   } catch (error) {
-    if (
-      error instanceof AppwriteException &&
-      error.code >= 400 &&
-      error.code < 500
-    ) {
+    if (isApplicationAddressError(error)) {
       await recordSecurityEvent({
         eventType: "google_login_failure",
         outcome: "failure",
@@ -85,11 +84,15 @@ export async function GET(request: NextRequest) {
       });
       const loginUrl = getFixedAuthUrl("/auth/login");
       loginUrl.searchParams.set("status", "error");
-      loginUrl.searchParams.set(
-        "message",
-        "Google sign-in is not configured for this application address. Please use email and password for now.",
-      );
+      loginUrl.searchParams.set("message", GOOGLE_ADDRESS_NOT_CONFIGURED);
       return NextResponse.redirect(loginUrl, 303);
+    }
+
+    if (error instanceof AppwriteException) {
+      console.warn("Google OAuth start was rejected by Appwrite.", {
+        code: error.code,
+        type: error.type,
+      });
     }
 
     await recordSecurityEvent({
@@ -101,4 +104,13 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.redirect(new URL("/auth/unavailable", request.url), 303);
   }
+}
+
+function isApplicationAddressError(error: unknown) {
+  return (
+    error instanceof AppwriteException &&
+    error.code >= 400 &&
+    error.code < 500 &&
+    error.type === "general_argument_invalid"
+  );
 }

@@ -157,6 +157,113 @@ export function createAppwriteSchema(collections) {
         keyIndex("idx_security_event_type_created", ["event_type", "created_at"]),
       ],
     },
+    {
+      id: collections.smsAccounts,
+      name: "SMS Accounts",
+      attributes: [
+        stringAttr("lender_id", 64, true),
+        enumAttr("status", ["active", "suspended"], true),
+        integerAttr("monthly_quota", true, 0),
+        datetimeAttr("created_at", true),
+        datetimeAttr("updated_at", true),
+      ],
+      indexes: [
+        keyIndex("idx_sms_account_lender", ["lender_id"]),
+        keyIndex("idx_sms_account_status", ["status"]),
+      ],
+    },
+    {
+      id: collections.smsSenderRequests,
+      name: "SMS Sender Requests",
+      attributes: [
+        stringAttr("lender_id", 64, true),
+        stringAttr("sender_id", 11, true),
+        stringAttr("normalized_sender_id", 11, true),
+        enumAttr("status", ["pending", "approved", "rejected"], true),
+        stringAttr("rejection_reason", 500, false),
+        datetimeAttr("requested_at", true),
+      ],
+      indexes: [
+        keyIndex("idx_sms_sender_normalized", ["normalized_sender_id"]),
+        keyIndex("idx_sms_sender_lender_status", ["lender_id", "status"]),
+        keyIndex("idx_sms_sender_lender_requested", [
+          "lender_id",
+          "requested_at",
+        ]),
+      ],
+    },
+    {
+      id: collections.smsTemplates,
+      name: "SMS Templates",
+      attributes: [
+        stringAttr("lender_id", 64, true),
+        stringAttr("name", 80, true),
+        stringAttr("normalized_name", 80, true),
+        stringAttr("message", 480, true),
+        datetimeAttr("created_at", true),
+        datetimeAttr("updated_at", true),
+      ],
+      indexes: [
+        keyIndex("idx_sms_template_lender", ["lender_id"]),
+        keyIndex("idx_sms_template_lender_name", [
+          "lender_id",
+          "normalized_name",
+        ]),
+        keyIndex("idx_sms_template_lender_created", [
+          "lender_id",
+          "created_at",
+        ]),
+      ],
+    },
+    {
+      id: collections.smsMonthlyUsage,
+      name: "SMS Monthly Usage",
+      attributes: [
+        stringAttr("lender_id", 64, true),
+        stringAttr("month_key", 7, true),
+        integerAttr("sent_recipients", true, 0),
+        integerAttr("failed_recipients", true, 0),
+        integerAttr("sent_units", true, 0),
+        integerAttr("reserved_units", true, 0),
+        integerAttr("batch_count", true, 0),
+        datetimeAttr("created_at", true),
+        datetimeAttr("updated_at", true),
+      ],
+      indexes: [
+        keyIndex("idx_sms_usage_lender_month", ["lender_id", "month_key"]),
+        keyIndex("idx_sms_usage_month", ["month_key"]),
+      ],
+    },
+    {
+      id: collections.smsSendLogs,
+      name: "SMS Send Logs",
+      attributes: [
+        stringAttr("lender_id", 64, true),
+        stringAttr("month_key", 7, true),
+        stringAttr("request_id", 64, true),
+        stringAttr("sender_id", 11, true),
+        integerAttr("character_count", true, 1, 480),
+        integerAttr("units_per_recipient", true, 1, 3),
+        integerAttr("requested_recipients", true, 1),
+        integerAttr("sent_recipients", true, 0),
+        integerAttr("failed_recipients", true, 0),
+        integerAttr("reserved_units", true, 0),
+        integerAttr("used_units", true, 0),
+        enumAttr(
+          "status",
+          ["processing", "sent", "partial", "failed", "review_required"],
+          true,
+        ),
+        stringAttr("purpose", 64, true),
+        datetimeAttr("created_at", true),
+        datetimeAttr("completed_at", false),
+      ],
+      indexes: [
+        keyIndex("idx_sms_log_lender_created", ["lender_id", "created_at"]),
+        keyIndex("idx_sms_log_lender_month", ["lender_id", "month_key"]),
+        keyIndex("idx_sms_log_status", ["status"]),
+      ],
+    },
   ];
 }
 

@@ -17,6 +17,11 @@ const config = {
     payments: requireEnv("NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID"),
     authRateLimits: requireEnv("APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID"),
     securityEvents: requireEnv("APPWRITE_SECURITY_EVENTS_COLLECTION_ID"),
+    smsAccounts: requireEnv("APPWRITE_SMS_ACCOUNTS_COLLECTION_ID"),
+    smsSenderRequests: requireEnv("APPWRITE_SMS_SENDER_REQUESTS_COLLECTION_ID"),
+    smsTemplates: requireEnv("APPWRITE_SMS_TEMPLATES_COLLECTION_ID"),
+    smsMonthlyUsage: requireEnv("APPWRITE_SMS_MONTHLY_USAGE_COLLECTION_ID"),
+    smsSendLogs: requireEnv("APPWRITE_SMS_SEND_LOGS_COLLECTION_ID"),
   },
 };
 

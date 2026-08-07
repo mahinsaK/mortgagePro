@@ -18,6 +18,18 @@ export const appwriteServerConfig = {
       process.env.APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID ?? "auth_rate_limits",
     securityEvents:
       process.env.APPWRITE_SECURITY_EVENTS_COLLECTION_ID ?? "security_events",
+    smsAccounts:
+      process.env.APPWRITE_SMS_ACCOUNTS_COLLECTION_ID ?? "sms_accounts",
+    smsSenderRequests:
+      process.env.APPWRITE_SMS_SENDER_REQUESTS_COLLECTION_ID ??
+      "sms_sender_requests",
+    smsTemplates:
+      process.env.APPWRITE_SMS_TEMPLATES_COLLECTION_ID ?? "sms_templates",
+    smsMonthlyUsage:
+      process.env.APPWRITE_SMS_MONTHLY_USAGE_COLLECTION_ID ??
+      "sms_monthly_usage",
+    smsSendLogs:
+      process.env.APPWRITE_SMS_SEND_LOGS_COLLECTION_ID ?? "sms_send_logs",
   },
 };
 

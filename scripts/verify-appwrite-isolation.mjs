@@ -25,6 +25,11 @@ const config = {
     payments: requireEnv("NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID"),
     authRateLimits: requireEnv("APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID"),
     securityEvents: requireEnv("APPWRITE_SECURITY_EVENTS_COLLECTION_ID"),
+    smsAccounts: requireEnv("APPWRITE_SMS_ACCOUNTS_COLLECTION_ID"),
+    smsSenderRequests: requireEnv("APPWRITE_SMS_SENDER_REQUESTS_COLLECTION_ID"),
+    smsTemplates: requireEnv("APPWRITE_SMS_TEMPLATES_COLLECTION_ID"),
+    smsMonthlyUsage: requireEnv("APPWRITE_SMS_MONTHLY_USAGE_COLLECTION_ID"),
+    smsSendLogs: requireEnv("APPWRITE_SMS_SEND_LOGS_COLLECTION_ID"),
   },
 };
 
@@ -142,6 +147,11 @@ function collectionNames() {
     "payments",
     "authRateLimits",
     "securityEvents",
+    "smsAccounts",
+    "smsSenderRequests",
+    "smsTemplates",
+    "smsMonthlyUsage",
+    "smsSendLogs",
   ];
 }
 
@@ -152,6 +162,10 @@ function makeProbe(prefix, appwriteUserId) {
   const collectorId = id(`${prefix}_c`);
   const loanId = id(`${prefix}_n`);
   const paymentId = id(`${prefix}_p`);
+  const smsSenderId = id(`${prefix}sender`).replaceAll("_", "").slice(0, 24);
+  const smsTemplateId = id(`${prefix}_template`);
+  const smsUsageId = id(`${prefix}_usage`);
+  const smsLogId = id(`${prefix}_sms_log`);
 
   return {
     lenders: {
@@ -245,6 +259,71 @@ function makeProbe(prefix, appwriteUserId) {
         created_at: now,
       },
     },
+    smsAccounts: {
+      id: lenderId,
+      data: {
+        lender_id: lenderId,
+        status: "active",
+        monthly_quota: 100,
+        created_at: now,
+        updated_at: now,
+      },
+    },
+    smsSenderRequests: {
+      id: smsSenderId,
+      data: {
+        lender_id: lenderId,
+        sender_id: "ProbeSender",
+        normalized_sender_id: smsSenderId,
+        status: "pending",
+        rejection_reason: "",
+        requested_at: now,
+      },
+    },
+    smsTemplates: {
+      id: smsTemplateId,
+      data: {
+        lender_id: lenderId,
+        name: "Isolation template",
+        normalized_name: "isolation template",
+        message: "Isolation test message.",
+        created_at: now,
+        updated_at: now,
+      },
+    },
+    smsMonthlyUsage: {
+      id: smsUsageId,
+      data: {
+        lender_id: lenderId,
+        month_key: "2099-01",
+        sent_recipients: 0,
+        failed_recipients: 0,
+        sent_units: 0,
+        reserved_units: 0,
+        batch_count: 0,
+        created_at: now,
+        updated_at: now,
+      },
+    },
+    smsSendLogs: {
+      id: smsLogId,
+      data: {
+        lender_id: lenderId,
+        month_key: "2099-01",
+        request_id: smsLogId,
+        sender_id: "ProbeSender",
+        character_count: 10,
+        units_per_recipient: 1,
+        requested_recipients: 1,
+        sent_recipients: 0,
+        failed_recipients: 0,
+        reserved_units: 1,
+        used_units: 0,
+        status: "processing",
+        purpose: "isolation_probe",
+        created_at: now,
+      },
+    },
   };
 }
 
@@ -317,6 +396,26 @@ function harmlessUpdate(collection) {
 
   if (collection === "securityEvents") {
     return { outcome: "success" };
+  }
+
+  if (collection === "smsAccounts") {
+    return { monthly_quota: 101 };
+  }
+
+  if (collection === "smsSenderRequests") {
+    return { rejection_reason: "" };
+  }
+
+  if (collection === "smsTemplates") {
+    return { name: "Isolation template" };
+  }
+
+  if (collection === "smsMonthlyUsage") {
+    return { batch_count: 1 };
+  }
+
+  if (collection === "smsSendLogs") {
+    return { status: "processing" };
   }
 
   return { method: "cash" };

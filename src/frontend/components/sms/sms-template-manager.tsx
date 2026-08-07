@@ -25,7 +25,7 @@ export function SmsTemplateManager({
   const [isCreating, setIsCreating] = useState(false);
 
   return (
-    <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
+    <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm xl:sticky xl:top-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-[#15191f]">
@@ -54,7 +54,7 @@ export function SmsTemplateManager({
         <CreateTemplateForm onSaved={() => setIsCreating(false)} />
       ) : null}
 
-      <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
+      <div className="mt-3 flex gap-3 overflow-x-auto pb-1 xl:grid xl:max-h-[560px] xl:overflow-x-hidden xl:overflow-y-auto xl:pr-1">
         {templates.map((template) => (
           <TemplateCard
             key={template.id}
@@ -126,7 +126,7 @@ function TemplateCard({
     return (
       <form
         action={action}
-        className="grid w-[min(280px,85vw)] shrink-0 gap-3 rounded-md border border-[#bfdbfe] bg-[#f8fafc] p-3"
+        className="grid w-[min(280px,85vw)] shrink-0 gap-3 rounded-md border border-[#bfdbfe] bg-[#f8fafc] p-3 xl:w-full"
       >
         <input name="template_id" type="hidden" value={template.id} />
         <TemplateFields disabled={isPending} template={template} />
@@ -152,7 +152,7 @@ function TemplateCard({
   }
 
   return (
-    <article className="w-[min(280px,85vw)] shrink-0 rounded-md border border-[#dfe5ec] bg-white p-3">
+    <article className="w-[min(280px,85vw)] shrink-0 rounded-md border border-[#dfe5ec] bg-white p-3 xl:w-full">
       <div className="flex items-start justify-between gap-3">
         <button
           className="min-w-0 flex-1 text-left"

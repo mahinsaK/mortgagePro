@@ -170,7 +170,14 @@ export function SmsWorkbench({
           and review history.
         </div>
       ) : null}
-      <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
+      <div
+        className={
+          management
+            ? "grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]"
+            : "grid"
+        }
+      >
+        <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
           <div className="mb-4">
             <p className="text-sm font-medium text-[#657386]">Selected SMS</p>
             <h2 className="mt-1 text-lg font-semibold">Message recipients</h2>
@@ -178,73 +185,73 @@ export function SmsWorkbench({
 
           <div className="grid gap-4">
             <div className="grid gap-4 lg:grid-cols-2">
-            <label className="text-sm font-medium text-[#2d3745]">
-              Search borrowers
-              <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                <div className="flex h-10 flex-1 items-center rounded-md border border-[#cfd8e3] px-3 transition focus-within:border-[#1d4ed8] focus-within:ring-2 focus-within:ring-[#dbeafe]">
-                  <Search
-                    aria-hidden="true"
-                    className="mr-2 shrink-0 text-[#657386]"
-                    size={18}
-                  />
+              <label className="text-sm font-medium text-[#2d3745]">
+                Search borrowers
+                <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                  <div className="flex h-10 flex-1 items-center rounded-md border border-[#cfd8e3] px-3 transition focus-within:border-[#1d4ed8] focus-within:ring-2 focus-within:ring-[#dbeafe]">
+                    <Search
+                      aria-hidden="true"
+                      className="mr-2 shrink-0 text-[#657386]"
+                      size={18}
+                    />
+                    <input
+                      className="h-full w-full border-0 bg-transparent text-sm outline-none"
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          void searchBorrowers();
+                        }
+                      }}
+                      placeholder="Borrower name or contact number"
+                      type="search"
+                      value={searchQuery}
+                    />
+                  </div>
+                  <button
+                    className="h-10 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
+                    disabled={isSearching}
+                    onClick={() => void searchBorrowers()}
+                    type="button"
+                  >
+                    {isSearching ? "Searching" : "Search"}
+                  </button>
+                </div>
+              </label>
+
+              <label className="text-sm font-medium text-[#2d3745]">
+                Add a custom phone number
+                <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                   <input
-                    className="h-full w-full border-0 bg-transparent text-sm outline-none"
-                    onChange={(event) => setSearchQuery(event.target.value)}
+                    className="h-10 min-w-0 flex-1 rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+                    onChange={(event) => {
+                      setCustomNumber(event.target.value);
+                      setCustomNumberError("");
+                    }}
                     onKeyDown={(event) => {
                       if (event.key === "Enter") {
                         event.preventDefault();
-                        void searchBorrowers();
+                        addCustomNumber();
                       }
                     }}
-                    placeholder="Borrower name or contact number"
-                    type="search"
-                    value={searchQuery}
+                    placeholder="+94 77 123 4567"
+                    type="tel"
+                    value={customNumber}
                   />
+                  <button
+                    className="h-10 rounded-md border border-[#cfd8e3] bg-white px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc]"
+                    onClick={addCustomNumber}
+                    type="button"
+                  >
+                    Add
+                  </button>
                 </div>
-                <button
-                  className="h-10 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
-                  disabled={isSearching}
-                  onClick={() => void searchBorrowers()}
-                  type="button"
-                >
-                  {isSearching ? "Searching" : "Search"}
-                </button>
-              </div>
-            </label>
-
-            <label className="text-sm font-medium text-[#2d3745]">
-              Add a custom phone number
-              <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                <input
-                  className="h-10 min-w-0 flex-1 rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
-                  onChange={(event) => {
-                    setCustomNumber(event.target.value);
-                    setCustomNumberError("");
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      addCustomNumber();
-                    }
-                  }}
-                  placeholder="+94 77 123 4567"
-                  type="tel"
-                  value={customNumber}
-                />
-                <button
-                  className="h-10 rounded-md border border-[#cfd8e3] bg-white px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc]"
-                  onClick={addCustomNumber}
-                  type="button"
-                >
-                  Add
-                </button>
-              </div>
-              {customNumberError ? (
-                <span className="mt-2 block text-sm font-medium text-[#b91c1c]">
-                  {customNumberError}
-                </span>
-              ) : null}
-            </label>
+                {customNumberError ? (
+                  <span className="mt-2 block text-sm font-medium text-[#b91c1c]">
+                    {customNumberError}
+                  </span>
+                ) : null}
+              </label>
             </div>
 
             <SearchResults
@@ -328,14 +335,15 @@ export function SmsWorkbench({
               </div>
             </form>
           </div>
-      </section>
+        </section>
 
-      {management ? (
-        <SmsTemplateManager
-          onSelect={setMessageText}
-          templates={management.templates}
-        />
-      ) : null}
+        {management ? (
+          <SmsTemplateManager
+            onSelect={setMessageText}
+            templates={management.templates}
+          />
+        ) : null}
+      </div>
       {reporting ? <SmsUsageDashboard data={reporting} /> : null}
       {reporting ? <SmsRecentBatches batches={reporting.latestBatches} /> : null}
     </div>

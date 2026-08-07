@@ -133,6 +133,12 @@ export async function createLoanForBorrowerAction(
   const loanId = createDocumentId("loan");
   const now = new Date().toISOString();
   const amount = readNumber(formData, "amount");
+  const startDate = readDate(formData, "start_date");
+  const endDate = readDate(formData, "end_date");
+
+  if (new Date(endDate).getTime() <= new Date(startDate).getTime()) {
+    throw new Error("end_date must be after start_date.");
+  }
 
   await createTenantDocument("loans", lender.id, loanId, {
     borrower_id: borrowerId,
@@ -141,8 +147,8 @@ export async function createLoanForBorrowerAction(
     daily_payment: readNumber(formData, "daily_payment"),
     total_paid: 0,
     remaining_amount: amount,
-    start_date: readDate(formData, "start_date"),
-    end_date: readDate(formData, "end_date"),
+    start_date: startDate,
+    end_date: endDate,
     status: "active",
     qr_code: loanId,
     search_text: createLoanSearchText({

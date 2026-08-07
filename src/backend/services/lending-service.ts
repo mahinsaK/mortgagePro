@@ -46,6 +46,7 @@ export type LoanRow = {
 
 export type BorrowerProfileData = {
   borrower: BorrowerRow | null;
+  currency: string;
   loans: LoanRow[];
   pageInfo: PageInfo;
 };
@@ -177,7 +178,12 @@ export async function getBorrowerProfileData(
   });
 
   if (!lender) {
-    return { borrower: null, loans: [], pageInfo: emptyPageInfo(pagination) };
+    return {
+      borrower: null,
+      currency: "USD",
+      loans: [],
+      pageInfo: emptyPageInfo(pagination),
+    };
   }
 
   const borrowers = await listTenantDocuments("borrowers", lender.id, [
@@ -197,7 +203,12 @@ export async function getBorrowerProfileData(
   const borrower = borrowers.documents[0];
 
   if (!borrower) {
-    return { borrower: null, loans: [], pageInfo: emptyPageInfo(pagination) };
+    return {
+      borrower: null,
+      currency: lender.currency,
+      loans: [],
+      pageInfo: emptyPageInfo(pagination),
+    };
   }
 
   const loanFilters = [
@@ -260,6 +271,7 @@ export async function getBorrowerProfileData(
       activeLoanCount: activeLoans.total,
       completedLoanCount: completedLoans.total,
     },
+    currency: lender.currency,
     loans: loanRows,
     pageInfo: toPageInfo(loans.total, pagination),
   };

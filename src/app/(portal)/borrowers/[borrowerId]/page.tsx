@@ -17,7 +17,7 @@ export default async function BorrowerProfilePage({
   const { borrowerId } = await params;
   const { page, status } = await searchParams;
   const loanStatus = status === "completed" ? "completed" : undefined;
-  const { borrower, loans, pageInfo } = await getBorrowerProfileData(
+  const { borrower, currency, loans, pageInfo } = await getBorrowerProfileData(
     borrowerId,
     {
       page: Number(page) || 1,
@@ -43,7 +43,11 @@ export default async function BorrowerProfilePage({
           </div>
         </div>
         <div className="flex flex-wrap gap-2 sm:shrink-0 sm:justify-end">
-          <CreateLoanForm borrowerId={borrower.id} />
+          <CreateLoanForm
+            borrowerId={borrower.id}
+            currency={currency}
+            defaultStartDate={toColomboDateInputValue(new Date())}
+          />
           <Link
             className="flex h-10 items-center rounded-md border border-[#cfd8e3] px-4 text-sm font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
             href="/borrowers"
@@ -85,6 +89,18 @@ export default async function BorrowerProfilePage({
       </section>
     </div>
   );
+}
+
+function toColomboDateInputValue(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "Asia/Colombo",
+    year: "numeric",
+  }).formatToParts(date);
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+
+  return `${value.year}-${value.month}-${value.day}`;
 }
 
 function SummaryCard({ label, value }: { label: string; value: string }) {

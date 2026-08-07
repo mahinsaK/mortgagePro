@@ -1,3 +1,5 @@
+import { getPrimaryLender } from "@/backend/services/lender-service";
+import { getSmsManagementData } from "@/backend/services/sms-management-service";
 import { SmsWorkbench } from "@/frontend/components/sms/sms-workbench";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +15,8 @@ export default async function SmsPage({
   }>;
 }) {
   const { count, message, phone, status } = await searchParams;
+  const lender = await getPrimaryLender();
+  const management = lender ? await getSmsManagementData(lender.id) : null;
 
   return (
     <div>
@@ -23,6 +27,7 @@ export default async function SmsPage({
 
       <SmsWorkbench
         count={count}
+        management={management}
         message={message}
         phone={phone}
         status={status}

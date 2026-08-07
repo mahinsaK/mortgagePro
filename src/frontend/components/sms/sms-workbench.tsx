@@ -7,6 +7,9 @@ import {
   sendManualSmsAction,
   sendSelectedSmsAction,
 } from "@/backend/actions/sms-actions";
+import type { SmsManagementData } from "@/backend/services/sms-management-service";
+import { SmsAccountPanel } from "./sms-account-panel";
+import { SmsTemplateManager } from "./sms-template-manager";
 
 type Recipient = {
   id: string;
@@ -17,32 +20,19 @@ type Recipient = {
 
 type SmsWorkbenchProps = {
   count?: string;
+  management?: SmsManagementData | null;
   message?: string;
   phone?: string;
   status?: string;
 };
 
-const templates = [
-  {
-    label: "Loan welcome",
-    description: "For new loan customers",
-    message:
-      "Welcome. Your loan has been created successfully. Thank you for choosing us.",
-  },
-  {
-    label: "Payment reminder",
-    description: "For daily or upcoming payments",
-    message: "Hello, this is a reminder about your scheduled loan payment.",
-  },
-  {
-    label: "Loan completed",
-    description: "For completed loan accounts",
-    message:
-      "Thank you. Your loan has been completed successfully. We appreciate your business.",
-  },
-];
-
-export function SmsWorkbench({ count, message, phone, status }: SmsWorkbenchProps) {
+export function SmsWorkbench({
+  count,
+  management,
+  message,
+  phone,
+  status,
+}: SmsWorkbenchProps) {
   const [customNumber, setCustomNumber] = useState("");
   const [customNumberError, setCustomNumberError] = useState("");
   const [messageText, setMessageText] = useState("");
@@ -144,6 +134,7 @@ export function SmsWorkbench({ count, message, phone, status }: SmsWorkbenchProp
 
   return (
     <div className="grid gap-6">
+      {management ? <SmsAccountPanel management={management} /> : null}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm md:p-5">
           <div className="mb-5">
@@ -287,7 +278,12 @@ export function SmsWorkbench({ count, message, phone, status }: SmsWorkbenchProp
         <QuickSmsPanel />
       </div>
 
-      <TemplateCards onSelect={setMessageText} />
+      {management ? (
+        <SmsTemplateManager
+          onSelect={setMessageText}
+          templates={management.templates}
+        />
+      ) : null}
     </div>
   );
 }
@@ -406,45 +402,6 @@ function SelectedRecipients({
         ) : null}
       </div>
     </div>
-  );
-}
-
-function TemplateCards({ onSelect }: { onSelect: (message: string) => void }) {
-  return (
-    <section className="rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-[#15191f]">
-          Message templates
-        </h2>
-        <span className="text-xs font-semibold text-[#657386]">
-          Click to fill
-        </span>
-      </div>
-      <div className="mt-4 grid gap-3 lg:grid-cols-3">
-        {templates.map((template) => (
-          <button
-            className="rounded-md border border-[#dfe5ec] bg-white p-3 text-left transition hover:border-[#bfdbfe] hover:bg-[#f8fafc]"
-            key={template.label}
-            onClick={() => onSelect(template.message)}
-            type="button"
-          >
-            <span className="flex items-start justify-between gap-3">
-              <span>
-                <span className="block text-sm font-semibold text-[#15191f]">
-                  {template.label}
-                </span>
-                <span className="mt-1 block text-xs text-[#657386]">
-                  {template.description}
-                </span>
-              </span>
-              <span className="shrink-0 rounded-md bg-[#e0ecff] px-2 py-1 text-xs font-semibold text-[#1d4ed8]">
-                Use
-              </span>
-            </span>
-          </button>
-        ))}
-      </div>
-    </section>
   );
 }
 

@@ -1,13 +1,74 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { SmsController } from "@/backend/modules/sms/controller";
 import { SmsService } from "@/backend/modules/sms/service";
 import { getPrimaryLender } from "@/backend/services/lender-service";
+import {
+  createSmsTemplate,
+  deleteSmsTemplate,
+  requestSmsSenderId,
+  SmsManagementError,
+  updateSmsTemplate,
+} from "@/backend/services/sms-management-service";
 import { getAllBorrowerSmsRecipients } from "@/backend/services/sms-recipient-service";
 import { TextlkSmsProvider } from "@/backend/services/textlk-sms-provider";
 
 const SMS_SEND_BATCH_SIZE = 20;
+
+export type SmsManagementActionState = {
+  status: "idle" | "error" | "success";
+  message: string;
+  operation?: "sender" | "template_create" | "template_update";
+};
+
+export async function requestSmsSenderAction(
+  _previousState: SmsManagementActionState,
+  formData: FormData,
+): Promise<SmsManagementActionState> {
+  return runManagementAction("sender", async (lenderId) => {
+    await requestSmsSenderId(lenderId, readField(formData, "sender_id"));
+  }, "Sender ID request submitted for review.");
+}
+
+export async function createSmsTemplateAction(
+  _previousState: SmsManagementActionState,
+  formData: FormData,
+): Promise<SmsManagementActionState> {
+  return runManagementAction("template_create", async (lenderId) => {
+    await createSmsTemplate(
+      lenderId,
+      readField(formData, "name"),
+      readField(formData, "message"),
+    );
+  }, "Message template saved.");
+}
+
+export async function updateSmsTemplateAction(
+  _previousState: SmsManagementActionState,
+  formData: FormData,
+): Promise<SmsManagementActionState> {
+  return runManagementAction("template_update", async (lenderId) => {
+    await updateSmsTemplate(
+      lenderId,
+      readField(formData, "template_id"),
+      readField(formData, "name"),
+      readField(formData, "message"),
+    );
+  }, "Message template updated.");
+}
+
+export async function deleteSmsTemplateAction(formData: FormData) {
+  const lender = await getPrimaryLender();
+
+  if (!lender) {
+    return;
+  }
+
+  await deleteSmsTemplate(lender.id, readField(formData, "template_id"));
+  revalidatePath("/sms");
+}
 
 export async function sendManualSmsAction(formData: FormData) {
   const result = await sendSmsToNumbers({
@@ -145,4 +206,32 @@ function redirectWithError(message: string): never {
   });
 
   redirect(`/sms?${params.toString()}`);
+}
+
+async function runManagementAction(
+  operation: NonNullable<SmsManagementActionState["operation"]>,
+  action: (lenderId: string) => Promise<void>,
+  successMessage: string,
+): Promise<SmsManagementActionState> {
+  const lender = await getPrimaryLender();
+
+  if (!lender) {
+    return { status: "error", message: "Lender account not found.", operation };
+  }
+
+  try {
+    await action(lender.id);
+    revalidatePath("/sms");
+    return { status: "success", message: successMessage, operation };
+  } catch (error) {
+    if (error instanceof SmsManagementError) {
+      return { status: "error", message: error.message, operation };
+    }
+
+    return {
+      status: "error",
+      message: "The SMS setting could not be saved. Please try again.",
+      operation,
+    };
+  }
 }

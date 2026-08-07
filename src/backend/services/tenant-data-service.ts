@@ -2,7 +2,16 @@ import type { Models } from "node-appwrite";
 import { appwriteServerConfig } from "@/backend/appwrite/config";
 import { databases, Query } from "@/backend/appwrite/server-client";
 
-export type TenantCollection = "borrowers" | "collectors" | "loans" | "payments";
+export type TenantCollection =
+  | "borrowers"
+  | "collectors"
+  | "loans"
+  | "payments"
+  | "smsAccounts"
+  | "smsSenderRequests"
+  | "smsTemplates"
+  | "smsMonthlyUsage"
+  | "smsSendLogs";
 export type TenantDocument = Models.Document & Record<string, unknown>;
 
 export class TenantResourceNotFoundError extends Error {

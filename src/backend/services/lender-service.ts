@@ -82,3 +82,14 @@ export async function getPrimaryLender(): Promise<LenderProfile | null> {
 
   return null;
 }
+
+export async function getLenderCurrencyById(lenderId: string) {
+  const lender = await databases.getDocument({
+    databaseId: appwriteServerConfig.databaseId,
+    collectionId: appwriteServerConfig.collections.lenders,
+    documentId: lenderId,
+    queries: [Query.select(["currency"])],
+  });
+
+  return normalizeCurrency(String(lender.currency ?? ""));
+}

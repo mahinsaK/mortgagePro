@@ -14,12 +14,14 @@ type LoanPreview = {
 
 type CollectorScannerProps = {
   collectAction: (formData: FormData) => void | Promise<void>;
+  currency: string;
   message?: string;
   status?: string;
 };
 
 export function CollectorScanner({
   collectAction,
+  currency,
   message,
   status,
 }: CollectorScannerProps) {
@@ -261,7 +263,10 @@ export function CollectorScanner({
                   type="button"
                 >
                   Use scheduled amount ·{" "}
-                  {formatMoney(Math.min(loan.dailyPayment, loan.remainingAmount))}
+                  {formatMoney(
+                    Math.min(loan.dailyPayment, loan.remainingAmount),
+                    currency,
+                  )}
                 </button>
 
                 <button
@@ -286,11 +291,11 @@ export function CollectorScanner({
                     <Detail label="Borrower" value={loan.borrowerName} />
                     <Detail
                       label="Daily payment"
-                      value={formatMoney(loan.dailyPayment)}
+                      value={formatMoney(loan.dailyPayment, currency)}
                     />
                     <Detail
                       label="Remaining"
-                      value={formatMoney(loan.remainingAmount)}
+                      value={formatMoney(loan.remainingAmount, currency)}
                     />
                   </dl>
                 ) : null}
@@ -338,9 +343,10 @@ function StatusMessage({
   );
 }
 
-function formatMoney(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    currency: "USD",
+function formatMoney(value: number, currency: string) {
+  return new Intl.NumberFormat(currency === "LKR" ? "en-LK" : "en-US", {
+    currency,
+    currencyDisplay: "code",
     style: "currency",
   }).format(value);
 }

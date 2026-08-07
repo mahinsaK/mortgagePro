@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { Account, Client, Databases } from "node-appwrite";
+import { Account, Client, Databases, Users } from "node-appwrite";
 import { loadScriptEnv } from "./lib/load-env.mjs";
 
 const env = loadScriptEnv();
@@ -9,14 +9,6 @@ const config = {
   databaseId: requireEnv("NEXT_PUBLIC_APPWRITE_DATABASE_ID"),
   runtimeKey: requireEnv("APPWRITE_RUNTIME_API_KEY"),
   setupKey: requireEnv("APPWRITE_SETUP_API_KEY"),
-  email:
-    env.ISOLATION_TEST_LENDER_EMAIL ||
-    env.DEMO_LENDER_EMAIL ||
-    requireEnv("ISOLATION_TEST_LENDER_EMAIL"),
-  password:
-    env.ISOLATION_TEST_LENDER_PASSWORD ||
-    env.DEMO_LENDER_PASSWORD ||
-    requireEnv("ISOLATION_TEST_LENDER_PASSWORD"),
   collections: {
     lenders: requireEnv("NEXT_PUBLIC_APPWRITE_LENDERS_COLLECTION_ID"),
     borrowers: requireEnv("NEXT_PUBLIC_APPWRITE_BORROWERS_COLLECTION_ID"),
@@ -32,6 +24,7 @@ const config = {
 
 const setupDatabases = createDatabasesWithKey(config.setupKey);
 const runtimeDatabases = createDatabasesWithKey(config.runtimeKey);
+const setupUsers = createUsersWithKey(config.setupKey);
 const loginClient = new Client()
   .setEndpoint(config.endpoint)
   .setProject(config.projectId)
@@ -41,11 +34,24 @@ let sessionAccount;
 let guardProbe;
 let runtimeProbe;
 let directCreateProbe;
+let testUserId;
 
 try {
+  const suffix = randomBytes(6).toString("hex");
+  testUserId = id(`isolation_user_${suffix}`);
+  const email = `isolation-${suffix}@mortgagepro.local`;
+  const password = `${randomBytes(24).toString("base64url")}Aa1!`;
+
+  await setupUsers.create({
+    userId: testUserId,
+    email,
+    password,
+    name: "Isolation verifier",
+  });
+
   const session = await loginAccount.createEmailPasswordSession({
-    email: config.email,
-    password: config.password,
+    email,
+    password,
   });
 
   if (!session.secret) {
@@ -58,8 +64,6 @@ try {
     .setSession(session.secret);
   const sessionDatabases = new Databases(sessionClient);
   sessionAccount = new Account(sessionClient);
-  const suffix = randomBytes(6).toString("hex");
-
   guardProbe = makeProbe(`guard_${suffix}`, session.userId);
   runtimeProbe = makeProbe(`runtime_${suffix}`, session.userId);
   directCreateProbe = makeProbe(`direct_${suffix}`, session.userId);
@@ -125,6 +129,14 @@ try {
       // The verification result is more important than logout cleanup errors.
     }
   }
+
+  if (testUserId) {
+    try {
+      await setupUsers.delete({ userId: testUserId });
+    } catch {
+      console.error("Cleanup warning for the temporary isolation user.");
+    }
+  }
 }
 
 function createDatabasesWithKey(key) {
@@ -133,6 +145,14 @@ function createDatabasesWithKey(key) {
     .setProject(config.projectId)
     .setKey(key);
   return new Databases(client);
+}
+
+function createUsersWithKey(key) {
+  const client = new Client()
+    .setEndpoint(config.endpoint)
+    .setProject(config.projectId)
+    .setKey(key);
+  return new Users(client);
 }
 
 function collectionNames() {
@@ -188,6 +208,7 @@ function makeProbe(prefix, appwriteUserId) {
         name: "Isolation collector",
         contact_info: "",
         password_hash: "probe:probe",
+        session_version: 1,
         status: "active",
         created_at: now,
       },

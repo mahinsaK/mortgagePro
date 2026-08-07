@@ -13,13 +13,24 @@ const client = new Client()
   .setKey(apiKey);
 const project = new Project(client);
 
-await project.updateSessionDurationPolicy({
-  duration: NINETY_DAYS_IN_SECONDS,
-});
-await project.updateSessionInvalidationPolicy({ enabled: true });
+try {
+  await project.updateSessionDurationPolicy({
+    duration: NINETY_DAYS_IN_SECONDS,
+  });
+  await project.updateSessionInvalidationPolicy({ enabled: true });
 
-console.log("Appwrite lender sessions now use a 90-day maximum duration.");
-console.log("Lender password changes now invalidate existing sessions.");
+  console.log("Appwrite lender sessions now use a 90-day maximum duration.");
+  console.log("Lender password changes now invalidate existing sessions.");
+} catch (error) {
+  if (error?.code === 401 && error?.type === "general_unauthorized_scope") {
+    console.error(
+      "APPWRITE_SETUP_API_KEY needs both policies.write and project.policies.write. Add those scopes in Appwrite Console, then run this command again.",
+    );
+    process.exitCode = 1;
+  } else {
+    throw error;
+  }
+}
 
 function requireEnv(name) {
   const value = env[name];

@@ -223,8 +223,8 @@ npm run appwrite:auth:configure
 
 This sets Appwrite lender sessions to a 90-day maximum and makes password
 changes invalidate existing lender sessions. The setup key needs the
-`project.policies.write` scope for this command. The running application does
-not need that scope.
+`policies.write` and `project.policies.write` scopes for this command. The
+running application does not need either scope.
 
 The scripts are designed to be safely rerun when a collection, attribute, or
 index already exists.

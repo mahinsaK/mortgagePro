@@ -23,8 +23,10 @@ const config = {
     collectors: requireEnv("NEXT_PUBLIC_APPWRITE_COLLECTORS_COLLECTION_ID"),
     loans: requireEnv("NEXT_PUBLIC_APPWRITE_LOANS_COLLECTION_ID"),
     payments: requireEnv("NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID"),
-    authRateLimits: requireEnv("APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID"),
-    securityEvents: requireEnv("APPWRITE_SECURITY_EVENTS_COLLECTION_ID"),
+    authRateLimits:
+      env.APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID || "auth_rate_limits",
+    securityEvents:
+      env.APPWRITE_SECURITY_EVENTS_COLLECTION_ID || "security_events",
   },
 };
 

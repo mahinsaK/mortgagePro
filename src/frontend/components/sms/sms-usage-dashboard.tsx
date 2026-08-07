@@ -11,15 +11,21 @@ export type SmsReportingData = {
 
 export function SmsUsageDashboard({ data }: { data: SmsReportingData }) {
   return (
-    <div className="grid gap-6">
-      <section>
-        <div className="mb-4">
-          <p className="text-sm font-medium text-[#657386]">SMS usage</p>
-          <h2 className="mt-1 text-lg font-semibold text-[#15191f]">
+    <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#657386]">
+            SMS usage
+          </p>
+          <h2 className="mt-1 text-base font-semibold text-[#15191f]">
             Current month
           </h2>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <p className="text-sm font-semibold text-[#1d4ed8]">
+          {data.current.remainingUnits.toLocaleString("en-US")} units remaining
+        </p>
+      </div>
+        <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-6">
           <Metric label="Monthly quota" value={data.current.quota} />
           <Metric label="Used units" value={data.current.sentUnits} />
           <Metric label="Reserved units" value={data.current.reservedUnits} />
@@ -27,18 +33,17 @@ export function SmsUsageDashboard({ data }: { data: SmsReportingData }) {
           <Metric label="Successful recipients" value={data.current.sentRecipients} />
           <Metric label="Failed recipients" value={data.current.failedRecipients} />
         </div>
-      </section>
 
-      <details className="group overflow-hidden rounded-lg border border-[#dfe5ec] bg-white shadow-sm">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-semibold text-[#1d4ed8] marker:hidden md:px-5">
+      <details className="group mt-3 border-t border-[#e7ebf0] pt-1">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3 text-sm font-semibold text-[#1d4ed8] marker:hidden">
           <span className="group-open:hidden">View 12-month report</span>
           <span className="hidden group-open:inline">Hide 12-month report</span>
           <span aria-hidden="true" className="text-lg transition group-open:rotate-180">
             ↓
           </span>
         </summary>
-        <section className="border-t border-[#e7ebf0]">
-          <div className="px-4 py-4 md:px-5">
+        <section className="overflow-hidden rounded-md border border-[#e7ebf0]">
+          <div className="px-3 py-3">
             <h3 className="text-lg font-semibold text-[#15191f]">
               12-month usage
             </h3>
@@ -78,22 +83,31 @@ export function SmsUsageDashboard({ data }: { data: SmsReportingData }) {
           </div>
         </section>
       </details>
-    </div>
+    </section>
   );
 }
 
 export function SmsRecentBatches({ batches }: { batches: SmsBatchSummary[] }) {
   return (
-    <section className="overflow-hidden rounded-lg border border-[#dfe5ec] bg-white shadow-sm">
-      <div className="border-b border-[#e7ebf0] px-4 py-4 md:px-5">
-        <h2 className="text-lg font-semibold text-[#15191f]">
-          Recent SMS batches
-        </h2>
-        <p className="mt-1 text-sm text-[#657386]">
-          Summary only—phone numbers and message text are not stored.
-        </p>
-      </div>
-      <div className="divide-y divide-[#e7ebf0]">
+    <details className="group overflow-hidden rounded-lg border border-[#dfe5ec] bg-white shadow-sm">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 marker:hidden">
+        <div>
+          <h2 className="text-base font-semibold text-[#15191f]">
+            Recent SMS batches
+          </h2>
+          <p className="mt-1 text-xs text-[#657386]">
+            {batches.length} recent batch{batches.length === 1 ? "" : "es"} · no
+            phone numbers or message text stored
+          </p>
+        </div>
+        <span className="text-sm font-semibold text-[#1d4ed8] group-open:hidden">
+          View
+        </span>
+        <span className="hidden text-sm font-semibold text-[#1d4ed8] group-open:inline">
+          Hide
+        </span>
+      </summary>
+      <div className="divide-y divide-[#e7ebf0] border-t border-[#e7ebf0]">
         {batches.map((batch) => (
           <article className="px-4 py-3 md:px-5" key={batch.id}>
             <div className="flex flex-wrap items-start justify-between gap-2">
@@ -118,15 +132,15 @@ export function SmsRecentBatches({ batches }: { batches: SmsBatchSummary[] }) {
           </p>
         ) : null}
       </div>
-    </section>
+    </details>
   );
 }
 
 function Metric({ label, value }: { label: string; value: number }) {
   return (
-    <article className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
-      <p className="text-sm font-medium text-[#657386]">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-[#15191f]">
+    <article className="rounded-md bg-[#f8fafc] px-3 py-2.5">
+      <p className="text-xs font-medium text-[#657386]">{label}</p>
+      <p className="mt-1 text-lg font-semibold text-[#15191f]">
         {value.toLocaleString("en-US")}
       </p>
     </article>

@@ -26,64 +26,70 @@ export function SmsAccountPanel({
   const suspended = management.account?.status === "suspended";
 
   return (
-    <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm md:p-5">
-      <div className="mb-5">
-        <p className="text-sm font-medium text-[#657386]">SMS settings</p>
-        <h2 className="mt-1 text-lg font-semibold text-[#15191f]">
+    <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
+      <div className="mb-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-[#657386]">
+          SMS settings
+        </p>
+        <h2 className="mt-1 text-base font-semibold text-[#15191f]">
           Sender and automatic payments
         </h2>
       </div>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-start">
-        <div>
+      <div className="grid gap-3 xl:grid-cols-2">
+        <div className="rounded-md bg-[#f8fafc] p-3">
           <p className="text-sm font-medium text-[#657386]">SMS sender</p>
-          <h2 className="mt-1 text-lg font-semibold text-[#15191f]">
+          <h3 className="mt-1 text-base font-semibold text-[#15191f]">
             {management.activeSender
               ? management.activeSender.senderId
               : "No approved sender ID"}
-          </h2>
+          </h3>
           <SenderStatus management={management} suspended={suspended} />
+
+          <form action={action} className="mt-3 grid gap-2">
+            <label className="text-sm font-medium text-[#2d3745]">
+              {management.activeSender
+                ? "Request a replacement sender ID"
+                : "Request a sender ID"}
+              <input
+                autoCapitalize="none"
+                className="mt-1.5 h-10 w-full rounded-md border border-[#cfd8e3] bg-white px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe] disabled:bg-[#f1f5f9]"
+                disabled={Boolean(management.pendingRequest) || isPending}
+                maxLength={11}
+                minLength={3}
+                name="sender_id"
+                pattern="[A-Za-z][A-Za-z0-9]{2,10}"
+                placeholder="MortgagePro"
+                required
+              />
+            </label>
+            <p className="text-xs leading-4 text-[#657386]">
+              3–11 letters or numbers, beginning with a letter. Administrator
+              approval is required.
+            </p>
+            {state.message ? (
+              <p
+                aria-live="polite"
+                className={
+                  state.status === "success"
+                    ? "text-sm font-medium text-[#166534]"
+                    : "text-sm font-medium text-[#b91c1c]"
+                }
+              >
+                {state.message}
+              </p>
+            ) : null}
+            <button
+              className="inline-flex h-10 items-center justify-center rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2] sm:justify-self-start"
+              disabled={Boolean(management.pendingRequest) || isPending}
+              type="submit"
+            >
+              {isPending ? "Submitting…" : "Request sender ID"}
+            </button>
+          </form>
         </div>
 
-        <form action={action} className="grid gap-3">
-          <label className="text-sm font-medium text-[#2d3745]">
-            {management.activeSender
-              ? "Request a replacement sender ID"
-              : "Request a sender ID"}
-            <input
-              autoCapitalize="none"
-              className="mt-2 h-11 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe] disabled:bg-[#f1f5f9]"
-              disabled={Boolean(management.pendingRequest) || isPending}
-              maxLength={11}
-              minLength={3}
-              name="sender_id"
-              pattern="[A-Za-z][A-Za-z0-9]{2,10}"
-              placeholder="MortgagePro"
-              required
-            />
-          </label>
-          <p className="text-xs leading-5 text-[#657386]">
-            Use 3–11 letters or numbers and begin with a letter. An administrator
-            will approve it after it is approved in Text.lk.
-          </p>
-          {state.message ? (
-            <p
-              aria-live="polite"
-              className={state.status === "success" ? "text-sm font-medium text-[#166534]" : "text-sm font-medium text-[#b91c1c]"}
-            >
-              {state.message}
-            </p>
-          ) : null}
-          <button
-            className="inline-flex h-11 items-center justify-center rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
-            disabled={Boolean(management.pendingRequest) || isPending}
-            type="submit"
-          >
-            {isPending ? "Submitting…" : "Request sender ID"}
-          </button>
-        </form>
+        <AutomaticPaymentSettings management={management} />
       </div>
-
-      <AutomaticPaymentSettings management={management} />
     </section>
   );
 }
@@ -106,19 +112,14 @@ function AutomaticPaymentSettings({
   const canConfigure = Boolean(management.account && management.templates.length);
 
   return (
-    <form
-      action={action}
-      className="mt-6 grid gap-4 border-t border-[#e7ebf0] pt-5"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="max-w-2xl">
-          <h3 className="text-base font-semibold text-[#15191f]">
+    <form action={action} className="grid gap-3 rounded-md bg-[#f8fafc] p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-[#15191f]">
             Automatic payment message
           </h3>
-          <p className="mt-1 text-sm leading-6 text-[#657386]">
-            Send the selected template to the borrower only after a collector’s
-            payment is recorded successfully. An SMS problem never reverses the
-            payment.
+          <p className="mt-1 text-xs leading-4 text-[#657386]">
+            Sends after a payment succeeds. SMS failure never reverses payment.
           </p>
         </div>
         <label className="inline-flex cursor-pointer items-center gap-3">
@@ -138,30 +139,43 @@ function AutomaticPaymentSettings({
         </label>
       </div>
 
-      <label className="text-sm font-medium text-[#2d3745]">
-        Payment message template
-        <select
-          className="mt-2 h-11 w-full rounded-md border border-[#cfd8e3] bg-white px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe] disabled:bg-[#f1f5f9]"
-          disabled={!canConfigure || isPending}
-          name="template_id"
-          onChange={(event) => setTemplateId(event.target.value)}
-          required={enabled}
-          value={templateId}
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <label className="text-sm font-medium text-[#2d3745]">
+          Payment template
+          <select
+            className="mt-1.5 h-10 w-full rounded-md border border-[#cfd8e3] bg-white px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe] disabled:bg-[#f1f5f9]"
+            disabled={!canConfigure || isPending}
+            name="template_id"
+            onChange={(event) => setTemplateId(event.target.value)}
+            required={enabled}
+            value={templateId}
+          >
+            <option value="">Choose a saved template</option>
+            {management.templates.map((template) => (
+              <option key={template.id} value={template.id}>
+                {template.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          className="h-10 rounded-md bg-[#15191f] px-3 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
+          disabled={!canConfigure || isPending || (enabled && !templateId)}
+          type="submit"
         >
-          <option value="">Choose a saved template</option>
-          {management.templates.map((template) => (
-            <option key={template.id} value={template.id}>
-              {template.name}
-            </option>
-          ))}
-        </select>
-      </label>
+          {isPending ? "Saving…" : "Save"}
+        </button>
+      </div>
 
-      <p className="text-xs leading-5 text-[#657386]">
-        Available placeholders: {"{{borrowerName}}"}, {"{{amount}}"},{" "}
-        {"{{remainingBalance}}"}, {"{{paymentDate}}"}, and{" "}
-        {"{{companyName}}"}.
-      </p>
+      <details className="text-xs leading-5 text-[#657386]">
+        <summary className="cursor-pointer font-semibold text-[#526174]">
+          Template placeholders
+        </summary>
+        <p className="mt-1">
+          {"{{borrowerName}}"}, {"{{amount}}"}, {"{{remainingBalance}}"},{" "}
+          {"{{paymentDate}}"}, {"{{companyName}}"}
+        </p>
+      </details>
 
       {!canConfigure ? (
         <p className="text-sm font-medium text-[#9a6700]">
@@ -181,13 +195,6 @@ function AutomaticPaymentSettings({
           {state.message}
         </p>
       ) : null}
-      <button
-        className="h-11 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2] sm:justify-self-start"
-        disabled={!canConfigure || isPending || (enabled && !templateId)}
-        type="submit"
-      >
-        {isPending ? "Saving…" : "Save automatic message setting"}
-      </button>
     </form>
   );
 }

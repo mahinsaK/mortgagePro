@@ -25,7 +25,7 @@ export function SmsTemplateManager({
   const [isCreating, setIsCreating] = useState(false);
 
   return (
-    <section className="rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm">
+    <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-[#15191f]">
@@ -54,7 +54,7 @@ export function SmsTemplateManager({
         <CreateTemplateForm onSaved={() => setIsCreating(false)} />
       ) : null}
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+      <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
         {templates.map((template) => (
           <TemplateCard
             key={template.id}
@@ -126,7 +126,7 @@ function TemplateCard({
     return (
       <form
         action={action}
-        className="grid gap-3 rounded-md border border-[#bfdbfe] bg-[#f8fafc] p-3"
+        className="grid w-[min(280px,85vw)] shrink-0 gap-3 rounded-md border border-[#bfdbfe] bg-[#f8fafc] p-3"
       >
         <input name="template_id" type="hidden" value={template.id} />
         <TemplateFields disabled={isPending} template={template} />
@@ -152,7 +152,7 @@ function TemplateCard({
   }
 
   return (
-    <article className="rounded-md border border-[#dfe5ec] bg-white p-3">
+    <article className="w-[min(280px,85vw)] shrink-0 rounded-md border border-[#dfe5ec] bg-white p-3">
       <div className="flex items-start justify-between gap-3">
         <button
           className="min-w-0 flex-1 text-left"
@@ -162,10 +162,10 @@ function TemplateCard({
           <span className="block truncate text-sm font-semibold text-[#15191f]">
             {template.name}
           </span>
-          <span className="mt-2 line-clamp-3 block text-xs leading-5 text-[#657386]">
+          <span className="mt-2 line-clamp-2 block text-xs leading-5 text-[#657386]">
             {template.message}
           </span>
-          <span className="mt-3 inline-block rounded-md bg-[#e0ecff] px-2 py-1 text-xs font-semibold text-[#1d4ed8]">
+          <span className="mt-2 inline-block rounded-md bg-[#e0ecff] px-2 py-1 text-xs font-semibold text-[#1d4ed8]">
             Use message
           </span>
         </button>

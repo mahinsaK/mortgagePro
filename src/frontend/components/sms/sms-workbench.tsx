@@ -154,13 +154,15 @@ export function SmsWorkbench({
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4 md:gap-5">
       <StatusBanner count={count} message={message} phone={phone} status={status} />
-      <QuickSmsPanel
-        requestId={requestIds?.quick ?? ""}
-        sendingEnabled={sendingEnabled}
-      />
-      {management ? <SmsAccountPanel management={management} /> : null}
+      <div className="grid items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <QuickSmsPanel
+          requestId={requestIds?.quick ?? ""}
+          sendingEnabled={sendingEnabled}
+        />
+        {management ? <SmsAccountPanel management={management} /> : null}
+      </div>
       {!sendingEnabled ? (
         <div className="rounded-md border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 text-sm font-medium text-[#9a3412]">
           Sending is unavailable until the account is active, a sender ID is
@@ -168,17 +170,18 @@ export function SmsWorkbench({
           and review history.
         </div>
       ) : null}
-      <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm md:p-5">
-          <div className="mb-5">
+      <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
+          <div className="mb-4">
             <p className="text-sm font-medium text-[#657386]">Selected SMS</p>
             <h2 className="mt-1 text-lg font-semibold">Message recipients</h2>
           </div>
 
-          <div className="grid gap-5">
+          <div className="grid gap-4">
+            <div className="grid gap-4 lg:grid-cols-2">
             <label className="text-sm font-medium text-[#2d3745]">
               Search borrowers
               <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                <div className="flex h-11 flex-1 items-center rounded-md border border-[#cfd8e3] px-3 transition focus-within:border-[#1d4ed8] focus-within:ring-2 focus-within:ring-[#dbeafe]">
+                <div className="flex h-10 flex-1 items-center rounded-md border border-[#cfd8e3] px-3 transition focus-within:border-[#1d4ed8] focus-within:ring-2 focus-within:ring-[#dbeafe]">
                   <Search
                     aria-hidden="true"
                     className="mr-2 shrink-0 text-[#657386]"
@@ -199,7 +202,7 @@ export function SmsWorkbench({
                   />
                 </div>
                 <button
-                  className="h-11 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
+                  className="h-10 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
                   disabled={isSearching}
                   onClick={() => void searchBorrowers()}
                   type="button"
@@ -209,19 +212,11 @@ export function SmsWorkbench({
               </div>
             </label>
 
-            <SearchResults
-              error={searchError}
-              hasSearched={hasSearched}
-              onAdd={addRecipient}
-              recipients={searchResults}
-              selectedRecipients={selectedRecipients}
-            />
-
             <label className="text-sm font-medium text-[#2d3745]">
               Add a custom phone number
               <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <input
-                  className="h-11 min-w-0 flex-1 rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+                  className="h-10 min-w-0 flex-1 rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
                   onChange={(event) => {
                     setCustomNumber(event.target.value);
                     setCustomNumberError("");
@@ -237,7 +232,7 @@ export function SmsWorkbench({
                   value={customNumber}
                 />
                 <button
-                  className="h-11 rounded-md border border-[#cfd8e3] bg-white px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc]"
+                  className="h-10 rounded-md border border-[#cfd8e3] bg-white px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc]"
                   onClick={addCustomNumber}
                   type="button"
                 >
@@ -250,6 +245,15 @@ export function SmsWorkbench({
                 </span>
               ) : null}
             </label>
+            </div>
+
+            <SearchResults
+              error={searchError}
+              hasSearched={hasSearched}
+              onAdd={addRecipient}
+              recipients={searchResults}
+              selectedRecipients={selectedRecipients}
+            />
 
             <SelectedRecipients
               onRemove={removeRecipient}
@@ -278,7 +282,7 @@ export function SmsWorkbench({
               <label className="text-sm font-medium text-[#2d3745]">
                 Message
                 <textarea
-                  className="mt-2 min-h-40 w-full resize-y rounded-md border border-[#cfd8e3] px-3 py-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+                  className="mt-2 min-h-28 w-full resize-y rounded-md border border-[#cfd8e3] px-3 py-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
                   maxLength={480}
                   name="message"
                   onChange={(event) => setMessageText(event.target.value)}
@@ -296,7 +300,7 @@ export function SmsWorkbench({
               </p>
               <div className="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
                 <button
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
                   disabled={!messageText.trim() || !sendingEnabled}
                   formAction={sendAllBorrowersSmsAction}
                   onClick={(event) => {
@@ -311,7 +315,7 @@ export function SmsWorkbench({
                   Send all borrowers
                 </button>
                 <button
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#15191f] px-5 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#15191f] px-5 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
                   disabled={
                     selectedRecipients.length === 0 || !messageText.trim()
                     || !sendingEnabled
@@ -419,7 +423,7 @@ function SelectedRecipients({
   recipients: Recipient[];
 }) {
   return (
-    <div className="min-h-20 rounded-md border border-[#dfe5ec] bg-[#f8fafc] p-3">
+    <div className="rounded-md border border-[#dfe5ec] bg-[#f8fafc] p-3">
       <div className="mb-2 flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-[#2d3745]">
           Selected recipients
@@ -470,21 +474,23 @@ function QuickSmsPanel({
   const analysis = analyzeSmsMessage(message);
 
   return (
-    <section className="rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm">
-      <div className="mb-5">
-        <p className="text-sm font-medium text-[#657386]">Quick SMS</p>
-        <h2 className="mt-1 text-lg font-semibold">Single number</h2>
+    <section className="self-start rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
+      <div className="mb-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-[#657386]">
+          Quick SMS
+        </p>
+        <h2 className="mt-1 text-base font-semibold">Single number</h2>
       </div>
 
       <form
         action={sendManualSmsAction}
-        className="grid gap-4"
+        className="grid gap-3"
       >
         <input name="request_id" type="hidden" value={requestId} />
         <label className="text-sm font-medium text-[#2d3745]">
           Phone number
           <input
-            className="mt-2 h-11 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+            className="mt-1.5 h-10 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
             name="phone_number"
             placeholder="+94 77 123 4567"
             required
@@ -495,7 +501,7 @@ function QuickSmsPanel({
         <label className="text-sm font-medium text-[#2d3745]">
           Message
           <textarea
-            className="mt-2 min-h-32 w-full resize-y rounded-md border border-[#cfd8e3] px-3 py-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+            className="mt-1.5 min-h-24 w-full resize-y rounded-md border border-[#cfd8e3] px-3 py-2 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
             maxLength={480}
             name="message"
             onChange={(event) => setMessage(event.target.value)}
@@ -511,7 +517,7 @@ function QuickSmsPanel({
         </p>
 
         <button
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#15191f] px-5 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
           disabled={!sendingEnabled || !message.trim()}
           type="submit"
         >
@@ -526,7 +532,7 @@ function QuickSmsPanel({
 function StatusBanner({ count, message, phone, status }: SmsWorkbenchProps) {
   if (status === "sent") {
     return (
-      <div className="mb-5 rounded-md border border-[#bbf7d0] bg-[#f0fdf4] px-4 py-3 text-sm font-medium text-[#166534]">
+      <div className="rounded-md border border-[#bbf7d0] bg-[#f0fdf4] px-4 py-3 text-sm font-medium text-[#166534]">
         Sent {count || "1"} SMS{count === "1" ? "" : " messages"}
         {phone ? `, first to ${phone}` : ""}.
       </div>
@@ -535,7 +541,7 @@ function StatusBanner({ count, message, phone, status }: SmsWorkbenchProps) {
 
   if (status === "partial") {
     return (
-      <div className="mb-5 rounded-md border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 text-sm font-medium text-[#9a3412]">
+      <div className="rounded-md border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 text-sm font-medium text-[#9a3412]">
         Sent {count || "some"} SMS messages. Some numbers failed.
       </div>
     );
@@ -543,7 +549,7 @@ function StatusBanner({ count, message, phone, status }: SmsWorkbenchProps) {
 
   if (status === "error") {
     return (
-      <div className="mb-5 rounded-md border border-[#fecaca] bg-[#fef2f2] px-4 py-3 text-sm font-medium text-[#991b1b]">
+      <div className="rounded-md border border-[#fecaca] bg-[#fef2f2] px-4 py-3 text-sm font-medium text-[#991b1b]">
         {message || "SMS could not be sent."}
       </div>
     );

@@ -120,11 +120,12 @@ async function ensureCollection(collection) {
 
 async function ensureAttribute(collectionId, attribute) {
   try {
-    await databases.getAttribute({
+    const existing = await databases.getAttribute({
       databaseId: config.databaseId,
       collectionId,
       key: attribute.key,
     });
+    await reconcileAttribute(collectionId, attribute, existing);
     return;
   } catch (error) {
     if (!isMissing(error)) {
@@ -189,6 +190,30 @@ async function ensureAttribute(collectionId, attribute) {
   }
 
   console.log(`Created attribute: ${collectionId}.${attribute.key}`);
+}
+
+async function reconcileAttribute(collectionId, attribute, existing) {
+  if (
+    collectionId !== config.collections.smsSendLogs ||
+    attribute.key !== "units_per_recipient" ||
+    attribute.type !== "integer" ||
+    Number(existing.max ?? 0) >= Number(attribute.max ?? 0)
+  ) {
+    return;
+  }
+
+  await databases.updateIntegerAttribute({
+    databaseId: config.databaseId,
+    collectionId,
+    key: attribute.key,
+    required: attribute.required,
+    min: attribute.min,
+    max: attribute.max,
+    xdefault: attribute.xdefault,
+  });
+  console.log(
+    `Updated attribute limits: ${collectionId}.${attribute.key} (max ${attribute.max})`,
+  );
 }
 
 async function migrateBorrowerContactFields() {

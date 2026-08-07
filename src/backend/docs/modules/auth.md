@@ -110,13 +110,19 @@ Session handling:
   modifying cookies during page rendering.
 - Invalid or inactive sessions redirect through `/auth/session/clear`, which
   expires the cookie and returns the lender to login.
+- Active lender sessions renew through `/auth/session/refresh` at most once per
+  day. Appwrite remains the source of truth for the expiry, with a configured
+  maximum of 90 days after the latest renewal.
+- Normal logout revokes only the current Appwrite device session. The settings
+  action can revoke all lender sessions, and password changes also sign out all
+  devices.
 - Appwrite outages preserve the cookie and display `/auth/unavailable`.
 - `resolvePrimaryLender()` maps the current Appwrite user to
   `lenders.appwrite_user_id`; `getPrimaryLender()` remains the service-level
   compatibility helper.
 
 Collector authentication is separate from Appwrite Auth. See
-`modules/collectors.md` for collector username login and signed 12-hour sessions.
+`modules/collectors.md` for collector username login and rolling 90-day sessions.
 
 ## Authentication abuse controls
 

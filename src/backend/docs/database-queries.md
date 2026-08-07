@@ -905,6 +905,7 @@ databases.createDocument({
   name,
   contact_info,
   password_hash,
+  session_version,
   status,
   created_at
 })

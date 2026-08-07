@@ -7,7 +7,10 @@ import { databases, Query, users } from "@/backend/appwrite/server-client";
 import { normalizeCurrency } from "@/backend/lib/currency";
 import { validateNewCollectorUsername } from "@/backend/modules/collectors/username";
 import { PaymentService } from "@/backend/modules/payments/service";
-import { hashCollectorPassword } from "@/backend/services/collector-auth-service";
+import {
+  hashCollectorPassword,
+  normalizeSessionVersion,
+} from "@/backend/services/collector-auth-service";
 import { getPrimaryLender } from "@/backend/services/lender-service";
 import {
   createBorrowerSearchText,
@@ -21,6 +24,7 @@ import {
   updateTenantDocument,
 } from "@/backend/services/tenant-data-service";
 import { normalizeOptionalPhoneNumber } from "@/shared/phone-number";
+import { clearAuthSession } from "@/backend/services/auth-session-service";
 
 export async function createBorrowerAction(formData: FormData) {
   const lender = await getRequiredLender();
@@ -327,6 +331,7 @@ export async function createCollectorAction(
         area: readOptional(formData, "area"),
       }),
       password_hash: hashCollectorPassword(password),
+      session_version: 1,
       status: readStatus(formData),
       created_at: now,
     });
@@ -358,6 +363,15 @@ export async function updateCollectorAction(
   const collectorId = readRequired(formData, "collector_id");
   const password = readOptional(formData, "password");
   const status = readStatus(formData);
+  const currentCollector = await requireTenantDocument(
+    "collectors",
+    lender.id,
+    collectorId,
+    ["$id", "session_version", "status"],
+  );
+  const currentSessionVersion = normalizeSessionVersion(
+    currentCollector.session_version,
+  );
   let phone: string;
 
   try {
@@ -387,6 +401,10 @@ export async function updateCollectorAction(
     }
 
     data.password_hash = hashCollectorPassword(password);
+  }
+
+  if (password || String(currentCollector.status ?? "") !== status) {
+    data.session_version = currentSessionVersion + 1;
   }
 
   await updateTenantDocument("collectors", lender.id, collectorId, data);
@@ -477,12 +495,16 @@ export async function updateLenderPasswordAction(
     };
   }
 
-  revalidatePath("/settings");
+  try {
+    await users.deleteSessions({ userId: lender.appwriteUserId });
+  } catch {
+    // Appwrite's password-change invalidation policy remains the primary guard.
+  }
 
-  return {
-    status: "success",
-    message: "Password updated successfully.",
-  };
+  await clearAuthSession();
+  redirect(
+    "/auth/login?status=success&message=Password+updated.+All+devices+were+signed+out.",
+  );
 }
 
 export async function updateLenderPasswordFormAction(

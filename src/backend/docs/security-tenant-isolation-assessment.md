@@ -19,7 +19,7 @@ approved for enterprise or real financial/PII production use.**
 The source branch now implements the selected critical release: deny-by-default
 collection provisioning/reconciliation, separate runtime and setup keys,
 shared tenant-aware data helpers, generic not-found behavior for cross-tenant
-IDs, collector username login, dedicated 12-hour signed sessions, active-record
+IDs, collector username login, rolling 90-day signed sessions, active-record
 revalidation, optional authentication rate limiting and security-event
 monitoring that are currently frozen for cost control, and focused security
 verification.
@@ -50,9 +50,10 @@ Direct answers:
   remain required before merge.
 - **Does the official collector payment action reject another lender's loan?**
   Yes; lookup and collection query by both loan ID and collector lender ID.
-- **Are collector cookies short-lived and revocable?** Partly in this branch:
-  they expire after 12 hours, and inactive or deleted collectors lose access
-  immediately. Changing a collector password also cancels existing cookies.
+- **Are collector cookies bounded and revocable?** Yes in this branch: they
+  expire 90 days after the last successful renewal, and inactive or deleted
+  collectors lose access immediately. Changing a collector password also
+  cancels existing cookies.
 - **Can the current overall system be trusted as an enterprise financial
   system?** No.
 - **Should real customer or financial data be added before remediation?** No.
@@ -65,7 +66,7 @@ Direct answers:
 | Separate runtime/setup Appwrite keys | Implemented in `0976933` | Runtime CRUD and setup provisioning passed |
 | Shared tenant-aware reads/writes | Implemented in `b9cbf2a` | Pending deployment |
 | Collector username login and copy UI | Implemented in source | Pending deployment |
-| 12-hour credential-bound collector sessions | Implemented in source | Pending secret/deployment |
+| Rolling 90-day credential-bound collector sessions | Implemented in source | Pending secret/deployment |
 | Tenant/session automated tests | Automated suite passing | Local/mocked coverage complete |
 | Direct Appwrite session denial verifier | Implemented in `61e6f08`, corrected in `8c7d9a8` | 28 denial checks passed July 20 |
 | Distributed authentication rate limits | Implemented but frozen by default | Historical live local probe passed; no runtime protection while frozen |
@@ -139,7 +140,7 @@ collector-ID lookup.
 Collectors are not Appwrite Auth users. In the remediated branch they
 authenticate by globally unique collector document ID plus password. Passwords
 are hashed with Node `scrypt` using a random salt. The HMAC-signed HTTP-only
-cookie contains issue/expiry claims, expires after 12 hours, and is
+cookie contains issue/expiry claims, expires 90 days after its last renewal, and is
 accepted only after `requireActiveCollectorPrincipal()` reloads the active
 collector by both collector and lender ID.
 
@@ -395,7 +396,7 @@ project ID and finally to a hard-coded development value. Production must fail
 closed when a dedicated high-entropy session secret is absent.
 
 Remediation status: **Implemented in source, pending deployment.** The cookie
-now expires after 12 hours and carries `issuedAt` and `expiresAt`.
+now uses a rolling 90-day expiry and carries `issuedAt` and `expiresAt`.
 `COLLECTOR_SESSION_SECRET` is mandatory and validated at a minimum of 32 bytes
 with no fallback. A secret-derived fingerprint binds each cookie to the current
 password hash without placing the password or password hash in the cookie.

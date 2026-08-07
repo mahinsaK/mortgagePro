@@ -1,6 +1,7 @@
 import {
   updateLenderProfileAction,
 } from "@/backend/actions/lending-actions";
+import { logoutAllLenderDevicesAction } from "@/backend/actions/auth-actions";
 import { currencyOptions } from "@/backend/lib/currency";
 import { getPrimaryLender } from "@/backend/services/lender-service";
 import { PhoneInput } from "@/frontend/components/forms/phone-input";
@@ -79,9 +80,32 @@ export default async function SettingsPage() {
         <div className="mb-5">
           <p className="text-sm font-medium text-[#657386]">Security</p>
           <h2 className="mt-1 text-lg font-semibold">Change password</h2>
+          <p className="mt-2 text-sm text-[#657386]">
+            Changing your password signs this account out on every device.
+          </p>
         </div>
 
         <LenderPasswordForm />
+      </section>
+
+      <section className="mt-5 max-w-3xl rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm md:mt-6 md:p-5">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <p className="text-sm font-medium text-[#657386]">Device sessions</p>
+            <h2 className="mt-1 text-lg font-semibold">Log out everywhere</h2>
+            <p className="mt-2 text-sm text-[#657386]">
+              Close your lender session on this device and every other device.
+            </p>
+          </div>
+          <form action={logoutAllLenderDevicesAction}>
+            <button
+              className="h-10 w-full rounded-md border border-[#dc2626] px-4 text-sm font-semibold text-[#b91c1c] transition hover:bg-[#fef2f2] sm:w-auto"
+              type="submit"
+            >
+              Log out all devices
+            </button>
+          </form>
+        </div>
       </section>
     </div>
   );

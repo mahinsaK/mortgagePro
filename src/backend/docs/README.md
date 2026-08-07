@@ -41,7 +41,7 @@ src/backend
   server-derived `lender_id`, overwrites tenant IDs on create, and strips tenant
   ID changes on update.
 - `src/backend/services/collector-auth-service.ts`
-  Resolves active collectors from signed 12-hour sessions and revalidates the
+  Resolves active collectors from rolling 90-day sessions and revalidates the
   collector record for every protected collector operation.
 - `src/backend/services/authentication-rate-limit-service.ts`
   Applies shared Appwrite-backed login, OAuth, registration, and password-reset limits.

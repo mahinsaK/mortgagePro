@@ -73,7 +73,7 @@ The app expects these core variables in `.env.local`:
 
 - `APPWRITE_RUNTIME_API_KEY` - server-only application key with user, session, and document runtime scopes.
 - `APPWRITE_SETUP_API_KEY` - local-only administration key used by setup, seed, and permission commands; do not add this key to Vercel.
-- `COLLECTOR_SESSION_SECRET` - a dedicated random secret containing at least 32 bytes; collector sessions expire after 12 hours.
+- `COLLECTOR_SESSION_SECRET` - a dedicated random secret containing at least 32 bytes; active collector sessions renew for up to 90 days.
 - `AUTH_SECURITY_CONTROLS_ENABLED` - optional feature switch. It defaults to `false`, which performs no authentication rate-limit or security-event database operations.
 - `SECURITY_MONITORING_SECRET` - required only when `AUTH_SECURITY_CONTROLS_ENABLED=true`; it hashes login identifiers and IP addresses before storage.
 - `APP_BASE_URL` - fixed application origin used for authentication callbacks, such as `http://localhost:3000` locally and the canonical HTTPS URL in production.
@@ -110,6 +110,7 @@ Create the database, collections, attributes, and indexes with:
 
 ```bash
 npm run appwrite:setup
+npm run appwrite:auth:configure
 ```
 
 You can also run the schema steps separately:

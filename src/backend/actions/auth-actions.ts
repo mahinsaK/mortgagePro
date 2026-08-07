@@ -419,6 +419,12 @@ export async function completePasswordResetAction(formData: FormData) {
     );
   }
 
+  try {
+    await users.deleteSessions({ userId });
+  } catch {
+    // Appwrite's password-change invalidation policy remains the primary guard.
+  }
+
   redirectWithAuthStatus(
     "/auth/login",
     "success",
@@ -439,6 +445,28 @@ export async function logoutAction() {
 
   await clearAuthSession();
   redirect("/auth/login");
+}
+
+export async function logoutAllLenderDevicesAction() {
+  const session = await getAuthSessionSecret();
+  let allSessionsClosed = true;
+
+  if (session) {
+    try {
+      await createAccountClient(session).deleteSessions();
+    } catch {
+      allSessionsClosed = false;
+    }
+  }
+
+  await clearAuthSession();
+  redirectWithAuthStatus(
+    "/auth/login",
+    allSessionsClosed ? "success" : "error",
+    allSessionsClosed
+      ? "All devices were signed out."
+      : "This device was signed out, but other sessions could not be closed. Try again after signing in.",
+  );
 }
 
 function formDataToRecord(formData: FormData) {

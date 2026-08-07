@@ -5,6 +5,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { HeaderActions } from "@/frontend/components/layout/header-actions";
 import { PortalSidebar } from "@/frontend/components/layout/portal-sidebar";
 import { NotificationOwnerProvider } from "@/frontend/components/notifications/notification-owner-context";
+import { SessionKeepAlive } from "@/frontend/components/auth/session-keep-alive";
 
 type Theme = "light" | "dark";
 type SidebarState = "collapsed" | "expanded";
@@ -70,6 +71,7 @@ export function PortalShell({
       key={notificationOwnerKey}
       ownerKey={notificationOwnerKey}
     >
+      <SessionKeepAlive kind="lender" />
       <div className="min-h-screen bg-[#f6f7f9] text-[#15191f]">
       {mobileMenuOpen ? (
         <button

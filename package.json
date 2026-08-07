@@ -18,6 +18,7 @@
     "e2e:seed": "node scripts/seed-appwrite-e2e-data.mjs",
     "e2e:cleanup": "node scripts/cleanup-appwrite-e2e-data.mjs",
     "appwrite:setup": "npm run appwrite:tables && npm run appwrite:indexes",
+    "appwrite:auth:configure": "node scripts/configure-appwrite-auth-policies.mjs",
     "appwrite:tables": "node scripts/create-appwrite-tables-and-attributes.mjs",
     "appwrite:indexes": "node scripts/create-appwrite-indexes.mjs",
     "appwrite:seed": "node scripts/seed-appwrite-demo-data.mjs",

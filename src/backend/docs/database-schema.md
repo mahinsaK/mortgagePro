@@ -70,6 +70,7 @@ Attributes:
 - `name`: collector name.
 - `contact_info`: JSON string with phone/area.
 - `password_hash`: salted `scrypt` password hash.
+- `session_version`: session generation used to revoke older device sessions.
 - `status`: `active` or `inactive`.
 - `created_at`: creation date.
 

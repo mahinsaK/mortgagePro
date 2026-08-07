@@ -1,5 +1,5 @@
 import { appwriteServerConfig } from "@/backend/appwrite/config";
-import { databases, Query } from "@/backend/appwrite/server-client";
+import { databases, Query, users } from "@/backend/appwrite/server-client";
 import { normalizeCurrency } from "@/backend/lib/currency";
 import {
   AuthenticationServiceUnavailableError,
@@ -52,6 +52,11 @@ export async function resolvePrimaryLender(): Promise<LenderAuthResolution> {
   const lender = lenders.documents[0];
 
   if (!lender || String(lender.status ?? "") !== "active") {
+    try {
+      await users.deleteSessions({ userId: session.user.$id });
+    } catch {
+      // Access remains denied even when best-effort revocation is unavailable.
+    }
     return { status: "inactive" };
   }
 

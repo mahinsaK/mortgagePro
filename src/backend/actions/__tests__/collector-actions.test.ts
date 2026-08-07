@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   clearIdentityLimit: vi.fn(),
+  clearCollectorSession: vi.fn(),
   consumeAuthAttempt: vi.fn(),
   getLenderCurrencyById: vi.fn(),
   listDocuments: vi.fn(),
@@ -10,7 +11,9 @@ const mocks = vi.hoisted(() => ({
   recordSecurityEvent: vi.fn(),
   requireActiveCollectorPrincipal: vi.fn(),
   setCollectorSession: vi.fn(),
+  normalizeSessionVersion: vi.fn((value: unknown) => Number(value ?? 1)),
   verifyCollectorPassword: vi.fn(),
+  updateTenantDocument: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -29,10 +32,14 @@ vi.mock("@/backend/appwrite/server-client", async () => {
   return { databases: { listDocuments: mocks.listDocuments }, Query };
 });
 vi.mock("@/backend/services/collector-auth-service", () => ({
-  clearCollectorSession: vi.fn(),
+  clearCollectorSession: mocks.clearCollectorSession,
+  normalizeSessionVersion: mocks.normalizeSessionVersion,
   requireActiveCollectorPrincipal: mocks.requireActiveCollectorPrincipal,
   setCollectorSession: mocks.setCollectorSession,
   verifyCollectorPassword: mocks.verifyCollectorPassword,
+}));
+vi.mock("@/backend/services/tenant-data-service", () => ({
+  updateTenantDocument: mocks.updateTenantDocument,
 }));
 vi.mock("@/backend/services/lender-service", () => ({
   getLenderCurrencyById: mocks.getLenderCurrencyById,
@@ -53,6 +60,7 @@ vi.mock("@/backend/services/security-event-service", () => ({
 import {
   collectScannedPaymentAction,
   collectorLoginAction,
+  collectorLogoutAllDevicesAction,
 } from "../collector-actions";
 
 describe("collectorLoginAction", () => {
@@ -65,6 +73,7 @@ describe("collectorLoginAction", () => {
           lender_id: "lender_A",
           name: "Jordan Lee",
           password_hash: "stored",
+          session_version: 1,
         },
       ],
       total: 1,
@@ -91,13 +100,14 @@ describe("collectorLoginAction", () => {
     expect(serialized).toContain('"attribute":"$id"');
     expect(serialized).toContain('"values":["jordanlee4821"]');
     expect(serialized).not.toContain('"attribute":"name"');
-    expect(serialized).not.toContain("session_version");
+    expect(serialized).toContain("session_version");
     expect(mocks.setCollectorSession).toHaveBeenCalledWith({
       collectorId: "jordanlee4821",
       currency: "LKR",
       lenderId: "lender_A",
       name: "Jordan Lee",
       passwordHash: "stored",
+      sessionVersion: 1,
     });
     expect(mocks.clearIdentityLimit).toHaveBeenCalledWith(
       "collector_login",
@@ -149,6 +159,26 @@ describe("collectorLoginAction", () => {
     expect(mocks.setCollectorSession).toHaveBeenCalledWith(
       expect.objectContaining({ collectorId: "collector_A" }),
     );
+  });
+
+  it("increments the session generation when logging out every device", async () => {
+    mocks.requireActiveCollectorPrincipal.mockResolvedValue({
+      collectorId: "collector_A",
+      lenderId: "lender_A",
+      sessionVersion: 4,
+    });
+
+    await expect(collectorLogoutAllDevicesAction()).rejects.toThrow(
+      "redirect:/collector/login?status=success",
+    );
+
+    expect(mocks.updateTenantDocument).toHaveBeenCalledWith(
+      "collectors",
+      "lender_A",
+      "collector_A",
+      { session_version: 5 },
+    );
+    expect(mocks.clearCollectorSession).toHaveBeenCalledTimes(1);
   });
 
   it("returns a generic error for an unknown username", async () => {

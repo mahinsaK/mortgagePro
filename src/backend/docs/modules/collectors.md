@@ -43,6 +43,7 @@ lender_id: active lender ID
 name
 contact_info: JSON string with phone/area
 password_hash: salted scrypt hash
+session_version: 1
 status
 created_at
 ```
@@ -69,7 +70,8 @@ How it works:
 - Ignores any submitted username because the collector `$id` is permanent.
 - Existing sessions are rejected when a collector becomes inactive or is
   deleted. Changing the password also rejects all sessions created with the
-  previous password.
+  previous password. Password and status changes advance `session_version`, as
+  does the collector's “Log out all devices” action.
 
 ## Delete collector write
 
@@ -135,16 +137,19 @@ username is the collector document `$id`; existing legacy IDs containing
 underscores or hyphens remain compatible. Name-based login is not supported.
 
 The `mortgagepro_collector_session` cookie is HTTP-only, SameSite Lax, Secure in
-production, signed with the mandatory `COLLECTOR_SESSION_SECRET`, and expires
-after 12 hours. Claims include collector ID, lender ID, issue time, expiry, and
-a secret-derived credential fingerprint. The password and stored password hash
-are never placed in the cookie.
+production and signed with the mandatory `COLLECTOR_SESSION_SECRET`. Active
+sessions renew at most once per day and expire 90 days after their last
+successful renewal. Claims include collector ID, lender ID, session generation,
+issue time, expiry, and a secret-derived credential fingerprint. The password
+and stored password hash are never placed in the cookie.
 
 `requireActiveCollectorPrincipal()` verifies the HMAC with a timing-safe
 comparison, checks expiry, reloads the collector by both collector ID and
 lender ID, requires active status, and compares the credential fingerprint to
-the collector's current password hash. The scan page, loan lookup route, and
-payment action all use this resolver.
+the collector's current password hash and session generation. The scan page,
+loan lookup route, and payment action all use this resolver. Password or status
+changes and the collector's explicit “Log out all devices” action advance the
+generation, invalidating older device cookies.
 
 Scanned loan lookup is a combined loan-ID/lender-ID query. Another lender's
 loan is returned as `404`, just like an unknown loan ID.

@@ -7,6 +7,7 @@ import { appwriteServerConfig } from "@/backend/appwrite/config";
 import { databases, Query } from "@/backend/appwrite/server-client";
 import {
   clearCollectorSession,
+  normalizeSessionVersion,
   requireActiveCollectorPrincipal,
   setCollectorSession,
   verifyCollectorPassword,
@@ -22,6 +23,7 @@ import {
   RATE_LIMITED_MESSAGE,
 } from "@/backend/services/authentication-rate-limit-service";
 import { recordSecurityEvent } from "@/backend/services/security-event-service";
+import { updateTenantDocument } from "@/backend/services/tenant-data-service";
 
 export async function collectorLoginAction(formData: FormData) {
   const collectorId = readRequired(formData, "username");
@@ -78,6 +80,7 @@ export async function collectorLoginAction(formData: FormData) {
           "lender_id",
           "name",
           "password_hash",
+          "session_version",
         ]),
       ],
     });
@@ -138,6 +141,7 @@ export async function collectorLoginAction(formData: FormData) {
       lenderId,
       name: String(collector.name ?? collectorId),
       passwordHash: String(collector.password_hash ?? ""),
+      sessionVersion: normalizeSessionVersion(collector.session_version),
     });
   } catch {
     await recordSecurityEvent({
@@ -219,6 +223,30 @@ export async function collectScannedPaymentAction(formData: FormData) {
 export async function collectorLogoutAction() {
   await clearCollectorSession();
   redirect("/collector/login");
+}
+
+export async function collectorLogoutAllDevicesAction() {
+  const session = await requireActiveCollectorPrincipal();
+
+  if (session) {
+    try {
+      await updateTenantDocument(
+        "collectors",
+        session.lenderId,
+        session.collectorId,
+        { session_version: session.sessionVersion + 1 },
+      );
+    } catch {
+      redirectWithStatus(
+        "/collector/scan",
+        "error",
+        "Could not log out other devices. Please try again.",
+      );
+    }
+  }
+
+  await clearCollectorSession();
+  redirect("/collector/login?status=success&message=All+devices+were+signed+out.");
 }
 
 function readRequired(formData: FormData, key: string) {

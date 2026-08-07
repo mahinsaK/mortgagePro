@@ -99,6 +99,7 @@ it the available administration read/write scopes for:
 - indexes
 - documents
 - users
+- project policies
 
 Store it only in the local `.env.local` file:
 
@@ -213,6 +214,17 @@ For a new installation, steps 7 and 8 can also be run together:
 ```bash
 npm run appwrite:setup
 ```
+
+Then apply the lender session policy:
+
+```bash
+npm run appwrite:auth:configure
+```
+
+This sets Appwrite lender sessions to a 90-day maximum and makes password
+changes invalidate existing lender sessions. The setup key needs the
+`project.policies.write` scope for this command. The running application does
+not need that scope.
 
 The scripts are designed to be safely rerun when a collection, attribute, or
 index already exists.

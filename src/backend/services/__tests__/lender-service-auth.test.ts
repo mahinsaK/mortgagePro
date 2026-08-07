@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   getDocument: vi.fn(),
   listDocuments: vi.fn(),
   resolveAppwriteSession: vi.fn(),
+  deleteUserSessions: vi.fn(),
 }));
 
 vi.mock("@/backend/appwrite/config", () => ({
@@ -23,6 +24,7 @@ vi.mock("@/backend/appwrite/server-client", async () => {
       listDocuments: mocks.listDocuments,
     },
     Query,
+    users: { deleteSessions: mocks.deleteUserSessions },
   };
 });
 
@@ -106,6 +108,7 @@ describe("lender authentication resolution", () => {
     await expect(resolvePrimaryLender()).resolves.toEqual({
       status: "inactive",
     });
+    expect(mocks.deleteUserSessions).toHaveBeenCalledWith({ userId: "user_A" });
   });
 
   it("preserves invalid and unavailable session states", async () => {

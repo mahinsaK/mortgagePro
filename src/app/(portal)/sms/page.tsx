@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { getPrimaryLender } from "@/backend/services/lender-service";
 import { getSmsManagementData } from "@/backend/services/sms-management-service";
 import { getSmsUsageAndHistory } from "@/backend/services/sms-sending-service";
@@ -39,6 +40,11 @@ export default async function SmsPage({
         message={message}
         phone={phone}
         reporting={reporting}
+        requestIds={{
+          all: randomUUID(),
+          quick: randomUUID(),
+          selected: randomUUID(),
+        }}
         status={status}
       />
     </div>

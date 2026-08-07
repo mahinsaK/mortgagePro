@@ -1,7 +1,7 @@
 "use client";
 
 import { Search, Send, Users, X } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   sendAllBorrowersSmsAction,
   sendManualSmsAction,
@@ -29,6 +29,11 @@ type SmsWorkbenchProps = {
   message?: string;
   phone?: string;
   reporting?: SmsReportingData | null;
+  requestIds?: {
+    all: string;
+    quick: string;
+    selected: string;
+  };
   status?: string;
 };
 
@@ -38,6 +43,7 @@ export function SmsWorkbench({
   message,
   phone,
   reporting,
+  requestIds,
   status,
 }: SmsWorkbenchProps) {
   const [customNumber, setCustomNumber] = useState("");
@@ -49,8 +55,6 @@ export function SmsWorkbench({
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const selectedRequestIdRef = useRef<HTMLInputElement>(null);
-  const allRequestIdRef = useRef<HTMLInputElement>(null);
   const selectedRecipientsPayload = useMemo(
     () => JSON.stringify(selectedRecipients),
     [selectedRecipients],
@@ -253,14 +257,6 @@ export function SmsWorkbench({
             <form
               action={sendSelectedSmsAction}
               className="grid gap-4"
-              onSubmit={() => {
-                if (selectedRequestIdRef.current) {
-                  selectedRequestIdRef.current.value ||= crypto.randomUUID();
-                }
-                if (allRequestIdRef.current) {
-                  allRequestIdRef.current.value ||= crypto.randomUUID();
-                }
-              }}
             >
               <input
                 name="recipients"
@@ -269,13 +265,13 @@ export function SmsWorkbench({
               />
               <input
                 name="request_id"
-                ref={selectedRequestIdRef}
                 type="hidden"
+                value={requestIds?.selected ?? ""}
               />
               <input
                 name="all_request_id"
-                ref={allRequestIdRef}
                 type="hidden"
+                value={requestIds?.all ?? ""}
               />
               <label className="text-sm font-medium text-[#2d3745]">
                 Message
@@ -327,7 +323,10 @@ export function SmsWorkbench({
           </div>
         </section>
 
-        <QuickSmsPanel sendingEnabled={sendingEnabled} />
+        <QuickSmsPanel
+          requestId={requestIds?.quick ?? ""}
+          sendingEnabled={sendingEnabled}
+        />
       </div>
 
       {management ? (
@@ -461,8 +460,13 @@ function phoneIdentity(value: string) {
   return value.replace(/\D/g, "");
 }
 
-function QuickSmsPanel({ sendingEnabled }: { sendingEnabled: boolean }) {
-  const requestIdRef = useRef<HTMLInputElement>(null);
+function QuickSmsPanel({
+  requestId,
+  sendingEnabled,
+}: {
+  requestId: string;
+  sendingEnabled: boolean;
+}) {
   const [message, setMessage] = useState("");
   const units = smsUnitsPerRecipient(message);
 
@@ -476,13 +480,8 @@ function QuickSmsPanel({ sendingEnabled }: { sendingEnabled: boolean }) {
       <form
         action={sendManualSmsAction}
         className="grid gap-4"
-        onSubmit={() => {
-          if (requestIdRef.current) {
-            requestIdRef.current.value ||= crypto.randomUUID();
-          }
-        }}
       >
-        <input name="request_id" ref={requestIdRef} type="hidden" />
+        <input name="request_id" type="hidden" value={requestId} />
         <label className="text-sm font-medium text-[#2d3745]">
           Phone number
           <input

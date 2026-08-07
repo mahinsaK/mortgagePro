@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 export function loadScriptEnv() {
   return {
     ...readEnvFile(".env.example"),
-    ...readEnvFile(".env.local"),
+    ...nonEmptyEntries(readEnvFile(".env.local")),
     ...nonEmptyProcessEnv(),
   };
 }
@@ -31,8 +31,12 @@ function readEnvFile(path) {
 }
 
 function nonEmptyProcessEnv() {
+  return nonEmptyEntries(process.env);
+}
+
+function nonEmptyEntries(values) {
   return Object.fromEntries(
-    Object.entries(process.env).filter(
+    Object.entries(values).filter(
       ([, value]) => typeof value === "string" && value.length > 0,
     ),
   );

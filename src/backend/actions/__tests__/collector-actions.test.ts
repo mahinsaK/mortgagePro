@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   clearIdentityLimit: vi.fn(),
   consumeAuthAttempt: vi.fn(),
+  getLenderCurrencyById: vi.fn(),
   listDocuments: vi.fn(),
   recordTenantLoanPayment: vi.fn(),
   redirect: vi.fn(),
@@ -32,6 +33,9 @@ vi.mock("@/backend/services/collector-auth-service", () => ({
   requireActiveCollectorPrincipal: mocks.requireActiveCollectorPrincipal,
   setCollectorSession: mocks.setCollectorSession,
   verifyCollectorPassword: mocks.verifyCollectorPassword,
+}));
+vi.mock("@/backend/services/lender-service", () => ({
+  getLenderCurrencyById: mocks.getLenderCurrencyById,
 }));
 vi.mock("@/backend/services/payment-recording-service", () => ({
   PaymentWriteError: class PaymentWriteError extends Error {},
@@ -66,6 +70,7 @@ describe("collectorLoginAction", () => {
       total: 1,
     });
     mocks.verifyCollectorPassword.mockReturnValue(true);
+    mocks.getLenderCurrencyById.mockResolvedValue("LKR");
     mocks.consumeAuthAttempt.mockResolvedValue({ allowed: true });
     mocks.redirect.mockImplementation((path: string) => {
       throw new Error(`redirect:${path}`);
@@ -89,6 +94,7 @@ describe("collectorLoginAction", () => {
     expect(serialized).not.toContain("session_version");
     expect(mocks.setCollectorSession).toHaveBeenCalledWith({
       collectorId: "jordanlee4821",
+      currency: "LKR",
       lenderId: "lender_A",
       name: "Jordan Lee",
       passwordHash: "stored",

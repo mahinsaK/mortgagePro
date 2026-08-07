@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { normalizeCurrency } from "@/backend/lib/currency";
 import {
   decodeCollectorSession,
   encodeCollectorSession,
@@ -15,13 +16,13 @@ const HASH_KEY_LENGTH = 64;
 
 export type CollectorPrincipal = Omit<
   CollectorSessionClaims,
-  "credentialFingerprint"
->;
+  "credentialFingerprint" | "currency"
+> & { currency: string };
 
 type NewCollectorSession = Pick<
   CollectorSessionClaims,
   "collectorId" | "lenderId" | "name"
-> & { passwordHash: string };
+> & { currency: string; passwordHash: string };
 
 export function hashCollectorPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -53,6 +54,7 @@ export async function setCollectorSession(session: NewCollectorSession) {
   const secret = sessionSecret();
   const claims: CollectorSessionClaims = {
     collectorId: session.collectorId,
+    currency: normalizeCurrency(session.currency),
     lenderId: session.lenderId,
     name: session.name,
     credentialFingerprint: createCollectorCredentialFingerprint(
@@ -116,6 +118,7 @@ export async function requireActiveCollectorPrincipal(): Promise<CollectorPrinci
 
   return {
     collectorId: claims.collectorId,
+    currency: normalizeCurrency(claims.currency ?? "LKR"),
     lenderId: claims.lenderId,
     name: String(collector.name ?? claims.name),
     issuedAt: claims.issuedAt,

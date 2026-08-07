@@ -4,6 +4,7 @@ export type CollectorSessionClaims = {
   collectorId: string;
   lenderId: string;
   name: string;
+  currency?: string;
   credentialFingerprint: string;
   issuedAt: number;
   expiresAt: number;
@@ -49,6 +50,8 @@ export function decodeCollectorSession(
       !parsed.lenderId ||
       typeof parsed.name !== "string" ||
       !parsed.name ||
+      (parsed.currency !== undefined &&
+        (typeof parsed.currency !== "string" || !parsed.currency)) ||
       typeof parsed.credentialFingerprint !== "string" ||
       !parsed.credentialFingerprint ||
       typeof parsed.issuedAt !== "number" ||

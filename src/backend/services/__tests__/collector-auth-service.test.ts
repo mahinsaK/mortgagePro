@@ -36,6 +36,7 @@ describe("requireActiveCollectorPrincipal", () => {
     const token = encodeCollectorSession(
       {
         collectorId: "collector_A",
+        currency: "LKR",
         lenderId: "lender_A",
         name: "Old name",
         credentialFingerprint: createCollectorCredentialFingerprint(
@@ -60,6 +61,7 @@ describe("requireActiveCollectorPrincipal", () => {
   it("returns a revalidated active collector principal", async () => {
     await expect(requireActiveCollectorPrincipal()).resolves.toMatchObject({
       collectorId: "collector_A",
+      currency: "LKR",
       lenderId: "lender_A",
       name: "Current name",
     });
@@ -69,6 +71,30 @@ describe("requireActiveCollectorPrincipal", () => {
       "collector_A",
       ["$id", "lender_id", "name", "password_hash", "status"],
     );
+  });
+
+  it("keeps legacy sessions usable with the LKR display default", async () => {
+    const now = Date.now();
+    const passwordHash = "salt:current-password-hash";
+    const token = encodeCollectorSession(
+      {
+        collectorId: "collector_A",
+        lenderId: "lender_A",
+        name: "Old name",
+        credentialFingerprint: createCollectorCredentialFingerprint(
+          passwordHash,
+          secret,
+        ),
+        issuedAt: now,
+        expiresAt: now + 60_000,
+      },
+      secret,
+    );
+    mocks.cookieGet.mockReturnValue({ value: token });
+
+    await expect(requireActiveCollectorPrincipal()).resolves.toMatchObject({
+      currency: "LKR",
+    });
   });
 
   it.each([

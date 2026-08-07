@@ -11,6 +11,7 @@ const now = Date.parse("2026-07-11T00:00:00.000Z");
 function claims(overrides: Partial<CollectorSessionClaims> = {}) {
   return {
     collectorId: "collector_A",
+    currency: "LKR",
     lenderId: "lender_A",
     name: "Jordan Lee",
     credentialFingerprint: "credential-fingerprint",

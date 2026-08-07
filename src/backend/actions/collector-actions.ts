@@ -11,6 +11,7 @@ import {
   setCollectorSession,
   verifyCollectorPassword,
 } from "@/backend/services/collector-auth-service";
+import { getLenderCurrencyById } from "@/backend/services/lender-service";
 import {
   PaymentWriteError,
   recordTenantLoanPayment,
@@ -112,10 +113,29 @@ export async function collectorLoginAction(formData: FormData) {
     );
   }
 
+  const lenderId = String(collector.lender_id ?? "");
+  let currency: string;
+
+  try {
+    currency = await getLenderCurrencyById(lenderId);
+  } catch {
+    await recordSecurityEvent({
+      eventType: "collector_login_error",
+      outcome: "error",
+      principalType: "collector",
+      principalIdentifier: collectorId,
+      lenderId,
+      headers: requestHeaders,
+      reasonCode: "lender_currency_unavailable",
+    });
+    redirect("/auth/unavailable");
+  }
+
   try {
     await setCollectorSession({
       collectorId: collector.$id,
-      lenderId: String(collector.lender_id ?? ""),
+      currency,
+      lenderId,
       name: String(collector.name ?? collectorId),
       passwordHash: String(collector.password_hash ?? ""),
     });
@@ -125,7 +145,7 @@ export async function collectorLoginAction(formData: FormData) {
       outcome: "error",
       principalType: "collector",
       principalIdentifier: collectorId,
-      lenderId: String(collector.lender_id ?? ""),
+      lenderId,
       headers: requestHeaders,
       reasonCode: "session_storage_failed",
     });
@@ -137,7 +157,7 @@ export async function collectorLoginAction(formData: FormData) {
     outcome: "success",
     principalType: "collector",
     principalIdentifier: collectorId,
-    lenderId: String(collector.lender_id ?? ""),
+    lenderId,
     headers: requestHeaders,
   });
   redirect("/collector/scan");

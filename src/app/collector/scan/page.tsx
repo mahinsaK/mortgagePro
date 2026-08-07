@@ -4,7 +4,6 @@ import {
   collectorLogoutAction,
 } from "@/backend/actions/collector-actions";
 import { requireActiveCollectorPrincipal } from "@/backend/services/collector-auth-service";
-import { getLenderCurrencyById } from "@/backend/services/lender-service";
 import { CollectorScanner } from "@/frontend/components/collector/collector-scanner";
 
 export const dynamic = "force-dynamic";
@@ -20,8 +19,6 @@ export default async function CollectorScanPage({
   if (!session) {
     redirect("/collector/login");
   }
-
-  const currency = await getLenderCurrencyById(session.lenderId);
 
   return (
     <main className="min-h-screen bg-[#eef2f6] px-4 py-5 text-[#15191f]">
@@ -43,7 +40,7 @@ export default async function CollectorScanPage({
 
         <CollectorScanner
           collectAction={collectScannedPaymentAction}
-          currency={currency}
+          currency={session.currency}
           message={message}
           status={status}
         />

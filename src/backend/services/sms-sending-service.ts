@@ -46,6 +46,7 @@ export type SmsUsageSummary = {
 
 export type SmsBatchSummary = {
   id: string;
+  purpose: string;
   senderId: string;
   month: string;
   characterCount: number;
@@ -571,6 +572,7 @@ function mapBatch(document: Models.Document): SmsBatchSummary {
   ] as const;
   return {
     id: value.$id,
+    purpose: String(value.purpose ?? "manual"),
     senderId: String(value.sender_id ?? ""),
     month: String(value.month_key ?? ""),
     characterCount: Number(value.character_count ?? 0),

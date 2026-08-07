@@ -23,8 +23,8 @@ lender's approved request and never accepts it from a form.
 
 ## Appwrite collections
 
-- `sms_accounts`: one lender account with `active`/`suspended` status and the
-  monthly application quota.
+- `sms_accounts`: one lender account with `active`/`suspended` status, the
+  monthly application quota, and automatic payment-message settings.
 - `sms_sender_requests`: globally unique sender requests and their
   `pending`/`approved`/`rejected` status.
 - `sms_templates`: up to 20 lender-owned, editable messages.
@@ -51,6 +51,19 @@ Administration is manual in Appwrite Console:
 
 The newest approved request is the active sender. A pending or rejected
 replacement does not disable the lender's previous approved sender.
+
+## Automatic payment receipts
+
+The lender can turn automatic payment messages on or off from the SMS page and
+select one of their saved templates. Supported placeholders are
+`{{borrowerName}}`, `{{amount}}`, `{{remainingBalance}}`, `{{paymentDate}}`, and
+`{{companyName}}`.
+
+The receipt attempt starts only after a new collector payment and loan-balance
+transaction commits. A duplicate payment request does not send another SMS.
+When the setting is off, the borrower phone is unusable, SMS quota is
+unavailable, or Text.lk fails, the financial payment remains recorded. Deleting
+the selected template automatically turns the workflow off.
 
 ## Sending and quota safety
 
@@ -86,10 +99,10 @@ The first sender request creates the Loan welcome, Payment reminder, and Loan
 completed starter templates. Lenders can create, rename, edit, use, and delete
 up to 20 templates. Names are unique per lender.
 
-The SMS page shows current quota, used/reserved/remaining units, successful and
-failed recipients, recent sanitized batch summaries, and a 12-month report.
-Templates and history remain available when sending is not configured or is
-suspended.
+The SMS page is ordered for daily work: Quick SMS, sender and automatic-payment
+settings, recipients, templates, current-month usage, an expandable 12-month
+report, and recent sanitized batch summaries. Templates and history remain
+available when sending is not configured or is suspended.
 
 ## Borrower recipients
 

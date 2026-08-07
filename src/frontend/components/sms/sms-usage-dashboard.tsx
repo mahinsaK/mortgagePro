@@ -12,57 +12,36 @@ export type SmsReportingData = {
 export function SmsUsageDashboard({ data }: { data: SmsReportingData }) {
   return (
     <div className="grid gap-6">
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <Metric label="Monthly quota" value={data.current.quota} />
-        <Metric label="Used units" value={data.current.sentUnits} />
-        <Metric label="Reserved units" value={data.current.reservedUnits} />
-        <Metric label="Remaining units" value={data.current.remainingUnits} />
-        <Metric label="Successful recipients" value={data.current.sentRecipients} />
-        <Metric label="Failed recipients" value={data.current.failedRecipients} />
+      <section>
+        <div className="mb-4">
+          <p className="text-sm font-medium text-[#657386]">SMS usage</p>
+          <h2 className="mt-1 text-lg font-semibold text-[#15191f]">
+            Current month
+          </h2>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <Metric label="Monthly quota" value={data.current.quota} />
+          <Metric label="Used units" value={data.current.sentUnits} />
+          <Metric label="Reserved units" value={data.current.reservedUnits} />
+          <Metric label="Remaining units" value={data.current.remainingUnits} />
+          <Metric label="Successful recipients" value={data.current.sentRecipients} />
+          <Metric label="Failed recipients" value={data.current.failedRecipients} />
+        </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <section className="overflow-hidden rounded-lg border border-[#dfe5ec] bg-white shadow-sm">
-          <div className="border-b border-[#e7ebf0] px-4 py-4 md:px-5">
-            <h2 className="text-lg font-semibold text-[#15191f]">
-              Recent SMS batches
-            </h2>
-            <p className="mt-1 text-sm text-[#657386]">
-              Summary only—phone numbers and message text are not stored.
-            </p>
-          </div>
-          <div className="divide-y divide-[#e7ebf0]">
-            {data.latestBatches.map((batch) => (
-              <article className="px-4 py-3 md:px-5" key={batch.id}>
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold text-[#15191f]">
-                      {batch.senderId} · {batch.sentRecipients} sent
-                    </p>
-                    <p className="mt-1 text-xs text-[#657386]">
-                      {formatSmsTimestamp(batch.createdAt)} · {batch.usedUnits} units
-                      · {batch.failedRecipients} failed
-                    </p>
-                  </div>
-                  <span className={batchStatusClass(batch.status)}>
-                    {batchStatusLabel(batch.status)}
-                  </span>
-                </div>
-              </article>
-            ))}
-            {data.latestBatches.length === 0 ? (
-              <p className="px-4 py-6 text-sm text-[#657386] md:px-5">
-                No SMS batches have been recorded yet.
-              </p>
-            ) : null}
-          </div>
-        </section>
-
-        <section className="overflow-hidden rounded-lg border border-[#dfe5ec] bg-white shadow-sm">
-          <div className="border-b border-[#e7ebf0] px-4 py-4 md:px-5">
-            <h2 className="text-lg font-semibold text-[#15191f]">
+      <details className="group overflow-hidden rounded-lg border border-[#dfe5ec] bg-white shadow-sm">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-semibold text-[#1d4ed8] marker:hidden md:px-5">
+          <span className="group-open:hidden">View 12-month report</span>
+          <span className="hidden group-open:inline">Hide 12-month report</span>
+          <span aria-hidden="true" className="text-lg transition group-open:rotate-180">
+            ↓
+          </span>
+        </summary>
+        <section className="border-t border-[#e7ebf0]">
+          <div className="px-4 py-4 md:px-5">
+            <h3 className="text-lg font-semibold text-[#15191f]">
               12-month usage
-            </h2>
+            </h3>
             <p className="mt-1 text-sm text-[#657386]">
               Successful and failed recipients by Asia/Colombo month.
             </p>
@@ -98,8 +77,48 @@ export function SmsUsageDashboard({ data }: { data: SmsReportingData }) {
             </table>
           </div>
         </section>
-      </div>
+      </details>
     </div>
+  );
+}
+
+export function SmsRecentBatches({ batches }: { batches: SmsBatchSummary[] }) {
+  return (
+    <section className="overflow-hidden rounded-lg border border-[#dfe5ec] bg-white shadow-sm">
+      <div className="border-b border-[#e7ebf0] px-4 py-4 md:px-5">
+        <h2 className="text-lg font-semibold text-[#15191f]">
+          Recent SMS batches
+        </h2>
+        <p className="mt-1 text-sm text-[#657386]">
+          Summary only—phone numbers and message text are not stored.
+        </p>
+      </div>
+      <div className="divide-y divide-[#e7ebf0]">
+        {batches.map((batch) => (
+          <article className="px-4 py-3 md:px-5" key={batch.id}>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-[#15191f]">
+                  {batchPurposeLabel(batch.purpose)} · {batch.sentRecipients} sent
+                </p>
+                <p className="mt-1 text-xs text-[#657386]">
+                  {batch.senderId} · {formatSmsTimestamp(batch.createdAt)} ·{" "}
+                  {batch.usedUnits} units · {batch.failedRecipients} failed
+                </p>
+              </div>
+              <span className={batchStatusClass(batch.status)}>
+                {batchStatusLabel(batch.status)}
+              </span>
+            </div>
+          </article>
+        ))}
+        {batches.length === 0 ? (
+          <p className="px-4 py-6 text-sm text-[#657386] md:px-5">
+            No SMS batches have been recorded yet.
+          </p>
+        ) : null}
+      </div>
+    </section>
   );
 }
 
@@ -135,6 +154,13 @@ function formatSmsTimestamp(value: string) {
 
 function batchStatusLabel(status: SmsBatchSummary["status"]) {
   return status.replaceAll("_", " ");
+}
+
+function batchPurposeLabel(purpose: string) {
+  if (purpose === "payment_receipt") return "Automatic payment receipt";
+  if (purpose === "loan_welcome") return "Loan welcome";
+  if (purpose === "loan_completed") return "Loan completed";
+  return "Manual message";
 }
 
 function batchStatusClass(status: SmsBatchSummary["status"]) {

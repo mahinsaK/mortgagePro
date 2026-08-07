@@ -12,6 +12,7 @@ import type { SmsManagementData } from "@/backend/services/sms-management-servic
 import { SmsAccountPanel } from "./sms-account-panel";
 import { SmsTemplateManager } from "./sms-template-manager";
 import {
+  SmsRecentBatches,
   SmsUsageDashboard,
   type SmsReportingData,
 } from "./sms-usage-dashboard";
@@ -154,8 +155,12 @@ export function SmsWorkbench({
 
   return (
     <div className="grid gap-6">
+      <StatusBanner count={count} message={message} phone={phone} status={status} />
+      <QuickSmsPanel
+        requestId={requestIds?.quick ?? ""}
+        sendingEnabled={sendingEnabled}
+      />
       {management ? <SmsAccountPanel management={management} /> : null}
-      {reporting ? <SmsUsageDashboard data={reporting} /> : null}
       {!sendingEnabled ? (
         <div className="rounded-md border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 text-sm font-medium text-[#9a3412]">
           Sending is unavailable until the account is active, a sender ID is
@@ -163,14 +168,11 @@ export function SmsWorkbench({
           and review history.
         </div>
       ) : null}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm md:p-5">
+      <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm md:p-5">
           <div className="mb-5">
             <p className="text-sm font-medium text-[#657386]">Selected SMS</p>
             <h2 className="mt-1 text-lg font-semibold">Message recipients</h2>
           </div>
-
-          <StatusBanner count={count} message={message} phone={phone} status={status} />
 
           <div className="grid gap-5">
             <label className="text-sm font-medium text-[#2d3745]">
@@ -322,13 +324,7 @@ export function SmsWorkbench({
               </div>
             </form>
           </div>
-        </section>
-
-        <QuickSmsPanel
-          requestId={requestIds?.quick ?? ""}
-          sendingEnabled={sendingEnabled}
-        />
-      </div>
+      </section>
 
       {management ? (
         <SmsTemplateManager
@@ -336,6 +332,8 @@ export function SmsWorkbench({
           templates={management.templates}
         />
       ) : null}
+      {reporting ? <SmsUsageDashboard data={reporting} /> : null}
+      {reporting ? <SmsRecentBatches batches={reporting.latestBatches} /> : null}
     </div>
   );
 }

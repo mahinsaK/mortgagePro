@@ -28,7 +28,6 @@ export type LenderDashboardData = {
   lender: Awaited<ReturnType<typeof getPrimaryLender>>;
   stats: DashboardStat[];
   loans: DashboardLoan[];
-  overdueLoans: DashboardLoan[];
   pageInfo: {
     page: number;
     pageSize: number;
@@ -59,13 +58,12 @@ export async function getLenderDashboardData(
       lender: null,
       stats: emptyStats(),
       loans: [],
-      overdueLoans: [],
       pageInfo: emptyPageInfo(pagination),
     };
   }
 
   const searchQuery = normalizeSearchQuery(options.query);
-  const today = toDateInputValue(new Date());
+  const today = toColomboDateInputValue(new Date());
   const todayRange = getDateRange(today);
   const loanQueries = [
     Query.orderDesc("created_at"),
@@ -87,7 +85,13 @@ export async function getLenderDashboardData(
     loanQueries.unshift(Query.search("search_text", searchQuery));
   }
 
-  const [initialLoans, totalBorrowers, activeLoans, todaysPayments, overdueLoans] =
+  const [
+    initialLoans,
+    totalBorrowers,
+    activeLoans,
+    todaysPayments,
+    overdueLoanCount,
+  ] =
     await Promise.all([
       listTenantDocuments("loans", lender.id, loanQueries),
       listTenantDocuments("borrowers", lender.id, [
@@ -108,18 +112,8 @@ export async function getLenderDashboardData(
       listTenantDocuments("loans", lender.id, [
         Query.equal("status", ["active", "overdue"]),
         Query.lessThan("end_date", todayRange.end),
-        Query.orderAsc("end_date"),
-        Query.limit(OVERDUE_LOAN_PREVIEW_LIMIT),
-        Query.select([
-          "$id",
-          "borrower_id",
-          "amount",
-          "total_paid",
-          "remaining_amount",
-          "daily_payment",
-          "status",
-          "end_date",
-        ]),
+        Query.limit(1),
+        Query.select(["$id"]),
       ]),
     ]);
   const loans =
@@ -127,9 +121,7 @@ export async function getLenderDashboardData(
       ? await findLoansByBorrowerSearch(lender.id, searchQuery, pagination)
       : initialLoans;
   const borrowerIds = uniqueStrings(
-    [...loans.documents, ...overdueLoans.documents].map((loan) =>
-      String(loan.borrower_id ?? ""),
-    ),
+    loans.documents.map((loan) => String(loan.borrower_id ?? "")),
   );
   const borrowers =
     borrowerIds.length > 0
@@ -181,16 +173,75 @@ export async function getLenderDashboardData(
       },
       {
         label: "Overdue loans",
-        value: String(overdueLoans.total),
+        value: String(overdueLoanCount.total),
         change: "Past the end date",
       },
     ],
     loans: loans.documents.map((loan) =>
       toDashboardLoan(loan, lender.currency, borrowerNames, borrowerContacts),
     ),
-    overdueLoans: overdueLoans.documents.map((loan) =>
+  };
+}
+
+export async function getDashboardOverdueLoans(asOf: string) {
+  if (!isDateOnly(asOf)) {
+    throw new Error("asOf must be a valid date in YYYY-MM-DD format.");
+  }
+
+  const lender = await getPrimaryLender();
+  if (!lender) {
+    return null;
+  }
+
+  const dateRange = getDateRange(asOf);
+  const overdueLoans = await listTenantDocuments("loans", lender.id, [
+    Query.equal("status", ["active", "overdue"]),
+    Query.lessThan("end_date", dateRange.end),
+    Query.orderAsc("end_date"),
+    Query.limit(OVERDUE_LOAN_PREVIEW_LIMIT),
+    Query.select([
+      "$id",
+      "borrower_id",
+      "amount",
+      "total_paid",
+      "remaining_amount",
+      "daily_payment",
+      "status",
+      "end_date",
+    ]),
+  ]);
+  const borrowerIds = uniqueStrings(
+    overdueLoans.documents.map((loan) => String(loan.borrower_id ?? "")),
+  );
+  const borrowers =
+    borrowerIds.length > 0
+      ? await listTenantDocuments("borrowers", lender.id, [
+          Query.equal("$id", borrowerIds),
+          Query.limit(borrowerIds.length),
+          Query.select(["$id", "name", "contact"]),
+        ])
+      : { documents: [] };
+  const borrowerNames = new Map(
+    borrowers.documents.map((borrower) => [
+      borrower.$id,
+      String(borrower.name ?? "Unknown borrower"),
+    ]),
+  );
+  const borrowerContacts = new Map(
+    borrowers.documents.map((borrower) => [
+      borrower.$id,
+      {
+        display: String(borrower.contact ?? ""),
+        phone: String(borrower.contact ?? ""),
+      },
+    ]),
+  );
+
+  return {
+    loans: overdueLoans.documents.map((loan) =>
       toDashboardLoan(loan, lender.currency, borrowerNames, borrowerContacts),
     ),
+    total: overdueLoans.total,
   };
 }
 
@@ -305,15 +356,28 @@ function normalizeSearchQuery(value: string | undefined) {
 }
 
 function getDateRange(dateOnly: string) {
-  const startDate = new Date(`${dateOnly}T00:00:00`);
-  const endDate = new Date(startDate);
-
-  endDate.setDate(startDate.getDate() + 1);
+  const startDate = new Date(`${dateOnly}T00:00:00+05:30`);
+  const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
 
   return {
     start: startDate.toISOString(),
     end: endDate.toISOString(),
   };
+}
+
+function isDateOnly(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
 }
 
 function toPageInfo(total: number, pagination: { page: number; pageSize: number }) {
@@ -337,10 +401,14 @@ function uniqueStrings(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)));
 }
 
-function toDateInputValue(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+function toColomboDateInputValue(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "Asia/Colombo",
+    year: "numeric",
+  }).formatToParts(date);
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
 
-  return `${year}-${month}-${day}`;
+  return `${value.year}-${value.month}-${value.day}`;
 }

@@ -31,7 +31,6 @@ export default async function LenderDashboardPage({
       </div>
 
       <LenderDashboardStats
-        overdueLoans={dashboard.overdueLoans}
         stats={dashboard.stats}
         today={today}
       />

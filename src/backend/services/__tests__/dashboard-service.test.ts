@@ -44,7 +44,10 @@ vi.mock("@/backend/services/search-text-service", () => ({
   },
 }));
 
-import { getLenderDashboardData } from "../dashboard-service";
+import {
+  getDashboardOverdueLoans,
+  getLenderDashboardData,
+} from "../dashboard-service";
 
 describe("dashboard-service", () => {
   beforeEach(() => {
@@ -90,6 +93,10 @@ describe("dashboard-service", () => {
         joinedQueries.includes('"attribute":"end_date"') &&
         joinedQueries.includes('"method":"lessThan"')
       ) {
+        if (!joinedQueries.includes('"method":"orderAsc"')) {
+          return Promise.resolve({ documents: [], total: 3 });
+        }
+
         return Promise.resolve({
           documents: [
             {
@@ -156,14 +163,6 @@ describe("dashboard-service", () => {
       borrower: "Avery Johnson",
       borrowerContact: "+1 555 0101",
     });
-    expect(dashboard.overdueLoans).toHaveLength(1);
-    expect(dashboard.overdueLoans[0]).toMatchObject({
-      id: "loan_overdue",
-      borrowerId: "borrower_1",
-      borrower: "Avery Johnson",
-      remainingAmount: "$500.00",
-      status: "overdue",
-    });
     expect(dashboard.stats[3]).toEqual({
       label: "Overdue loans",
       value: "3",
@@ -180,6 +179,38 @@ describe("dashboard-service", () => {
     expect(overdueQueries).toContain('"attribute":"lender_id"');
     expect(overdueQueries).toContain('"values":["active","overdue"]');
     expect(overdueQueries).toContain('"attribute":"end_date"');
+    expect(overdueQueries).not.toContain('"method":"orderAsc"');
+  });
+
+  it("loads the bounded overdue-loan preview only when requested", async () => {
+    const result = await getDashboardOverdueLoans("2026-08-04");
+
+    expect(result).toMatchObject({ total: 3 });
+    expect(result?.loans).toHaveLength(1);
+    expect(result?.loans[0]).toMatchObject({
+      id: "loan_overdue",
+      borrowerId: "borrower_1",
+      borrower: "Avery Johnson",
+      remainingAmount: "$500.00",
+      status: "overdue",
+    });
+
+    const overdueCall = mocks.listDocuments.mock.calls.find(
+      ([params]) =>
+        params.collectionId === "loans" &&
+        (params.queries as string[]).join(" ").includes('"method":"orderAsc"'),
+    );
+    const overdueQueries = overdueCall?.[0].queries.join(" ") ?? "";
+
+    expect(overdueQueries).toContain('"attribute":"lender_id"');
     expect(overdueQueries).toContain('"method":"orderAsc"');
+    expect(overdueQueries).toContain('"method":"limit","values":[20]');
+  });
+
+  it("rejects invalid overdue preview dates before reading documents", async () => {
+    await expect(getDashboardOverdueLoans("2026-02-31")).rejects.toThrow(
+      "asOf must be a valid date",
+    );
+    expect(mocks.listDocuments).not.toHaveBeenCalled();
   });
 });

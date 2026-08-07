@@ -12,19 +12,57 @@ type DashboardStat = {
 };
 
 export function LenderDashboardStats({
-  overdueLoans,
   stats,
   today,
 }: {
-  overdueLoans: DashboardLoan[];
   stats: DashboardStat[];
   today: string;
 }) {
   const [showOverdueLoans, setShowOverdueLoans] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<DashboardLoan | null>(null);
+  const [overdueLoans, setOverdueLoans] = useState<DashboardLoan[]>([]);
+  const [loadedTotal, setLoadedTotal] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const overdueTotal = Number(
     stats.find((stat) => stat.label === "Overdue loans")?.value ?? 0,
   );
+  const displayedTotal = loadedTotal ?? overdueTotal;
+
+  async function openOverdueLoans() {
+    setShowOverdueLoans(true);
+    if (loadedTotal !== null || isLoading) {
+      return;
+    }
+
+    await loadOverdueLoans();
+  }
+
+  async function loadOverdueLoans() {
+    setIsLoading(true);
+    setLoadError("");
+
+    try {
+      const response = await fetch(
+        `/api/dashboard/overdue-loans?asOf=${encodeURIComponent(today)}`,
+        { cache: "no-store" },
+      );
+      if (!response.ok) {
+        throw new Error("Overdue loans are unavailable.");
+      }
+
+      const result = (await response.json()) as {
+        loans: DashboardLoan[];
+        total: number;
+      };
+      setOverdueLoans(result.loans);
+      setLoadedTotal(result.total);
+    } catch {
+      setLoadError("Overdue loans could not be loaded. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   return (
     <>
@@ -48,7 +86,7 @@ export function LenderDashboardStats({
                 className="block min-h-28 rounded-lg border border-[#dfe5ec] bg-white p-4 text-left shadow-sm transition hover:border-[#f59e0b] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d4ed8] focus-visible:ring-offset-2 disabled:cursor-default disabled:hover:border-[#dfe5ec] disabled:hover:shadow-sm md:min-h-36 md:p-5"
                 disabled={overdueTotal === 0}
                 key={`${stat.label}-${index}`}
-                onClick={() => setShowOverdueLoans(true)}
+                onClick={openOverdueLoans}
                 type="button"
               >
                 <span className="block text-sm font-medium text-[#657386]">
@@ -89,7 +127,7 @@ export function LenderDashboardStats({
                   Overdue loans
                 </h2>
                 <p className="mt-1 text-sm text-[#657386]">
-                  {overdueTotal} {overdueTotal === 1 ? "loan has" : "loans have"} passed the end date.
+                  {displayedTotal} {displayedTotal === 1 ? "loan has" : "loans have"} passed the end date.
                 </p>
               </div>
               <button
@@ -100,8 +138,23 @@ export function LenderDashboardStats({
                 Close
               </button>
             </div>
-            <div className="divide-y divide-[#eef2f6]">
-              {overdueLoans.map((loan) => (
+            <div className={overdueLoans.length > 0 ? "divide-y divide-[#eef2f6]" : undefined}>
+              {isLoading ? (
+                <p className="p-6 text-sm text-[#657386]">Loading overdue loans…</p>
+              ) : null}
+              {!isLoading && loadError ? (
+                <div className="p-6">
+                  <p className="text-sm text-[#b91c1c]">{loadError}</p>
+                  <button
+                    className="mt-3 h-10 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#1d4ed8] transition hover:bg-[#f8fafc]"
+                    onClick={loadOverdueLoans}
+                    type="button"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : null}
+              {!isLoading && !loadError ? overdueLoans.map((loan) => (
                 <button
                   className="block w-full p-4 text-left transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1d4ed8] sm:px-6"
                   key={loan.id}
@@ -130,7 +183,7 @@ export function LenderDashboardStats({
                     View loan details
                   </span>
                 </button>
-              ))}
+              )) : null}
             </div>
             <div className="sticky bottom-0 border-t border-[#dfe5ec] bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
               <Link

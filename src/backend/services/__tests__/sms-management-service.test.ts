@@ -46,6 +46,7 @@ vi.mock("@/backend/services/tenant-data-service", () => ({
 import {
   createSmsTemplate,
   requestSmsSenderId,
+  updateAutomaticPaymentSmsSettings,
 } from "../sms-management-service";
 
 describe("SMS management transactions", () => {
@@ -159,5 +160,61 @@ describe("SMS management transactions", () => {
       createSmsTemplate("lender_A", "Another reminder", "Pay today."),
     ).rejects.toMatchObject({ code: "template_limit" });
     expect(mocks.createDocument).not.toHaveBeenCalled();
+  });
+
+  it("enables automatic payment messages only with a lender-owned template", async () => {
+    mocks.getDocument.mockResolvedValue({
+      $id: "lender_A",
+      lender_id: "lender_A",
+    });
+    mocks.listDocuments.mockResolvedValue({
+      documents: [
+        {
+          $id: "template_A",
+          lender_id: "lender_A",
+          message: "Hi {{borrowerName}}, we received {{amount}}.",
+        },
+      ],
+      total: 1,
+    });
+
+    await updateAutomaticPaymentSmsSettings(
+      "lender_A",
+      true,
+      "template_A",
+    );
+
+    expect(mocks.updateDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collectionId: "sms_accounts",
+        documentId: "lender_A",
+        data: expect.objectContaining({
+          payment_sms_enabled: true,
+          payment_sms_template_id: "template_A",
+        }),
+        transactionId: "transaction_1",
+      }),
+    );
+    expect(mocks.updateTransaction).toHaveBeenCalledWith({
+      transactionId: "transaction_1",
+      commit: true,
+    });
+  });
+
+  it("rejects enabling automatic messages with another lender's template", async () => {
+    mocks.getDocument.mockResolvedValue({
+      $id: "lender_A",
+      lender_id: "lender_A",
+    });
+    mocks.listDocuments.mockResolvedValue({ documents: [], total: 0 });
+
+    await expect(
+      updateAutomaticPaymentSmsSettings("lender_A", true, "template_B"),
+    ).rejects.toMatchObject({ code: "template_not_found" });
+    expect(mocks.updateDocument).not.toHaveBeenCalled();
+    expect(mocks.updateTransaction).toHaveBeenCalledWith({
+      transactionId: "transaction_1",
+      rollback: true,
+    });
   });
 });

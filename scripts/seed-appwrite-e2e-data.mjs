@@ -151,6 +151,8 @@ async function seed() {
     lender_id: e2eIds.lenders[0],
     status: "active",
     monthly_quota: 0,
+    payment_sms_enabled: false,
+    payment_sms_template_id: "",
     created_at: now,
     updated_at: now,
   });
@@ -158,6 +160,8 @@ async function seed() {
     lender_id: e2eIds.lenders[1],
     status: "active",
     monthly_quota: 0,
+    payment_sms_enabled: false,
+    payment_sms_template_id: "",
     created_at: now,
     updated_at: now,
   });

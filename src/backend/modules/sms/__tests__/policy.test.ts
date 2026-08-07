@@ -5,10 +5,12 @@ import {
   normalizeSmsSenderId,
   normalizeSmsTemplateName,
   previousSmsMonthKeys,
+  renderPaymentSmsTemplate,
   smsCharacterCount,
   smsUnitsPerRecipient,
   validateSmsSenderId,
   validateSmsTemplate,
+  validatePaymentSmsTemplate,
 } from "../policy";
 
 describe("SMS policy", () => {
@@ -84,6 +86,30 @@ describe("SMS policy", () => {
     expect(validateSmsTemplate("", "Pay today")).toContain("name");
     expect(validateSmsTemplate("Reminder", "")).toContain("message");
     expect(validateSmsTemplate("Reminder", "a".repeat(481))).toContain("480");
+  });
+
+  it("validates and renders automatic payment placeholders", () => {
+    const template =
+      "Hi {{borrowerName}}, {{amount}} received. Balance {{remainingBalance}} - {{companyName}}";
+
+    expect(validatePaymentSmsTemplate(template)).toBeNull();
+    expect(validatePaymentSmsTemplate("Hello {{unknownValue}}")).toContain(
+      "Unknown",
+    );
+    expect(validatePaymentSmsTemplate("Hello {{borrowerName" )).toContain(
+      "invalid placeholder",
+    );
+    expect(
+      renderPaymentSmsTemplate(template, {
+        amount: "LKR 1,000.00",
+        borrowerName: "Jordan",
+        companyName: "River Capital",
+        paymentDate: "Aug 7, 2026, 10:30 AM",
+        remainingBalance: "LKR 4,000.00",
+      }),
+    ).toBe(
+      "Hi Jordan, LKR 1,000.00 received. Balance LKR 4,000.00 - River Capital",
+    );
   });
 
   it("uses Asia/Colombo months and returns a 12-month sequence", () => {

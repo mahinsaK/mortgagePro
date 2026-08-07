@@ -283,6 +283,8 @@ async function seedLender(lender) {
     lender_id: lender.id,
     status: "active",
     monthly_quota: 0,
+    payment_sms_enabled: false,
+    payment_sms_template_id: "",
     created_at: now,
     updated_at: now,
   });

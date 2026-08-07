@@ -8,6 +8,7 @@ import {
   deleteSmsTemplate,
   requestSmsSenderId,
   SmsManagementError,
+  updateAutomaticPaymentSmsSettings,
   updateSmsTemplate,
 } from "@/backend/services/sms-management-service";
 import { getAllBorrowerSmsRecipients } from "@/backend/services/sms-recipient-service";
@@ -19,7 +20,11 @@ import {
 export type SmsManagementActionState = {
   status: "idle" | "error" | "success";
   message: string;
-  operation?: "sender" | "template_create" | "template_update";
+  operation?:
+    | "sender"
+    | "automatic_payment"
+    | "template_create"
+    | "template_update";
 };
 
 export async function requestSmsSenderAction(
@@ -42,6 +47,25 @@ export async function createSmsTemplateAction(
       readField(formData, "message"),
     );
   }, "Message template saved.");
+}
+
+export async function updateAutomaticPaymentSmsAction(
+  _previousState: SmsManagementActionState,
+  formData: FormData,
+): Promise<SmsManagementActionState> {
+  return runManagementAction(
+    "automatic_payment",
+    async (lenderId) => {
+      await updateAutomaticPaymentSmsSettings(
+        lenderId,
+        formData.get("enabled") === "on",
+        readField(formData, "template_id"),
+      );
+    },
+    formData.get("enabled") === "on"
+      ? "Automatic payment messages enabled."
+      : "Automatic payment messages disabled.",
+  );
 }
 
 export async function updateSmsTemplateAction(

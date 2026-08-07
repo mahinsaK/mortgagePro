@@ -227,6 +227,10 @@ Wait for the command to finish successfully before creating indexes.
 npm run appwrite:indexes
 ```
 
+For the lender SMS workflow, rerunning the table command adds the automatic
+payment-message switch and selected-template fields to `sms_accounts` without
+replacing existing documents.
+
 The index script waits for Appwrite attributes to become available and then
 creates any missing indexes.
 
@@ -392,7 +396,7 @@ npm run appwrite:indexes
 ### `Collection ... could not be found`
 
 Check that all collection IDs in `.env.local` match the Appwrite project, then
-run `npm run appwrite:tables` again. The permission checker expects all seven
+run `npm run appwrite:tables` again. The permission checker expects all
 configured collections to exist.
 
 ### `Authentication is temporarily unavailable`

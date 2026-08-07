@@ -1,5 +1,14 @@
 export const MAX_SMS_TEMPLATES = 20;
 export const MAX_SMS_MESSAGE_CHARACTERS = 480;
+export const PAYMENT_SMS_PLACEHOLDERS = [
+  "borrowerName",
+  "amount",
+  "remainingBalance",
+  "paymentDate",
+  "companyName",
+] as const;
+
+export type PaymentSmsPlaceholder = (typeof PAYMENT_SMS_PLACEHOLDERS)[number];
 
 const GSM_7_BASIC_CHARACTERS = new Set(
   Array.from(
@@ -79,6 +88,39 @@ export function validateSmsTemplate(name: string, message: string) {
   }
 
   return null;
+}
+
+export function validatePaymentSmsTemplate(message: string) {
+  const validationError = validateSmsTemplate("Payment receipt", message);
+  if (validationError) return validationError;
+
+  const allowed = new Set<string>(PAYMENT_SMS_PLACEHOLDERS);
+  const tokens = Array.from(message.matchAll(/{{\s*([^{}]+?)\s*}}/g));
+  const unknownToken = tokens.find((token) => !allowed.has(token[1]));
+
+  if (unknownToken) {
+    return `Unknown automatic-message placeholder: {{${unknownToken[1]}}}.`;
+  }
+
+  const withoutTokens = message.replaceAll(/{{\s*[^{}]+?\s*}}/g, "");
+  if (withoutTokens.includes("{{") || withoutTokens.includes("}}")) {
+    return "The automatic-message template contains an invalid placeholder.";
+  }
+
+  return null;
+}
+
+export function renderPaymentSmsTemplate(
+  message: string,
+  values: Record<PaymentSmsPlaceholder, string>,
+) {
+  const validationError = validatePaymentSmsTemplate(message);
+  if (validationError) throw new Error(validationError);
+
+  return message.replaceAll(
+    /{{\s*([^{}]+?)\s*}}/g,
+    (_token, name: string) => values[name as PaymentSmsPlaceholder],
+  );
 }
 
 export function smsCharacterCount(message: string) {

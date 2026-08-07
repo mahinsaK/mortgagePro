@@ -9,13 +9,11 @@ import {
   normalizeSmsSenderId,
   normalizeSmsTemplateName,
   STARTER_SMS_TEMPLATES,
+  validatePaymentSmsTemplate,
   validateSmsSenderId,
   validateSmsTemplate,
 } from "@/backend/modules/sms/policy";
-import {
-  deleteTenantDocument,
-  listTenantDocuments,
-} from "./tenant-data-service";
+import { listTenantDocuments } from "./tenant-data-service";
 
 const MAX_TRANSACTION_ATTEMPTS = 3;
 type SmsDocument = Models.Document & Record<string, unknown>;
@@ -24,6 +22,8 @@ export type SmsAccount = {
   id: string;
   status: "active" | "suspended";
   monthlyQuota: number;
+  paymentSmsEnabled: boolean;
+  paymentSmsTemplateId: string;
 };
 
 export type SmsSenderRequest = {
@@ -55,6 +55,7 @@ export class SmsManagementError extends Error {
     public readonly code:
       | "duplicate_sender"
       | "pending_sender"
+      | "account_not_found"
       | "template_duplicate"
       | "template_limit"
       | "template_not_found"
@@ -72,7 +73,13 @@ export async function getSmsManagementData(
   const [accountResult, senderResult, templateResult] = await Promise.all([
     listTenantDocuments("smsAccounts", lenderId, [
       Query.limit(1),
-      Query.select(["$id", "status", "monthly_quota"]),
+      Query.select([
+        "$id",
+        "status",
+        "monthly_quota",
+        "payment_sms_enabled",
+        "payment_sms_template_id",
+      ]),
     ]),
     listTenantDocuments("smsSenderRequests", lenderId, [
       Query.orderDesc("requested_at"),
@@ -226,6 +233,8 @@ export async function requestSmsSenderId(lenderId: string, value: string) {
             lender_id: lenderId,
             status: "active",
             monthly_quota: 0,
+            payment_sms_enabled: false,
+            payment_sms_template_id: "",
             created_at: now,
             updated_at: now,
           },
@@ -260,6 +269,77 @@ export async function requestSmsSenderId(lenderId: string, value: string) {
   }
 }
 
+export async function updateAutomaticPaymentSmsSettings(
+  lenderId: string,
+  enabled: boolean,
+  templateId: string,
+) {
+  const normalizedTemplateId = templateId.trim();
+
+  if (enabled && !normalizedTemplateId) {
+    throw new SmsManagementError(
+      "validation",
+      "Choose a saved template before enabling automatic payment messages.",
+    );
+  }
+
+  const transaction = await databases.createTransaction({ ttl: 60 });
+  const transactionId = transaction.$id;
+
+  try {
+    const [account, template] = await Promise.all([
+      getDocumentOrNull(
+        appwriteServerConfig.collections.smsAccounts,
+        lenderId,
+        transactionId,
+      ),
+      normalizedTemplateId
+        ? getTenantDocumentInTransaction(
+            lenderId,
+            normalizedTemplateId,
+            transactionId,
+          )
+        : Promise.resolve(null),
+    ]);
+
+    if (!account || String(account.lender_id ?? "") !== lenderId) {
+      throw new SmsManagementError(
+        "account_not_found",
+        "Request a sender ID before configuring automatic messages.",
+      );
+    }
+
+    if (normalizedTemplateId && !template) {
+      throw new SmsManagementError("template_not_found", "Template not found.");
+    }
+
+    if (template) {
+      const validationError = validatePaymentSmsTemplate(
+        String(template.message ?? ""),
+      );
+      if (validationError) {
+        throw new SmsManagementError("validation", validationError);
+      }
+    }
+
+    await databases.updateDocument({
+      databaseId: appwriteServerConfig.databaseId,
+      collectionId: appwriteServerConfig.collections.smsAccounts,
+      documentId: lenderId,
+      data: {
+        payment_sms_enabled: enabled,
+        payment_sms_template_id: normalizedTemplateId,
+        updated_at: new Date().toISOString(),
+      },
+      transactionId,
+    });
+    await databases.updateTransaction({ transactionId, commit: true });
+  } catch (error) {
+    await rollbackTransaction(transactionId);
+    throw error;
+  }
+}
+
 export async function createSmsTemplate(
   lenderId: string,
   nameValue: string,
@@ -281,7 +361,48 @@ export async function deleteSmsTemplate(
   lenderId: string,
   templateId: string,
 ) {
-  await deleteTenantDocument("smsTemplates", lenderId, templateId);
+  const transaction = await databases.createTransaction({ ttl: 60 });
+  const transactionId = transaction.$id;
+
+  try {
+    const [template, account] = await Promise.all([
+      getTenantDocumentInTransaction(lenderId, templateId, transactionId),
+      getDocumentOrNull(
+        appwriteServerConfig.collections.smsAccounts,
+        lenderId,
+        transactionId,
+      ),
+    ]);
+
+    if (!template) {
+      throw new SmsManagementError("template_not_found", "Template not found.");
+    }
+
+    if (String(account?.payment_sms_template_id ?? "") === templateId) {
+      await databases.updateDocument({
+        databaseId: appwriteServerConfig.databaseId,
+        collectionId: appwriteServerConfig.collections.smsAccounts,
+        documentId: lenderId,
+        data: {
+          payment_sms_enabled: false,
+          payment_sms_template_id: "",
+          updated_at: new Date().toISOString(),
+        },
+        transactionId,
+      });
+    }
+
+    await databases.deleteDocument({
+      databaseId: appwriteServerConfig.databaseId,
+      collectionId: appwriteServerConfig.collections.smsTemplates,
+      documentId: templateId,
+      transactionId,
+    });
+    await databases.updateTransaction({ transactionId, commit: true });
+  } catch (error) {
+    await rollbackTransaction(transactionId);
+    throw error;
+  }
 }
 
 async function saveSmsTemplate(
@@ -493,6 +614,8 @@ function mapSmsAccount(document: SmsDocument): SmsAccount {
     id: document.$id,
     status: document.status === "suspended" ? "suspended" : "active",
     monthlyQuota: Math.max(0, Number(document.monthly_quota ?? 0)),
+    paymentSmsEnabled: document.payment_sms_enabled === true,
+    paymentSmsTemplateId: String(document.payment_sms_template_id ?? ""),
   };
 }
 

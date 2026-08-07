@@ -168,6 +168,16 @@ async function ensureAttribute(collectionId, attribute) {
     });
   }
 
+  if (attribute.type === "boolean") {
+    await databases.createBooleanAttribute({
+      databaseId: config.databaseId,
+      collectionId,
+      key: attribute.key,
+      required: attribute.required,
+      xdefault: attribute.xdefault,
+    });
+  }
+
   if (attribute.type === "enum") {
     await databases.createEnumAttribute({
       databaseId: config.databaseId,

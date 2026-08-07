@@ -265,6 +265,8 @@ function makeProbe(prefix, appwriteUserId) {
         lender_id: lenderId,
         status: "active",
         monthly_quota: 100,
+        payment_sms_enabled: false,
+        payment_sms_template_id: "",
         created_at: now,
         updated_at: now,
       },

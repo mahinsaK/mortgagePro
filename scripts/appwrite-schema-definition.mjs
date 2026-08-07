@@ -164,6 +164,8 @@ export function createAppwriteSchema(collections) {
         stringAttr("lender_id", 64, true),
         enumAttr("status", ["active", "suspended"], true),
         integerAttr("monthly_quota", true, 0),
+        booleanAttr("payment_sms_enabled", false, false),
+        stringAttr("payment_sms_template_id", 64, false, ""),
         datetimeAttr("created_at", true),
         datetimeAttr("updated_at", true),
       ],
@@ -278,6 +280,10 @@ function floatAttr(key, required, min, max, xdefault) {
 
 function integerAttr(key, required, min, max, xdefault) {
   return { type: "integer", key, required, min, max, xdefault };
+}
+
+function booleanAttr(key, required, xdefault) {
+  return { type: "boolean", key, required, xdefault };
 }
 
 function enumAttr(key, elements, required, xdefault) {

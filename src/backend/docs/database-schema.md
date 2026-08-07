@@ -165,7 +165,8 @@ code, safe metadata, and timestamp. Records older than 90 days are removed by
 ## SMS Accounts
 
 One document per lender stores `lender_id`, `active`/`suspended` status,
-`monthly_quota`, and timestamps. The document ID matches the lender ID.
+`monthly_quota`, the automatic payment-message switch and selected template,
+and timestamps. The document ID matches the lender ID.
 
 ## SMS Sender Requests
 

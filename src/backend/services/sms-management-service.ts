@@ -427,30 +427,38 @@ async function saveSmsTemplate(
     const transactionId = transaction.$id;
 
     try {
-      const [existingTemplate, destination, templateList] = await Promise.all([
-        existingTemplateId
-          ? getTenantDocumentInTransaction(
-              lenderId,
-              existingTemplateId,
-              transactionId,
-            )
-          : Promise.resolve(null),
-        getDocumentOrNull(
-          appwriteServerConfig.collections.smsTemplates,
-          destinationId,
-          transactionId,
-        ),
-        databases.listDocuments({
-          databaseId: appwriteServerConfig.databaseId,
-          collectionId: appwriteServerConfig.collections.smsTemplates,
-          queries: [
-            Query.equal("lender_id", lenderId),
-            Query.limit(MAX_SMS_TEMPLATES + 1),
-            Query.select(["$id"]),
-          ],
-          transactionId,
-        }),
-      ]);
+      const [existingTemplate, destination, templateList, account] =
+        await Promise.all([
+          existingTemplateId
+            ? getTenantDocumentInTransaction(
+                lenderId,
+                existingTemplateId,
+                transactionId,
+              )
+            : Promise.resolve(null),
+          getDocumentOrNull(
+            appwriteServerConfig.collections.smsTemplates,
+            destinationId,
+            transactionId,
+          ),
+          databases.listDocuments({
+            databaseId: appwriteServerConfig.databaseId,
+            collectionId: appwriteServerConfig.collections.smsTemplates,
+            queries: [
+              Query.equal("lender_id", lenderId),
+              Query.limit(MAX_SMS_TEMPLATES + 1),
+              Query.select(["$id"]),
+            ],
+            transactionId,
+          }),
+          existingTemplateId
+            ? getDocumentOrNull(
+                appwriteServerConfig.collections.smsAccounts,
+                lenderId,
+                transactionId,
+              )
+            : Promise.resolve(null),
+        ]);
 
       if (existingTemplateId && !existingTemplate) {
         throw new SmsManagementError(
@@ -502,6 +510,21 @@ async function saveSmsTemplate(
       }
 
       if (existingTemplateId && existingTemplateId !== destinationId) {
+        if (
+          String(account?.payment_sms_template_id ?? "") === existingTemplateId
+        ) {
+          await databases.updateDocument({
+            databaseId: appwriteServerConfig.databaseId,
+            collectionId: appwriteServerConfig.collections.smsAccounts,
+            documentId: lenderId,
+            data: {
+              payment_sms_template_id: destinationId,
+              updated_at: now,
+            },
+            transactionId,
+          });
+        }
+
         await databases.deleteDocument({
           databaseId: appwriteServerConfig.databaseId,
           collectionId: appwriteServerConfig.collections.smsTemplates,

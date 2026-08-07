@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -45,8 +46,11 @@ vi.mock("@/backend/services/tenant-data-service", () => ({
 
 import {
   createSmsTemplate,
+  deleteSmsTemplate,
+  getSmsManagementData,
   requestSmsSenderId,
   updateAutomaticPaymentSmsSettings,
+  updateSmsTemplate,
 } from "../sms-management-service";
 
 describe("SMS management transactions", () => {
@@ -162,6 +166,177 @@ describe("SMS management transactions", () => {
     expect(mocks.createDocument).not.toHaveBeenCalled();
   });
 
+  it("edits a template in place when its normalized name does not change", async () => {
+    const templateId = smsTemplateId("lender_A", "payment reminder");
+    mocks.getDocument.mockImplementation(
+      ({ collectionId }: { collectionId: string }) =>
+        collectionId === "sms_templates"
+          ? Promise.resolve({
+              $id: templateId,
+              lender_id: "lender_A",
+              name: "Payment reminder",
+              normalized_name: "payment reminder",
+              message: "Old message",
+              created_at: "2026-01-01T00:00:00.000Z",
+            })
+          : Promise.reject({ code: 404 }),
+    );
+    mocks.listDocuments.mockImplementation(
+      ({ queries }: { queries: string[] }) =>
+        Promise.resolve(
+          queries.join(" ").includes('"attribute":"$id"')
+            ? {
+                documents: [
+                  {
+                    $id: templateId,
+                    lender_id: "lender_A",
+                    created_at: "2026-01-01T00:00:00.000Z",
+                  },
+                ],
+                total: 1,
+              }
+            : { documents: [], total: 1 },
+        ),
+    );
+
+    await updateSmsTemplate(
+      "lender_A",
+      templateId,
+      "Payment reminder",
+      "Updated payment reminder.",
+    );
+
+    expect(mocks.updateDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collectionId: "sms_templates",
+        documentId: templateId,
+        data: expect.objectContaining({
+          lender_id: "lender_A",
+          message: "Updated payment reminder.",
+        }),
+      }),
+    );
+    expect(mocks.createDocument).not.toHaveBeenCalled();
+    expect(mocks.deleteDocument).not.toHaveBeenCalled();
+  });
+
+  it("renames a selected automatic-payment template and updates its account reference atomically", async () => {
+    mocks.getDocument.mockImplementation(
+      ({ collectionId }: { collectionId: string }) => {
+        if (collectionId === "sms_accounts") {
+          return Promise.resolve({
+            $id: "lender_A",
+            lender_id: "lender_A",
+            payment_sms_enabled: true,
+            payment_sms_template_id: "template_old",
+          });
+        }
+        return Promise.reject({ code: 404 });
+      },
+    );
+    mocks.listDocuments.mockImplementation(
+      ({ queries }: { queries: string[] }) =>
+        Promise.resolve(
+          queries.join(" ").includes('"attribute":"$id"')
+            ? {
+                documents: [
+                  {
+                    $id: "template_old",
+                    lender_id: "lender_A",
+                    created_at: "2026-01-01T00:00:00.000Z",
+                  },
+                ],
+                total: 1,
+              }
+            : { documents: [], total: 1 },
+        ),
+    );
+
+    await updateSmsTemplate(
+      "lender_A",
+      "template_old",
+      "Renamed reminder",
+      "Updated payment reminder.",
+    );
+
+    const templateCreate = mocks.createDocument.mock.calls.find(
+      ([call]) => call.collectionId === "sms_templates",
+    )?.[0];
+    expect(templateCreate).toBeDefined();
+    expect(mocks.updateDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collectionId: "sms_accounts",
+        documentId: "lender_A",
+        data: expect.objectContaining({
+          payment_sms_template_id: templateCreate.documentId,
+        }),
+        transactionId: "transaction_1",
+      }),
+    );
+    expect(mocks.deleteDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collectionId: "sms_templates",
+        documentId: "template_old",
+        transactionId: "transaction_1",
+      }),
+    );
+    expect(mocks.updateTransaction).toHaveBeenCalledWith({
+      transactionId: "transaction_1",
+      commit: true,
+    });
+  });
+
+  it("deletes a selected template and disables automatic payment messages", async () => {
+    mocks.getDocument.mockResolvedValue({
+      $id: "lender_A",
+      lender_id: "lender_A",
+      payment_sms_enabled: true,
+      payment_sms_template_id: "template_A",
+    });
+    mocks.listDocuments.mockResolvedValue({
+      documents: [{ $id: "template_A", lender_id: "lender_A" }],
+      total: 1,
+    });
+
+    await deleteSmsTemplate("lender_A", "template_A");
+
+    expect(mocks.updateDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collectionId: "sms_accounts",
+        documentId: "lender_A",
+        data: expect.objectContaining({
+          payment_sms_enabled: false,
+          payment_sms_template_id: "",
+        }),
+      }),
+    );
+    expect(mocks.deleteDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collectionId: "sms_templates",
+        documentId: "template_A",
+      }),
+    );
+  });
+
+  it("cannot edit or delete another lender's template", async () => {
+    mocks.listDocuments.mockResolvedValue({ documents: [], total: 0 });
+
+    await expect(
+      updateSmsTemplate(
+        "lender_A",
+        "template_B",
+        "Foreign template",
+        "Do not change",
+      ),
+    ).rejects.toMatchObject({ code: "template_not_found" });
+    await expect(
+      deleteSmsTemplate("lender_A", "template_B"),
+    ).rejects.toMatchObject({ code: "template_not_found" });
+
+    expect(mocks.createDocument).not.toHaveBeenCalled();
+    expect(mocks.deleteDocument).not.toHaveBeenCalled();
+  });
+
   it("enables automatic payment messages only with a lender-owned template", async () => {
     mocks.getDocument.mockResolvedValue({
       $id: "lender_A",
@@ -217,4 +392,29 @@ describe("SMS management transactions", () => {
       rollback: true,
     });
   });
+
+  it("applies the lender boundary to every SMS management query", async () => {
+    mocks.listTenantDocuments.mockResolvedValue({ documents: [], total: 0 });
+
+    await getSmsManagementData("lender_A");
+
+    expect(mocks.listTenantDocuments).toHaveBeenCalledTimes(3);
+    for (const call of mocks.listTenantDocuments.mock.calls) {
+      expect(call[1]).toBe("lender_A");
+    }
+    expect(mocks.listTenantDocuments.mock.calls.map(([collection]) => collection)).toEqual(
+      expect.arrayContaining([
+        "smsAccounts",
+        "smsSenderRequests",
+        "smsTemplates",
+      ]),
+    );
+  });
 });
+
+function smsTemplateId(lenderId: string, normalizedName: string) {
+  const digest = createHash("sha256")
+    .update(`${lenderId}:${normalizedName}`)
+    .digest("hex");
+  return `st_${digest.slice(0, 32)}`;
+}

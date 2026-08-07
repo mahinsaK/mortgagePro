@@ -38,6 +38,7 @@ vi.mock("@/backend/appwrite/server-client", async () => {
 });
 
 import {
+  getSmsUsageAndHistory,
   sendTenantSmsBatch,
   SmsSendingError,
 } from "../sms-sending-service";
@@ -161,6 +162,82 @@ describe("sendTenantSmsBatch", () => {
     expect(mocks.createDocument).not.toHaveBeenCalled();
   });
 
+  it("rejects suspended SMS accounts before provider delivery", async () => {
+    mocks.getDocument.mockImplementation(
+      ({ collectionId }: { collectionId: string }) =>
+        collectionId === "sms_accounts"
+          ? Promise.resolve({
+              lender_id: "lender_A",
+              monthly_quota: 100,
+              status: "suspended",
+            })
+          : Promise.reject({ code: 404 }),
+    );
+    const provider = successfulProvider();
+
+    await expect(sendTenantSmsBatch(input, provider)).rejects.toMatchObject({
+      code: "account_suspended",
+    });
+    expect(provider.send).not.toHaveBeenCalled();
+  });
+
+  it("rejects missing SMS accounts and zero quotas before provider delivery", async () => {
+    const provider = successfulProvider();
+    mocks.getDocument.mockRejectedValue({ code: 404 });
+
+    await expect(sendTenantSmsBatch(input, provider)).rejects.toMatchObject({
+      code: "no_quota",
+    });
+
+    mocks.getDocument.mockImplementation(
+      ({ collectionId }: { collectionId: string }) =>
+        collectionId === "sms_accounts"
+          ? Promise.resolve({
+              lender_id: "lender_A",
+              monthly_quota: 0,
+              status: "active",
+            })
+          : Promise.reject({ code: 404 }),
+    );
+
+    await expect(
+      sendTenantSmsBatch(
+        { ...input, requestId: "22345678-1234-1234-1234-123456789012" },
+        provider,
+      ),
+    ).rejects.toMatchObject({ code: "no_quota" });
+    expect(provider.send).not.toHaveBeenCalled();
+  });
+
+  it("rejects a missing approved sender before provider delivery", async () => {
+    mocks.listDocuments.mockResolvedValue({ documents: [] });
+    const provider = successfulProvider();
+
+    await expect(sendTenantSmsBatch(input, provider)).rejects.toMatchObject({
+      code: "no_sender",
+    });
+    expect(provider.send).not.toHaveBeenCalled();
+  });
+
+  it("rejects an SMS account document owned by another lender", async () => {
+    mocks.getDocument.mockImplementation(
+      ({ collectionId }: { collectionId: string }) =>
+        collectionId === "sms_accounts"
+          ? Promise.resolve({
+              lender_id: "lender_B",
+              monthly_quota: 100,
+              status: "active",
+            })
+          : Promise.reject({ code: 404 }),
+    );
+    const provider = successfulProvider();
+
+    await expect(sendTenantSmsBatch(input, provider)).rejects.toMatchObject({
+      code: "no_quota",
+    });
+    expect(provider.send).not.toHaveBeenCalled();
+  });
+
   it("releases failed-recipient units and records a partial result", async () => {
     const provider: SmsProvider = {
       send: vi
@@ -266,6 +343,129 @@ describe("sendTenantSmsBatch", () => {
       sentRecipients: 2,
     });
     expect(provider.send).not.toHaveBeenCalled();
+  });
+
+  it("blocks the losing simultaneous duplicate send after a reservation conflict", async () => {
+    mocks.getDocument.mockImplementation(
+      ({
+        collectionId,
+        transactionId,
+      }: {
+        collectionId: string;
+        transactionId: string;
+      }) => {
+        if (collectionId === "sms_accounts") {
+          return Promise.resolve({
+            lender_id: "lender_A",
+            monthly_quota: 100,
+            status: "active",
+          });
+        }
+        if (collectionId === "sms_send_logs") {
+          return transactionId === "transaction_1"
+            ? Promise.reject({ code: 404 })
+            : Promise.resolve({
+                $id: "batch_winner",
+                lender_id: "lender_A",
+                status: "processing",
+              });
+        }
+        return Promise.reject({ code: 404 });
+      },
+    );
+    let reservationCommits = 0;
+    mocks.updateTransaction.mockImplementation(
+      ({ commit }: { commit?: boolean }) => {
+        if (!commit) return Promise.resolve({});
+        reservationCommits += 1;
+        return reservationCommits === 1
+          ? Promise.reject({ code: 409 })
+          : Promise.resolve({});
+      },
+    );
+    const provider = successfulProvider();
+
+    await expect(sendTenantSmsBatch(input, provider)).rejects.toMatchObject({
+      code: "duplicate_processing",
+    });
+    expect(mocks.createTransaction).toHaveBeenCalledTimes(2);
+    expect(provider.send).not.toHaveBeenCalled();
+  });
+
+  it("rechecks quota after a simultaneous reservation conflict", async () => {
+    mocks.getDocument.mockImplementation(
+      ({
+        collectionId,
+        transactionId,
+      }: {
+        collectionId: string;
+        transactionId: string;
+      }) => {
+        if (collectionId === "sms_accounts") {
+          return Promise.resolve({
+            lender_id: "lender_A",
+            monthly_quota: 2,
+            status: "active",
+          });
+        }
+        if (
+          collectionId === "sms_monthly_usage" &&
+          transactionId === "transaction_2"
+        ) {
+          return Promise.resolve({
+            lender_id: "lender_A",
+            sent_units: 0,
+            reserved_units: 1,
+          });
+        }
+        return Promise.reject({ code: 404 });
+      },
+    );
+    let reservationCommits = 0;
+    mocks.updateTransaction.mockImplementation(
+      ({ commit }: { commit?: boolean }) => {
+        if (!commit) return Promise.resolve({});
+        reservationCommits += 1;
+        return reservationCommits === 1
+          ? Promise.reject({ code: 409 })
+          : Promise.resolve({});
+      },
+    );
+    const provider = successfulProvider();
+
+    await expect(sendTenantSmsBatch(input, provider)).rejects.toMatchObject({
+      code: "quota_exceeded",
+    });
+    expect(mocks.createTransaction).toHaveBeenCalledTimes(2);
+    expect(provider.send).not.toHaveBeenCalled();
+  });
+
+  it("tenant-scopes approved sender, usage, and batch-history queries", async () => {
+    mocks.listDocuments.mockImplementation(
+      ({ collectionId }: { collectionId: string }) =>
+        Promise.resolve({
+          documents:
+            collectionId === "sms_sender_requests"
+              ? [{ $id: "sender", sender_id: "MortgagePro" }]
+              : [],
+        }),
+    );
+
+    await getSmsUsageAndHistory("lender_A", 100);
+
+    const reportingCalls = mocks.listDocuments.mock.calls.filter(([call]) =>
+      ["sms_monthly_usage", "sms_send_logs"].includes(call.collectionId),
+    );
+    expect(reportingCalls).toHaveLength(2);
+    for (const [call] of reportingCalls) {
+      expect(call.queries.join(" ")).toContain("lender_A");
+    }
+
+    await sendTenantSmsBatch(input, successfulProvider());
+    const senderCall = mocks.listDocuments.mock.calls.find(
+      ([call]) => call.collectionId === "sms_sender_requests",
+    )?.[0];
+    expect(senderCall.queries.join(" ")).toContain("lender_A");
   });
 
   it("rejects malformed request IDs without opening a transaction", async () => {

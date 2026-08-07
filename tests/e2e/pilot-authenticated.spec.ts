@@ -90,6 +90,108 @@ test.describe("dedicated pilot lender journey", () => {
     await expectNoSeriousAccessibilityViolations(page);
   });
 
+  test("lender can complete the SMS template and recipient workflow without sending", async ({
+    page,
+  }) => {
+    const templateName = "E2E browser template";
+    const renamedTemplate = "E2E browser template updated";
+
+    await loginLender(page);
+    await page.goto("/sms");
+    await deleteSmsTemplateIfPresent(page, templateName);
+    await deleteSmsTemplateIfPresent(page, renamedTemplate);
+
+    try {
+      await expect(page.getByText(/E2EAlpha is awaiting review/i)).toBeVisible();
+      await page.getByRole("button", { name: "New template" }).click();
+
+      const createForm = page.locator("form").filter({
+        has: page.getByRole("button", { name: "Save template" }),
+      });
+      await createForm.getByLabel("Template name").fill(templateName);
+      await createForm
+        .getByLabel("Message")
+        .fill("Please make your scheduled payment today.");
+      await createForm.getByRole("button", { name: "Save template" }).click();
+
+      await expect(
+        page.getByRole("button", { name: `Edit ${templateName}` }),
+      ).toBeVisible();
+      await page.getByRole("button", { name: `Edit ${templateName}` }).click();
+
+      const editForm = page.locator("form").filter({
+        has: page.locator('input[name="template_id"]'),
+      });
+      await editForm.getByLabel("Template name").fill(renamedTemplate);
+      await editForm
+        .getByLabel("Message")
+        .fill("Updated payment reminder for the browser workflow.");
+      await editForm.getByRole("button", { name: "Save", exact: true }).click();
+
+      const templateCard = page.getByRole("article").filter({
+        has: page.getByRole("button", { name: `Edit ${renamedTemplate}` }),
+      });
+      await expect(templateCard).toBeVisible();
+      await templateCard.getByRole("button", { name: "Use message" }).click();
+
+      await page.getByLabel("Search borrowers").fill("E2E Alpha");
+      await page.getByRole("button", { name: "Search", exact: true }).click();
+      const borrowerResult = page.getByRole("article").filter({
+        hasText: "E2E Alpha Borrower",
+      });
+      await borrowerResult.getByRole("button", { name: "Add" }).click();
+      await page.getByLabel("Add a custom phone number").fill("+94775555555");
+      await page.getByRole("button", { name: "Add", exact: true }).click();
+
+      const selectedForm = page.locator("form").filter({
+        has: page.locator('input[name="recipients"]'),
+      });
+      await expect(selectedForm.getByLabel("Message")).toHaveValue(
+        "Updated payment reminder for the browser workflow.",
+      );
+      await expect(page.getByText("E2E Alpha Borrower · +94771111111")).toBeVisible();
+      await expect(page.getByText("+94775555555", { exact: true })).toBeVisible();
+      await expect(page.getByText(/2 units for the selected list/)).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Send selected" }),
+      ).toBeDisabled();
+    } finally {
+      await deleteSmsTemplateIfPresent(page, templateName);
+      await deleteSmsTemplateIfPresent(page, renamedTemplate);
+    }
+  });
+
+  test("@critical SMS workflow remains usable on mobile", async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      !["iphone-critical", "android-critical"].includes(testInfo.project.name),
+      "Mobile-only SMS workflow",
+    );
+    await loginLender(page);
+    await page.goto("/sms");
+
+    const quickSms = page.getByRole("heading", { name: "Single number" }).locator(
+      "xpath=ancestor::section",
+    );
+    await quickSms.getByLabel("Phone number").fill("+94776666666");
+    await quickSms.getByLabel("Message").fill("Mobile payment reminder");
+    await expect(quickSms.getByText(/1 unit$/)).toBeVisible();
+    await expect(quickSms.getByRole("button", { name: "Send SMS" })).toBeDisabled();
+
+    await page.getByLabel("Add a custom phone number").fill("+94777777777");
+    await page.getByRole("button", { name: "Add", exact: true }).click();
+    const selectedForm = page.locator("form").filter({
+      has: page.locator('input[name="recipients"]'),
+    });
+    await selectedForm.getByLabel("Message").fill("Mobile selected reminder");
+
+    await expect(page.getByText("+94777777777", { exact: true })).toBeVisible();
+    await expect(page.getByText(/1 unit for the selected list/)).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await expectNoSeriousAccessibilityViolations(page);
+  });
+
   test("cross-tenant loans, QR codes, and exports remain isolated", async ({
     page,
   }) => {
@@ -171,6 +273,23 @@ async function loginLender(page: import("@playwright/test").Page) {
   await page.getByLabel("Password").fill(lenderPassword!);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/dashboard\/lender/);
+}
+
+async function deleteSmsTemplateIfPresent(
+  page: import("@playwright/test").Page,
+  templateName: string,
+) {
+  const editButton = page.getByRole("button", {
+    name: `Edit ${templateName}`,
+  });
+  if ((await editButton.count()) === 0) return;
+
+  const templateCard = page.getByRole("article").filter({ has: editButton });
+  page.once("dialog", (dialog) => dialog.accept());
+  await templateCard
+    .getByRole("button", { name: `Delete ${templateName}` })
+    .click();
+  await expect(editButton).toHaveCount(0);
 }
 
 function escapeRegex(value: string) {

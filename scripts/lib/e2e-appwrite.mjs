@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { Client, Databases, Users } from "node-appwrite";
 import { loadScriptEnv } from "./load-env.mjs";
 
@@ -82,10 +83,22 @@ export const e2eIds = {
   payments: ["e2e_payment_alpha"],
   smsAccounts: ["e2e_lender_alpha", "e2e_lender_beta"],
   smsSenderRequests: ["e2ealpha", "e2ebeta"],
-  smsTemplates: ["e2e_sms_template_alpha", "e2e_sms_template_beta"],
+  smsTemplates: [
+    "e2e_sms_template_alpha",
+    "e2e_sms_template_beta",
+    smsTemplateId("e2e_lender_alpha", "e2e browser template"),
+    smsTemplateId("e2e_lender_alpha", "e2e browser template updated"),
+  ],
   smsMonthlyUsage: [],
   smsSendLogs: [],
 };
+
+function smsTemplateId(lenderId, normalizedName) {
+  const digest = createHash("sha256")
+    .update(`${lenderId}:${normalizedName}`)
+    .digest("hex");
+  return `st_${digest.slice(0, 32)}`;
+}
 
 function requireEnv(env, name) {
   const value = env[name]?.trim();

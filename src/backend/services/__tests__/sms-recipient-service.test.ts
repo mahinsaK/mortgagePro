@@ -62,6 +62,8 @@ describe("sms-recipient-service", () => {
     const recipients = await searchBorrowerSmsRecipients("Avery");
     const queries = mocks.listDocuments.mock.calls[0][0].queries as string[];
 
+    expect(queries.join(" ")).toContain('"attribute":"lender_id"');
+    expect(queries.join(" ")).toContain("lender_1");
     expect(queries.join(" ")).toContain('"attribute":"name"');
     expect(queries.join(" ")).toContain('"attribute":"business_name"');
     expect(queries.join(" ")).toContain('"attribute":"contact"');

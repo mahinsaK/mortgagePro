@@ -1,4 +1,4 @@
-import { randomBytes, scryptSync } from "node:crypto";
+import { createHash, randomBytes, scryptSync } from "node:crypto";
 import { Client, Databases, Query, Users } from "node-appwrite";
 import { loadScriptEnv } from "./lib/load-env.mjs";
 
@@ -28,8 +28,27 @@ const config = {
     collectors: requireEnv("NEXT_PUBLIC_APPWRITE_COLLECTORS_COLLECTION_ID"),
     loans: requireEnv("NEXT_PUBLIC_APPWRITE_LOANS_COLLECTION_ID"),
     payments: requireEnv("NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID"),
+    smsAccounts: requireEnv("APPWRITE_SMS_ACCOUNTS_COLLECTION_ID"),
+    smsTemplates: requireEnv("APPWRITE_SMS_TEMPLATES_COLLECTION_ID"),
   },
 };
+
+const starterSmsTemplates = [
+  {
+    name: "Loan welcome",
+    message:
+      "Welcome. Your loan has been created successfully. Thank you for choosing us.",
+  },
+  {
+    name: "Payment reminder",
+    message: "Hello, this is a reminder about your scheduled loan payment.",
+  },
+  {
+    name: "Loan completed",
+    message:
+      "Thank you. Your loan has been completed successfully. We appreciate your business.",
+  },
+];
 
 if (!config.apiKey) {
   throw new Error("APPWRITE_SETUP_API_KEY is required for seeding.");
@@ -260,6 +279,30 @@ async function seedLender(lender) {
     created_at: now,
   });
 
+  await upsertDocument(config.collections.smsAccounts, lender.id, {
+    lender_id: lender.id,
+    status: "active",
+    monthly_quota: 0,
+    created_at: now,
+    updated_at: now,
+  });
+
+  for (const template of starterSmsTemplates) {
+    const normalizedName = template.name.toLowerCase();
+    await upsertDocument(
+      config.collections.smsTemplates,
+      smsTemplateId(lender.id, normalizedName),
+      {
+        lender_id: lender.id,
+        name: template.name,
+        normalized_name: normalizedName,
+        message: template.message,
+        created_at: now,
+        updated_at: now,
+      },
+    );
+  }
+
   for (const collector of lender.collectors) {
     await upsertDocument(config.collections.collectors, collector.id, {
       lender_id: lender.id,
@@ -419,6 +462,13 @@ function hashCollectorPassword(password) {
   const hash = scryptSync(password, salt, 64).toString("hex");
 
   return `${salt}:${hash}`;
+}
+
+function smsTemplateId(lenderId, normalizedName) {
+  const digest = createHash("sha256")
+    .update(`${lenderId}:${normalizedName}`)
+    .digest("hex");
+  return `st_${digest.slice(0, 32)}`;
 }
 
 function createLoanSearchText({ borrowerName, borrowerContact, borrowerAddress }) {

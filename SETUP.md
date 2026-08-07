@@ -60,6 +60,11 @@ NEXT_PUBLIC_APPWRITE_LOANS_COLLECTION_ID="loans"
 NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID="payments"
 APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID="auth_rate_limits"
 APPWRITE_SECURITY_EVENTS_COLLECTION_ID="security_events"
+APPWRITE_SMS_ACCOUNTS_COLLECTION_ID="sms_accounts"
+APPWRITE_SMS_SENDER_REQUESTS_COLLECTION_ID="sms_sender_requests"
+APPWRITE_SMS_TEMPLATES_COLLECTION_ID="sms_templates"
+APPWRITE_SMS_MONTHLY_USAGE_COLLECTION_ID="sms_monthly_usage"
+APPWRITE_SMS_SEND_LOGS_COLLECTION_ID="sms_send_logs"
 ```
 
 The final two collections are reserved for optional authentication monitoring.
@@ -153,6 +158,11 @@ APP_BASE_URL="http://localhost:3000"
 
 APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID="auth_rate_limits"
 APPWRITE_SECURITY_EVENTS_COLLECTION_ID="security_events"
+APPWRITE_SMS_ACCOUNTS_COLLECTION_ID="sms_accounts"
+APPWRITE_SMS_SENDER_REQUESTS_COLLECTION_ID="sms_sender_requests"
+APPWRITE_SMS_TEMPLATES_COLLECTION_ID="sms_templates"
+APPWRITE_SMS_MONTHLY_USAGE_COLLECTION_ID="sms_monthly_usage"
+APPWRITE_SMS_SEND_LOGS_COLLECTION_ID="sms_send_logs"
 
 NEXT_PUBLIC_APPWRITE_ENDPOINT="https://<region>.cloud.appwrite.io/v1"
 NEXT_PUBLIC_APPWRITE_PROJECT_ID="your_project_id"
@@ -174,12 +184,23 @@ SMS pages require:
 
 ```dotenv
 TEXTLK_API_TOKEN="your_textlk_token"
-TEXTLK_SENDER_ID="your_approved_sender_id"
 TEXTLK_API_URL="https://app.text.lk/api/v3/sms/send"
 ```
 
-The rest of MortgagePro can run without Text.lk credentials, but SMS sending
-will fail until they are configured.
+Sender IDs are requested by lenders in the SMS page and approved per lender in
+Appwrite Console after Text.lk approval. Do not add a global sender ID to the
+environment. The rest of MortgagePro can run without Text.lk credentials, but
+SMS sending remains unavailable until the token, lender sender approval, and
+monthly quota are configured.
+
+After a lender submits a request:
+
+1. Confirm the sender ID is approved in the shared Text.lk account.
+2. In `sms_sender_requests`, change the request to `approved` or `rejected` and
+   optionally add `rejection_reason`.
+3. In `sms_accounts`, assign `monthly_quota` and keep `status` as `active`.
+
+See `src/backend/docs/modules/sms.md` for the quota and replacement rules.
 
 ## 7. Create Appwrite tables and attributes
 
@@ -194,6 +215,7 @@ This creates or reconciles:
 - the MortgagePro database;
 - lenders, borrowers, collectors, loans, and payments collections;
 - the two reserved security collections;
+- the five server-only SMS collections;
 - all required attributes; and
 - server-only collection permissions.
 
@@ -254,8 +276,9 @@ Only run this for development or demonstration environments:
 npm run appwrite:seed
 ```
 
-The seed script creates two demo lenders, collectors, borrowers, loans, and
-payments. The demo login credentials are listed in `scripts/README.md` and at
+The seed script creates two demo lenders, collectors, borrowers, loans,
+payments, zero-quota SMS accounts, and starter templates. It does not approve
+sender IDs. The demo login credentials are listed in `scripts/README.md` and at
 the top of `scripts/seed-appwrite-demo-data.mjs`.
 
 Do not seed a production database containing real customer data.

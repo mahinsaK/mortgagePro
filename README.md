@@ -79,6 +79,11 @@ The app expects these core variables in `.env.local`:
 - `APP_BASE_URL` - fixed application origin used for authentication callbacks, such as `http://localhost:3000` locally and the canonical HTTPS URL in production.
 - `APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID` - server-only shared authentication counter collection (default `auth_rate_limits`).
 - `APPWRITE_SECURITY_EVENTS_COLLECTION_ID` - server-only sanitized security-event collection (default `security_events`).
+- `APPWRITE_SMS_ACCOUNTS_COLLECTION_ID` - lender SMS quota/account collection.
+- `APPWRITE_SMS_SENDER_REQUESTS_COLLECTION_ID` - sender approval requests.
+- `APPWRITE_SMS_TEMPLATES_COLLECTION_ID` - lender-owned message templates.
+- `APPWRITE_SMS_MONTHLY_USAGE_COLLECTION_ID` - monthly quota counters.
+- `APPWRITE_SMS_SEND_LOGS_COLLECTION_ID` - sanitized batch summaries.
 - `NEXT_PUBLIC_APPWRITE_ENDPOINT`
 - `NEXT_PUBLIC_APPWRITE_PROJECT_ID`
 - `NEXT_PUBLIC_APPWRITE_DATABASE_ID`
@@ -88,7 +93,6 @@ The app expects these core variables in `.env.local`:
 - `NEXT_PUBLIC_APPWRITE_LOANS_COLLECTION_ID`
 - `NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID`
 - `TEXTLK_API_TOKEN`
-- `TEXTLK_SENDER_ID`
 - `TEXTLK_API_URL`
 - `DEMO_LENDER_EMAIL`
 - `DEMO_LENDER_PASSWORD`
@@ -136,9 +140,9 @@ Demo collector logins:
 - `seed_collector_maya` / `MayaCollect123!`
 - `seed_collector_nina` / `NinaCollect123!`
 
-The table script creates or reconciles the five application collections plus
-`auth_rate_limits` and `security_events`, all with empty client permissions and
-`documentSecurity` disabled. Database access is server-only.
+The table script creates or reconciles the five core collections, two optional
+security collections, and five SMS collections. All have empty client
+permissions and `documentSecurity` disabled. Database access is server-only.
 
 Inspect collection permission metadata without changing it:
 

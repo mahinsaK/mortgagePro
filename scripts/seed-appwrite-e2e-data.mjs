@@ -146,6 +146,61 @@ async function seed() {
     method: "cash",
     created_at: now,
   });
+
+  await upsert(config.collections.smsAccounts, e2eIds.smsAccounts[0], {
+    lender_id: e2eIds.lenders[0],
+    status: "active",
+    monthly_quota: 0,
+    created_at: now,
+    updated_at: now,
+  });
+  await upsert(config.collections.smsAccounts, e2eIds.smsAccounts[1], {
+    lender_id: e2eIds.lenders[1],
+    status: "active",
+    monthly_quota: 0,
+    created_at: now,
+    updated_at: now,
+  });
+  await upsert(
+    config.collections.smsSenderRequests,
+    e2eIds.smsSenderRequests[0],
+    {
+      lender_id: e2eIds.lenders[0],
+      sender_id: "E2EAlpha",
+      normalized_sender_id: "e2ealpha",
+      status: "pending",
+      rejection_reason: "",
+      requested_at: now,
+    },
+  );
+  await upsert(
+    config.collections.smsSenderRequests,
+    e2eIds.smsSenderRequests[1],
+    {
+      lender_id: e2eIds.lenders[1],
+      sender_id: "E2EBeta",
+      normalized_sender_id: "e2ebeta",
+      status: "pending",
+      rejection_reason: "",
+      requested_at: now,
+    },
+  );
+  await upsert(config.collections.smsTemplates, e2eIds.smsTemplates[0], {
+    lender_id: e2eIds.lenders[0],
+    name: "E2E Alpha reminder",
+    normalized_name: "e2e alpha reminder",
+    message: "E2E Alpha payment reminder.",
+    created_at: now,
+    updated_at: now,
+  });
+  await upsert(config.collections.smsTemplates, e2eIds.smsTemplates[1], {
+    lender_id: e2eIds.lenders[1],
+    name: "E2E Beta reminder",
+    normalized_name: "e2e beta reminder",
+    message: "E2E Beta payment reminder.",
+    created_at: now,
+    updated_at: now,
+  });
 }
 
 async function upsertUser(userId, email, password, name) {

@@ -7,6 +7,11 @@ console.log("Dedicated E2E records removed.");
 
 async function cleanup() {
   for (const [collectionName, ids] of [
+    ["smsSendLogs", e2eIds.smsSendLogs],
+    ["smsMonthlyUsage", e2eIds.smsMonthlyUsage],
+    ["smsTemplates", e2eIds.smsTemplates],
+    ["smsSenderRequests", e2eIds.smsSenderRequests],
+    ["smsAccounts", e2eIds.smsAccounts],
     ["payments", e2eIds.payments],
     ["loans", e2eIds.loans],
     ["borrowers", e2eIds.borrowers],

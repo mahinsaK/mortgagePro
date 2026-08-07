@@ -29,3 +29,9 @@ Script jobs:
 All scripts load configuration in the same order: `.env.example` defaults,
 then `.env.local`, then non-empty process environment values. Empty process
 variables never overwrite populated local values.
+
+The SMS setup adds `sms_accounts`, `sms_sender_requests`, `sms_templates`,
+`sms_monthly_usage`, and `sms_send_logs`. Run `npm run appwrite:tables`, then
+`npm run appwrite:indexes`, then `npm run appwrite:permissions:check`. The demo
+seed creates SMS accounts with zero quota and starter templates; it never
+pre-approves a Text.lk sender ID.

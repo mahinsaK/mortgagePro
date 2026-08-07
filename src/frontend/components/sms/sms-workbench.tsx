@@ -7,9 +7,14 @@ import {
   sendManualSmsAction,
   sendSelectedSmsAction,
 } from "@/backend/actions/sms-actions";
+import { smsUnitsPerRecipient } from "@/backend/modules/sms/policy";
 import type { SmsManagementData } from "@/backend/services/sms-management-service";
 import { SmsAccountPanel } from "./sms-account-panel";
 import { SmsTemplateManager } from "./sms-template-manager";
+import {
+  SmsUsageDashboard,
+  type SmsReportingData,
+} from "./sms-usage-dashboard";
 
 type Recipient = {
   id: string;
@@ -23,6 +28,7 @@ type SmsWorkbenchProps = {
   management?: SmsManagementData | null;
   message?: string;
   phone?: string;
+  reporting?: SmsReportingData | null;
   status?: string;
 };
 
@@ -31,6 +37,7 @@ export function SmsWorkbench({
   management,
   message,
   phone,
+  reporting,
   status,
 }: SmsWorkbenchProps) {
   const [customNumber, setCustomNumber] = useState("");
@@ -47,6 +54,13 @@ export function SmsWorkbench({
   const selectedRecipientsPayload = useMemo(
     () => JSON.stringify(selectedRecipients),
     [selectedRecipients],
+  );
+  const unitsPerRecipient = smsUnitsPerRecipient(messageText);
+  const sendingEnabled = Boolean(
+    management?.account?.status === "active" &&
+      management.activeSender &&
+      reporting &&
+      reporting.current.remainingUnits > 0,
   );
 
   async function searchBorrowers() {
@@ -137,6 +151,14 @@ export function SmsWorkbench({
   return (
     <div className="grid gap-6">
       {management ? <SmsAccountPanel management={management} /> : null}
+      {reporting ? <SmsUsageDashboard data={reporting} /> : null}
+      {!sendingEnabled ? (
+        <div className="rounded-md border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 text-sm font-medium text-[#9a3412]">
+          Sending is unavailable until the account is active, a sender ID is
+          approved, and monthly quota remains. You can still manage templates
+          and review history.
+        </div>
+      ) : null}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm md:p-5">
           <div className="mb-5">
@@ -267,10 +289,16 @@ export function SmsWorkbench({
                   value={messageText}
                 />
               </label>
+              <p className="text-xs font-medium text-[#657386]">
+                Estimated usage: {unitsPerRecipient || 0} unit
+                {unitsPerRecipient === 1 ? "" : "s"} per recipient ·{" "}
+                {unitsPerRecipient * selectedRecipients.length} units for the
+                selected list
+              </p>
               <div className="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
                 <button
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
-                  disabled={!messageText.trim()}
+                  disabled={!messageText.trim() || !sendingEnabled}
                   formAction={sendAllBorrowersSmsAction}
                   onClick={(event) => {
                     if (!confirm("Send this SMS to all borrowers?")) {
@@ -287,6 +315,7 @@ export function SmsWorkbench({
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#15191f] px-5 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
                   disabled={
                     selectedRecipients.length === 0 || !messageText.trim()
+                    || !sendingEnabled
                   }
                   type="submit"
                 >
@@ -298,7 +327,7 @@ export function SmsWorkbench({
           </div>
         </section>
 
-        <QuickSmsPanel />
+        <QuickSmsPanel sendingEnabled={sendingEnabled} />
       </div>
 
       {management ? (
@@ -432,8 +461,10 @@ function phoneIdentity(value: string) {
   return value.replace(/\D/g, "");
 }
 
-function QuickSmsPanel() {
+function QuickSmsPanel({ sendingEnabled }: { sendingEnabled: boolean }) {
   const requestIdRef = useRef<HTMLInputElement>(null);
+  const [message, setMessage] = useState("");
+  const units = smsUnitsPerRecipient(message);
 
   return (
     <section className="rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm">
@@ -469,13 +500,20 @@ function QuickSmsPanel() {
             className="mt-2 min-h-32 w-full resize-y rounded-md border border-[#cfd8e3] px-3 py-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
             maxLength={480}
             name="message"
+            onChange={(event) => setMessage(event.target.value)}
             placeholder="Type the customer message"
             required
+            value={message}
           />
         </label>
 
+        <p className="text-xs font-medium text-[#657386]">
+          Estimated usage: {units || 0} unit{units === 1 ? "" : "s"}
+        </p>
+
         <button
           className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#15191f] px-5 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
+          disabled={!sendingEnabled || !message.trim()}
           type="submit"
         >
           <Send aria-hidden="true" size={17} />

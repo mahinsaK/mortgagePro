@@ -1,13 +1,13 @@
 # Database Schema
 
-The app uses five core business collections and two server-only security
-collections in Appwrite Database.
+The app uses five core business collections, two server-only security
+collections, and five server-only SMS collections in Appwrite Database.
 
 The schema sources are `scripts/appwrite-schema-definition.mjs`,
 `scripts/create-appwrite-tables-and-attributes.mjs`, and
 `scripts/create-appwrite-indexes.mjs`.
 
-All seven collections are provisioned with empty collection permissions,
+All twelve collections are provisioned with empty collection permissions,
 `documentSecurity: false`, and server-only access through the runtime API key.
 Normal Appwrite user sessions must not access database documents directly.
 
@@ -161,6 +161,34 @@ an event type, outcome, principal type, optional lender ID, request ID, reason
 code, safe metadata, and timestamp. Records older than 90 days are removed by
 `npm run security:cleanup`; aggregate counts are available through
 `npm run security:report -- --hours 24`.
+
+## SMS Accounts
+
+One document per lender stores `lender_id`, `active`/`suspended` status,
+`monthly_quota`, and timestamps. The document ID matches the lender ID.
+
+## SMS Sender Requests
+
+Stores the preserved sender ID, lowercase uniqueness key, lender ID,
+`pending`/`approved`/`rejected` status, optional reason, and request timestamp.
+The lowercase sender is the document ID, which makes sender IDs globally unique.
+
+## SMS Templates
+
+Stores lender-owned template name, normalized name, message (up to 480 Unicode
+code points), and timestamps. A deterministic lender/name document ID protects
+name uniqueness during concurrent saves.
+
+## SMS Monthly Usage
+
+Stores lender and Asia/Colombo `YYYY-MM`, successful and failed recipient
+counters, sent/reserved application units, batch count, and timestamps.
+
+## SMS Send Logs
+
+Stores one sanitized summary per request: lender, month, request ID, sender ID,
+character/unit counts, recipient result counts, status, purpose, and timestamps.
+It never stores recipient phone numbers, message contents, or provider secrets.
 
 ## Why `search_text` exists
 

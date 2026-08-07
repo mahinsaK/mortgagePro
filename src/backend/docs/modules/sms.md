@@ -1,118 +1,95 @@
-# SMS Module
+# Lender SMS Workflow
 
-Paths:
+MortgagePro uses a shared server-side Text.lk API token, but every SMS send uses
+the active sender ID approved for the authenticated lender. Sender IDs, quotas,
+templates, usage, and history are stored in server-only Appwrite collections.
 
-- `src/backend/modules/sms/dto.ts`
-- `src/backend/modules/sms/controller.ts`
-- `src/backend/modules/sms/service.ts`
-- `src/backend/modules/sms/__tests__/sms.test.ts`
-- `src/backend/actions/sms-actions.ts`
-- `src/backend/services/sms-recipient-service.ts`
-- `src/backend/services/textlk-sms-provider.ts`
-- `src/app/api/sms/borrowers/search/route.ts`
-- `src/app/(portal)/sms/page.tsx`
-- `src/frontend/components/sms/sms-workbench.tsx`
+## Configuration
 
-## Purpose
-
-Handles SMS message validation, templates, and Text.lk-backed sending.
-
-## DTO/controller/service layer
-
-The module files validate and prepare SMS sends:
-
-- `toSendSmsDto(input)` validates lender ID, phone number, message, and purpose.
-- `SmsController.send(input)` returns success or failure.
-- `SmsService.send(dto)` delegates delivery to an injected `SmsProvider`.
-
-The module does not know Text.lk request details. The Text.lk gateway lives in `src/backend/services/textlk-sms-provider.ts`.
-
-## Text.lk configuration
-
-Path: `.env.local`
-
-Required variables:
+Application runtime variables:
 
 ```txt
 TEXTLK_API_TOKEN
-TEXTLK_SENDER_ID
 TEXTLK_API_URL
+APPWRITE_SMS_ACCOUNTS_COLLECTION_ID=sms_accounts
+APPWRITE_SMS_SENDER_REQUESTS_COLLECTION_ID=sms_sender_requests
+APPWRITE_SMS_TEMPLATES_COLLECTION_ID=sms_templates
+APPWRITE_SMS_MONTHLY_USAGE_COLLECTION_ID=sms_monthly_usage
+APPWRITE_SMS_SEND_LOGS_COLLECTION_ID=sms_send_logs
 ```
 
-Only placeholders should be committed in `.env.example`.
+There is no `TEXTLK_SENDER_ID`. The server resolves the sender from the current
+lender's approved request and never accepts it from a form.
 
-## Current SMS send flow
+## Appwrite collections
 
-Path: `src/backend/actions/sms-actions.ts`
+- `sms_accounts`: one lender account with `active`/`suspended` status and the
+  monthly application quota.
+- `sms_sender_requests`: globally unique sender requests and their
+  `pending`/`approved`/`rejected` status.
+- `sms_templates`: up to 20 lender-owned, editable messages.
+- `sms_monthly_usage`: Asia/Colombo monthly sent, failed, and reserved counters.
+- `sms_send_logs`: sanitized batch summaries. It never stores message content or
+  recipient phone numbers.
 
-Functions:
+All five collections have empty client permissions and `documentSecurity` set
+to `false`. Only server API-key clients access them.
 
-- `sendManualSmsAction(formData)`
-- `sendSelectedSmsAction(formData)`
-- `sendAllBorrowersSmsAction(formData)`
+## Sender approval and quota administration
 
-How it works:
+The application lets a lender request a 3–11 character sender ID. It must start
+with a letter and contain only ASCII letters and numbers. Case is preserved for
+Text.lk, while a lowercase copy guarantees global uniqueness.
 
-- Reads the active lender with `getPrimaryLender()`.
-- Creates `SmsController(new SmsService(new TextlkSmsProvider()))`.
-- Sends `lenderId`, `phoneNumber`, `message`, and `purpose: "manual"` to the controller.
-- Sends in batches of 20 numbers so bulk sends do not create one large provider burst.
-- Redirects back to `/sms` with a success or error status.
+Administration is manual in Appwrite Console:
 
-## Borrower recipient search
+1. Confirm the requested sender is approved in the shared Text.lk account.
+2. Open `sms_sender_requests` and change the request status to `approved` or
+   `rejected`. Add `rejection_reason` when useful.
+3. Open the lender document in `sms_accounts`, set `monthly_quota`, and keep its
+   status `active` (or use `suspended` to stop sends).
 
-Paths:
+The newest approved request is the active sender. A pending or rejected
+replacement does not disable the lender's previous approved sender.
 
-- `src/app/api/sms/borrowers/search/route.ts`
-- `src/backend/services/sms-recipient-service.ts`
+## Sending and quota safety
 
-Query:
+`sms-sending-service.ts` performs the protected workflow:
 
-```txt
-Query.equal("lender_id", lender.id)
-Query.or([
-  Query.search("name", normalizedQuery),
-  Query.search("business_name", normalizedQuery),
-  Query.search("contact", normalizedQuery)
-])
-Query.limit(8)
-Query.select(["$id", "name", "business_name", "contact"])
-```
+1. Validate and deduplicate recipient numbers and validate the 1–480 code-point
+   message.
+2. Resolve the authenticated lender's active account and newest approved sender.
+3. Reserve all requested units in an Appwrite transaction and create a
+   deterministic processing batch.
+4. Send to Text.lk in bounded groups of 20 recipients.
+5. Transactionally finalize successful/failed recipient counters, consume units
+   only for successes, and release units for failures.
 
-How it works:
+The browser supplies a one-time request ID, and the lender plus request ID
+produce a deterministic batch ID. Replayed submissions are not sent again. If
+Text.lk completes but Appwrite finalization cannot be confirmed, the batch is
+marked `review_required`, its reservation remains, and the app tells the lender
+not to resend.
 
-- The SMS page does not load all borrowers.
-- The lender types borrower name, business name, or contact and clicks Search.
-- The API returns only matching borrower recipients for the active lender.
-- The browser keeps selected borrowers in a temporary array until `Send selected`.
-- `Send all borrowers` does not use the browser array. It asks the backend for all borrower phone numbers under the active lender when clicked.
+Application quota units are deliberately simple and may differ from Text.lk
+billing: 1–160 Unicode code points use one unit, 161–320 use two, and 321–480 use
+three per successful recipient. Months use the Asia/Colombo calendar and unused
+units do not roll over.
 
-## Frontend behavior
+## Templates and reporting
 
-Path: `src/frontend/components/sms/sms-workbench.tsx`
+The first sender request creates the Loan welcome, Payment reminder, and Loan
+completed starter templates. Lenders can create, rename, edit, use, and delete
+up to 20 templates. Names are unique per lender.
 
-How it works:
+The SMS page shows current quota, used/reserved/remaining units, successful and
+failed recipients, recent sanitized batch summaries, and a 12-month report.
+Templates and history remain available when sending is not configured or is
+suspended.
 
-- The SMS page does not list all borrowers/customers.
-- Borrower search results can be added to a temporary browser array.
-- Valid custom phone numbers can be added to the same selected-recipient array;
-  duplicate numbers are prevented before sending.
-- The selected array is posted only when the lender clicks `Send selected`.
-- `Send all borrowers` retrieves lender-owned borrower phone numbers on the server only when clicked.
-- Quick SMS sends one typed number directly.
-- Templates appear below the send panels and only fill the message text in the browser.
+## Borrower recipients
 
-## Future loan messages
-
-Path: `src/backend/modules/sms/service.ts`
-
-Template helpers:
-
-- `createLoanWelcomeMessage(...)`
-- `createLoanCompletedMessage(...)`
-
-These are ready for the next phase where loan creation and loan completion actions can call SMS automatically.
-
-## Current limitation
-
-Phase one does not store SMS logs. Add an `sms_logs` collection or notification log later if sent-message audit history becomes required.
+Borrower search and bulk recipient lookup remain tenant scoped. Search returns
+at most eight matching lender-owned borrowers. `Send all borrowers` resolves
+the lender's current borrower numbers on the server; it does not trust a
+browser-supplied lender ID.

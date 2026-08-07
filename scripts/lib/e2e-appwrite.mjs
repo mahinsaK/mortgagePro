@@ -18,6 +18,17 @@ export function createE2EContext() {
       collectors: requireEnv(env, "NEXT_PUBLIC_APPWRITE_COLLECTORS_COLLECTION_ID"),
       loans: requireEnv(env, "NEXT_PUBLIC_APPWRITE_LOANS_COLLECTION_ID"),
       payments: requireEnv(env, "NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID"),
+      smsAccounts: requireEnv(env, "APPWRITE_SMS_ACCOUNTS_COLLECTION_ID"),
+      smsSenderRequests: requireEnv(
+        env,
+        "APPWRITE_SMS_SENDER_REQUESTS_COLLECTION_ID",
+      ),
+      smsTemplates: requireEnv(env, "APPWRITE_SMS_TEMPLATES_COLLECTION_ID"),
+      smsMonthlyUsage: requireEnv(
+        env,
+        "APPWRITE_SMS_MONTHLY_USAGE_COLLECTION_ID",
+      ),
+      smsSendLogs: requireEnv(env, "APPWRITE_SMS_SEND_LOGS_COLLECTION_ID"),
     },
   };
   const client = new Client()
@@ -69,6 +80,11 @@ export const e2eIds = {
   collectors: ["e2ealpha4821", "e2ebeta5932"],
   loans: ["e2e_loan_alpha", "e2e_loan_beta"],
   payments: ["e2e_payment_alpha"],
+  smsAccounts: ["e2e_lender_alpha", "e2e_lender_beta"],
+  smsSenderRequests: ["e2ealpha", "e2ebeta"],
+  smsTemplates: ["e2e_sms_template_alpha", "e2e_sms_template_beta"],
+  smsMonthlyUsage: [],
+  smsSendLogs: [],
 };
 
 function requireEnv(env, name) {

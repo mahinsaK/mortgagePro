@@ -6,10 +6,12 @@ import { SmsService } from "@/backend/modules/sms/service";
 import { getPrimaryLender } from "@/backend/services/lender-service";
 import { getAllBorrowerSmsRecipients } from "@/backend/services/sms-recipient-service";
 import { TextlkSmsProvider } from "@/backend/services/textlk-sms-provider";
+import { isFeatureAvailable } from "@/shared/feature-availability";
 
 const SMS_SEND_BATCH_SIZE = 20;
 
 export async function sendManualSmsAction(formData: FormData) {
+  requireSmsAvailability();
   const result = await sendSmsToNumbers({
     message: readField(formData, "message"),
     phoneNumbers: [readField(formData, "phone_number")],
@@ -19,6 +21,7 @@ export async function sendManualSmsAction(formData: FormData) {
 }
 
 export async function sendSelectedSmsAction(formData: FormData) {
+  requireSmsAvailability();
   const result = await sendSmsToNumbers({
     message: readField(formData, "message"),
     phoneNumbers: readSelectedRecipients(formData).map(
@@ -30,6 +33,7 @@ export async function sendSelectedSmsAction(formData: FormData) {
 }
 
 export async function sendAllBorrowersSmsAction(formData: FormData) {
+  requireSmsAvailability();
   const recipients = await getAllBorrowerSmsRecipients();
   const result = await sendSmsToNumbers({
     message: readField(formData, "message"),
@@ -145,4 +149,10 @@ function redirectWithError(message: string): never {
   });
 
   redirect(`/sms?${params.toString()}`);
+}
+
+function requireSmsAvailability() {
+  if (!isFeatureAvailable("sms")) {
+    redirectWithError("SMS is currently under maintenance.");
+  }
 }

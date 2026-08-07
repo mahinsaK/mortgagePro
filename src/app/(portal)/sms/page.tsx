@@ -1,4 +1,6 @@
 import { SmsWorkbench } from "@/frontend/components/sms/sms-workbench";
+import { FeatureMaintenanceCover } from "@/frontend/components/maintenance/feature-maintenance-cover";
+import { getFeatureAvailability } from "@/shared/feature-availability";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +14,11 @@ export default async function SmsPage({
     status?: string;
   }>;
 }) {
+  const availability = getFeatureAvailability("sms");
+  if (!availability.available) {
+    return <FeatureMaintenanceCover {...availability} />;
+  }
+
   const { count, message, phone, status } = await searchParams;
 
   return (

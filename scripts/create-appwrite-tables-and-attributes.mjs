@@ -219,7 +219,7 @@ async function reconcileAttribute(collectionId, attribute, existing) {
     required: attribute.required,
     min: attribute.min,
     max: attribute.max,
-    xdefault: attribute.xdefault,
+    xdefault: attribute.xdefault ?? existing.default ?? null,
   });
   console.log(
     `Updated attribute limits: ${collectionId}.${attribute.key} (max ${attribute.max})`,

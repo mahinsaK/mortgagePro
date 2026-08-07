@@ -1,6 +1,10 @@
 import { optionalString, requiredString } from "../shared";
 
-export type SmsPurpose = "manual" | "loan_welcome" | "loan_completed";
+export type SmsPurpose =
+  | "manual"
+  | "loan_welcome"
+  | "loan_completed"
+  | "payment_receipt";
 
 export type SendSmsDto = {
   lenderId: string;
@@ -10,7 +14,12 @@ export type SendSmsDto = {
   senderId: string;
 };
 
-const smsPurposes: SmsPurpose[] = ["manual", "loan_welcome", "loan_completed"];
+const smsPurposes: SmsPurpose[] = [
+  "manual",
+  "loan_welcome",
+  "loan_completed",
+  "payment_receipt",
+];
 
 export function toSendSmsDto(input: Record<string, unknown>): SendSmsDto {
   const message = requiredString(input.message, "message");

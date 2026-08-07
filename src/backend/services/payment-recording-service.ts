@@ -33,6 +33,7 @@ export type RecordedLoanPayment = {
   remainingAmount: number;
   status: string;
   duplicate: boolean;
+  recordedAt: string;
 };
 
 export type DeletedLoanPayment = {
@@ -204,6 +205,7 @@ export async function recordTenantLoanPayment(
         remainingAmount: totals.remainingAmount,
         status: totals.status,
         duplicate: false,
+        recordedAt: String(paymentResult.data.created_at),
       };
     } catch (error) {
       await rollbackTransaction(transactionId);
@@ -439,6 +441,7 @@ function loanPaymentResult(
     remainingAmount,
     status: String(loan.status ?? "active"),
     duplicate,
+    recordedAt: "",
   };
 }
 

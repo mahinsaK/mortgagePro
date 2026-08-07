@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   consumeAuthAttempt: vi.fn(),
   listDocuments: vi.fn(),
   recordTenantLoanPayment: vi.fn(),
+  sendAutomaticPaymentSms: vi.fn(),
   redirect: vi.fn(),
   recordSecurityEvent: vi.fn(),
   requireActiveCollectorPrincipal: vi.fn(),
@@ -37,6 +38,9 @@ vi.mock("@/backend/services/payment-recording-service", () => ({
   PaymentWriteError: class PaymentWriteError extends Error {},
   recordTenantLoanPayment: mocks.recordTenantLoanPayment,
 }));
+vi.mock("@/backend/services/payment-sms-service", () => ({
+  sendAutomaticPaymentSms: mocks.sendAutomaticPaymentSms,
+}));
 vi.mock("@/backend/services/authentication-rate-limit-service", () => ({
   clearAuthenticationIdentityLimit: mocks.clearIdentityLimit,
   consumeAuthenticationAttempt: mocks.consumeAuthAttempt,
@@ -67,6 +71,7 @@ describe("collectorLoginAction", () => {
     });
     mocks.verifyCollectorPassword.mockReturnValue(true);
     mocks.consumeAuthAttempt.mockResolvedValue({ allowed: true });
+    mocks.sendAutomaticPaymentSms.mockResolvedValue({ status: "disabled" });
     mocks.redirect.mockImplementation((path: string) => {
       throw new Error(`redirect:${path}`);
     });
@@ -184,5 +189,62 @@ describe("collectorLoginAction", () => {
         requestId: "12345678-1234-1234-1234-123456789012",
       }),
     );
+    expect(mocks.sendAutomaticPaymentSms).not.toHaveBeenCalled();
+  });
+
+  it("sends one automatic receipt only after a new payment succeeds", async () => {
+    mocks.requireActiveCollectorPrincipal.mockResolvedValue({
+      collectorId: "collector_A",
+      lenderId: "lender_A",
+      name: "Jordan Lee",
+    });
+    mocks.recordTenantLoanPayment.mockResolvedValue({
+      paymentId: "payment_123",
+      loanId: "loan_A",
+      remainingAmount: 900,
+      recordedAt: "2026-08-07T05:00:00.000Z",
+      duplicate: false,
+    });
+    mocks.sendAutomaticPaymentSms.mockResolvedValue({ status: "sent" });
+    const formData = new FormData();
+    formData.set("loan_id", "loan_A");
+    formData.set("amount", "100");
+    formData.set("payment_request_id", "12345678-1234-1234-1234-123456789012");
+
+    await expect(collectScannedPaymentAction(formData)).rejects.toThrow(
+      "redirect:/collector/scan?status=success",
+    );
+    expect(mocks.sendAutomaticPaymentSms).toHaveBeenCalledWith({
+      lenderId: "lender_A",
+      loanId: "loan_A",
+      paymentId: "payment_123",
+      amount: 100,
+      remainingAmount: 900,
+      recordedAt: "2026-08-07T05:00:00.000Z",
+    });
+  });
+
+  it("does not send another receipt for an idempotent duplicate payment", async () => {
+    mocks.requireActiveCollectorPrincipal.mockResolvedValue({
+      collectorId: "collector_A",
+      lenderId: "lender_A",
+      name: "Jordan Lee",
+    });
+    mocks.recordTenantLoanPayment.mockResolvedValue({
+      paymentId: "payment_123",
+      loanId: "loan_A",
+      remainingAmount: 900,
+      recordedAt: "",
+      duplicate: true,
+    });
+    const formData = new FormData();
+    formData.set("loan_id", "loan_A");
+    formData.set("amount", "100");
+    formData.set("payment_request_id", "12345678-1234-1234-1234-123456789012");
+
+    await expect(collectScannedPaymentAction(formData)).rejects.toThrow(
+      "redirect:/collector/scan?status=success",
+    );
+    expect(mocks.sendAutomaticPaymentSms).not.toHaveBeenCalled();
   });
 });

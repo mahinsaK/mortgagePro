@@ -16,6 +16,10 @@ import {
   recordTenantLoanPayment,
 } from "@/backend/services/payment-recording-service";
 import {
+  sendAutomaticPaymentSms,
+  type AutomaticPaymentSmsResult,
+} from "@/backend/services/payment-sms-service";
+import {
   clearAuthenticationIdentityLimit,
   consumeAuthenticationAttempt,
   RATE_LIMITED_MESSAGE,
@@ -163,6 +167,7 @@ export async function collectScannedPaymentAction(formData: FormData) {
   }
 
   let duplicate = false;
+  let automaticSms: AutomaticPaymentSmsResult = { status: "disabled" };
 
   try {
     const result = await recordTenantLoanPayment({
@@ -175,6 +180,16 @@ export async function collectScannedPaymentAction(formData: FormData) {
       requestId,
     });
     duplicate = result.duplicate;
+    if (!result.duplicate) {
+      automaticSms = await sendAutomaticPaymentSms({
+        lenderId: session.lenderId,
+        loanId: result.loanId,
+        paymentId: result.paymentId,
+        amount,
+        remainingAmount: result.remainingAmount,
+        recordedAt: result.recordedAt,
+      });
+    }
   } catch (error) {
     redirectWithStatus(
       `/collector/scan?loan=${encodeURIComponent(loanId)}`,
@@ -192,8 +207,24 @@ export async function collectScannedPaymentAction(formData: FormData) {
     "success",
     duplicate
       ? "This payment was already recorded. No duplicate was added."
-      : "Payment collected successfully.",
+      : paymentSuccessMessage(automaticSms),
   );
+}
+
+function paymentSuccessMessage(result: AutomaticPaymentSmsResult) {
+  if (result.status === "sent") {
+    return "Payment collected successfully. The receipt SMS was sent.";
+  }
+
+  if (result.status === "skipped" && result.reason === "missing_phone") {
+    return "Payment collected successfully. The automatic SMS was skipped because the borrower has no usable phone number.";
+  }
+
+  if (result.status === "failed") {
+    return "Payment collected successfully, but the automatic SMS could not be sent.";
+  }
+
+  return "Payment collected successfully.";
 }
 
 export async function collectorLogoutAction() {

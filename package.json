@@ -21,6 +21,7 @@
     "appwrite:tables": "node scripts/create-appwrite-tables-and-attributes.mjs",
     "appwrite:indexes": "node scripts/create-appwrite-indexes.mjs",
     "appwrite:seed": "node scripts/seed-appwrite-demo-data.mjs",
+    "appwrite:seed:showcase": "node scripts/seed-appwrite-showcase-data.mjs",
     "appwrite:permissions:check": "node scripts/manage-appwrite-permissions.mjs --check",
     "appwrite:permissions:apply": "node scripts/manage-appwrite-permissions.mjs --apply",
     "appwrite:isolation:verify": "node scripts/verify-appwrite-isolation.mjs",

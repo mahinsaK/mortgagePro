@@ -192,6 +192,27 @@ describe("sendTenantSmsBatch", () => {
     );
   });
 
+  it("uses Text.lk's returned SMS count for finalized quota", async () => {
+    const provider: SmsProvider = {
+      send: vi.fn().mockResolvedValue({
+        provider: "textlk",
+        providerMessageId: "message",
+        status: "sent",
+        unitsUsed: 2,
+      }),
+    };
+
+    const result = await sendTenantSmsBatch(input, provider);
+
+    expect(result.usedUnits).toBe(4);
+    expect(mocks.updateDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collectionId: "sms_monthly_usage",
+        data: expect.objectContaining({ sent_units: 4 }),
+      }),
+    );
+  });
+
   it("retains the reservation and marks review required if finalization fails", async () => {
     let commitNumber = 0;
     mocks.updateTransaction.mockImplementation(

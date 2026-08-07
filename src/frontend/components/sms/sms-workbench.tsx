@@ -7,7 +7,7 @@ import {
   sendManualSmsAction,
   sendSelectedSmsAction,
 } from "@/backend/actions/sms-actions";
-import { smsUnitsPerRecipient } from "@/backend/modules/sms/policy";
+import { analyzeSmsMessage } from "@/backend/modules/sms/policy";
 import type { SmsManagementData } from "@/backend/services/sms-management-service";
 import { SmsAccountPanel } from "./sms-account-panel";
 import { SmsTemplateManager } from "./sms-template-manager";
@@ -59,7 +59,7 @@ export function SmsWorkbench({
     () => JSON.stringify(selectedRecipients),
     [selectedRecipients],
   );
-  const unitsPerRecipient = smsUnitsPerRecipient(messageText);
+  const messageAnalysis = analyzeSmsMessage(messageText);
   const sendingEnabled = Boolean(
     management?.account?.status === "active" &&
       management.activeSender &&
@@ -286,10 +286,11 @@ export function SmsWorkbench({
                 />
               </label>
               <p className="text-xs font-medium text-[#657386]">
-                Estimated usage: {unitsPerRecipient || 0} unit
-                {unitsPerRecipient === 1 ? "" : "s"} per recipient ·{" "}
-                {unitsPerRecipient * selectedRecipients.length} units for the
-                selected list
+                {messageAnalysis.characterCount} characters ·{" "}
+                {messageAnalysis.encoding} · {messageAnalysis.units} unit
+                {messageAnalysis.units === 1 ? "" : "s"} per recipient ·{" "}
+                {messageAnalysis.units * selectedRecipients.length} units for
+                the selected list
               </p>
               <div className="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
                 <button
@@ -468,7 +469,7 @@ function QuickSmsPanel({
   sendingEnabled: boolean;
 }) {
   const [message, setMessage] = useState("");
-  const units = smsUnitsPerRecipient(message);
+  const analysis = analyzeSmsMessage(message);
 
   return (
     <section className="rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm">
@@ -507,7 +508,8 @@ function QuickSmsPanel({
         </label>
 
         <p className="text-xs font-medium text-[#657386]">
-          Estimated usage: {units || 0} unit{units === 1 ? "" : "s"}
+          {analysis.characterCount} characters · {analysis.encoding} ·{" "}
+          {analysis.units} unit{analysis.units === 1 ? "" : "s"}
         </p>
 
         <button

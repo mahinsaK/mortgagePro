@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  analyzeSmsMessage,
   colomboMonthKey,
   normalizeSmsSenderId,
   normalizeSmsTemplateName,
@@ -36,10 +37,46 @@ describe("SMS policy", () => {
     expect(smsCharacterCount("A😀B")).toBe(3);
     expect(smsUnitsPerRecipient("a".repeat(160))).toBe(1);
     expect(smsUnitsPerRecipient("a".repeat(161))).toBe(2);
-    expect(smsUnitsPerRecipient("a".repeat(320))).toBe(2);
+    expect(smsUnitsPerRecipient("a".repeat(306))).toBe(2);
+    expect(smsUnitsPerRecipient("a".repeat(307))).toBe(3);
     expect(smsUnitsPerRecipient("a".repeat(321))).toBe(3);
-    expect(smsUnitsPerRecipient("a".repeat(480))).toBe(3);
+    expect(smsUnitsPerRecipient("a".repeat(480))).toBe(4);
     expect(smsUnitsPerRecipient("a".repeat(481))).toBe(0);
+  });
+
+  it("applies Text.lk Unicode and GSM-7 extension segmentation", () => {
+    expect(analyzeSmsMessage("අ".repeat(70))).toMatchObject({
+      encoding: "Unicode",
+      units: 1,
+    });
+    expect(analyzeSmsMessage("අ".repeat(71))).toMatchObject({
+      encoding: "Unicode",
+      units: 2,
+    });
+    expect(analyzeSmsMessage("අ".repeat(134))).toMatchObject({ units: 2 });
+    expect(analyzeSmsMessage("අ".repeat(135))).toMatchObject({ units: 3 });
+    expect(analyzeSmsMessage("^".repeat(80))).toMatchObject({
+      encoding: "GSM-7",
+      encodedLength: 160,
+      units: 1,
+    });
+    expect(analyzeSmsMessage("^".repeat(81))).toMatchObject({ units: 2 });
+    expect(analyzeSmsMessage("😀".repeat(35))).toMatchObject({
+      characterCount: 35,
+      encodedLength: 70,
+      units: 1,
+    });
+    expect(analyzeSmsMessage("😀".repeat(36))).toMatchObject({ units: 2 });
+    expect(
+      analyzeSmsMessage(
+        "අද දින ඔබගෙන් රු. {{amount}} ක ගෙවීම ලැබුණි.\nsiyarata Investment",
+      ),
+    ).toMatchObject({
+      characterCount: 64,
+      encodedLength: 64,
+      encoding: "Unicode",
+      units: 1,
+    });
   });
 
   it("validates template fields", () => {

@@ -71,9 +71,13 @@ Text.lk completes but Appwrite finalization cannot be confirmed, the batch is
 marked `review_required`, its reservation remains, and the app tells the lender
 not to resend.
 
-Application quota units are deliberately simple and may differ from Text.lk
-billing: 1–160 Unicode code points use one unit, 161–320 use two, and 321–480 use
-three per successful recipient. Months use the Asia/Colombo calendar and unused
+Quota estimation follows Text.lk encoding rules. GSM-7 messages use 160 encoded
+characters for one unit and 153 per part when concatenated; GSM-7 extension
+characters consume two encoded positions. Sinhala, Tamil, emoji, and other
+non-GSM messages use UTF-16/Unicode: 70 code units for one unit and 67 per
+concatenated part. Spaces and line breaks count. When Text.lk returns
+`sms_count`, final usage records that provider-reported value; otherwise the
+same local estimate is used. Months use the Asia/Colombo calendar and unused
 units do not roll over.
 
 ## Templates and reporting

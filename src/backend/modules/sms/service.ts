@@ -9,6 +9,7 @@ export type SmsSendResult = {
   purpose: SendSmsDto["purpose"];
   status: "queued" | "sent";
   queuedAt: string;
+  unitsUsed?: number;
 };
 
 export type SmsProviderInput = {
@@ -23,6 +24,7 @@ export type SmsProviderResult = {
   provider: string;
   providerMessageId: string;
   status: "queued" | "sent";
+  unitsUsed?: number;
 };
 
 export type SmsProvider = {
@@ -50,6 +52,7 @@ export class SmsService {
       purpose: dto.purpose,
       status: providerResult.status,
       queuedAt: new Date().toISOString(),
+      unitsUsed: providerResult.unitsUsed,
     };
   }
 

@@ -244,7 +244,7 @@ export function createAppwriteSchema(collections) {
         stringAttr("request_id", 64, true),
         stringAttr("sender_id", 11, true),
         integerAttr("character_count", true, 1, 480),
-        integerAttr("units_per_recipient", true, 1, 3),
+        integerAttr("units_per_recipient", true, 1, 15),
         integerAttr("requested_recipients", true, 1),
         integerAttr("sent_recipients", true, 0),
         integerAttr("failed_recipients", true, 0),

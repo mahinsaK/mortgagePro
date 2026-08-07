@@ -11,7 +11,11 @@ import {
   smsCharacterCount,
   smsUnitsPerRecipient,
 } from "@/backend/modules/sms/policy";
-import { SmsService, type SmsProvider } from "@/backend/modules/sms/service";
+import {
+  SmsService,
+  type SmsProvider,
+  type SmsSendResult,
+} from "@/backend/modules/sms/service";
 import { TextlkSmsProvider } from "./textlk-sms-provider";
 
 const MAX_TRANSACTION_ATTEMPTS = 3;
@@ -131,7 +135,7 @@ export async function sendTenantSmsBatch(
   }
 
   const smsService = new SmsService(provider);
-  const results: PromiseSettledResult<unknown>[] = [];
+  const results: PromiseSettledResult<SmsSendResult>[] = [];
 
   for (let index = 0; index < phoneNumbers.length; index += SMS_SEND_BATCH_SIZE) {
     const batch = phoneNumbers.slice(index, index + SMS_SEND_BATCH_SIZE);
@@ -153,6 +157,14 @@ export async function sendTenantSmsBatch(
     (result) => result.status === "fulfilled",
   ).length;
   const failedRecipients = phoneNumbers.length - sentRecipients;
+  const usedUnits = results.reduce(
+    (total, result) =>
+      total +
+      (result.status === "fulfilled"
+        ? result.value.unitsUsed ?? unitsPerRecipient
+        : 0),
+    0,
+  );
 
   try {
     return await finalizeQuota({
@@ -162,7 +174,7 @@ export async function sendTenantSmsBatch(
       month,
       reservedUnits: phoneNumbers.length * unitsPerRecipient,
       sentRecipients,
-      unitsPerRecipient,
+      usedUnits,
     });
   } catch {
     await markReviewRequired(batchId);
@@ -401,7 +413,7 @@ async function finalizeQuota(input: {
   month: string;
   reservedUnits: number;
   sentRecipients: number;
-  unitsPerRecipient: number;
+  usedUnits: number;
 }): Promise<SmsSendBatchResult> {
   for (let attempt = 1; attempt <= MAX_TRANSACTION_ATTEMPTS; attempt += 1) {
     const transaction = await databases.createTransaction({ ttl: 60 });
@@ -431,7 +443,6 @@ async function finalizeQuota(input: {
         return batchResult(batch, true);
       }
 
-      const usedUnits = input.sentRecipients * input.unitsPerRecipient;
       const status =
         input.sentRecipients === 0
           ? "failed"
@@ -449,7 +460,7 @@ async function finalizeQuota(input: {
             Number(usage.sent_recipients ?? 0) + input.sentRecipients,
           failed_recipients:
             Number(usage.failed_recipients ?? 0) + input.failedRecipients,
-          sent_units: Number(usage.sent_units ?? 0) + usedUnits,
+          sent_units: Number(usage.sent_units ?? 0) + input.usedUnits,
           reserved_units: Math.max(
             0,
             Number(usage.reserved_units ?? 0) - input.reservedUnits,
@@ -467,7 +478,7 @@ async function finalizeQuota(input: {
           sent_recipients: input.sentRecipients,
           failed_recipients: input.failedRecipients,
           reserved_units: 0,
-          used_units: usedUnits,
+          used_units: input.usedUnits,
           status,
           completed_at: completedAt,
         },
@@ -482,7 +493,7 @@ async function finalizeQuota(input: {
         requestedRecipients: input.sentRecipients + input.failedRecipients,
         sentRecipients: input.sentRecipients,
         status,
-        usedUnits,
+        usedUnits: input.usedUnits,
       };
     } catch (error) {
       await rollbackTransaction(transactionId);

@@ -1,6 +1,20 @@
 export const MAX_SMS_TEMPLATES = 20;
 export const MAX_SMS_MESSAGE_CHARACTERS = 480;
 
+const GSM_7_BASIC_CHARACTERS = new Set(
+  Array.from(
+    "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà",
+  ),
+);
+const GSM_7_EXTENSION_CHARACTERS = new Set(Array.from("\f^{}\\[~]|€"));
+
+export type SmsMessageAnalysis = {
+  encoding: "GSM-7" | "Unicode";
+  characterCount: number;
+  encodedLength: number;
+  units: number;
+};
+
 export const STARTER_SMS_TEMPLATES = [
   {
     name: "Loan welcome",
@@ -72,13 +86,45 @@ export function smsCharacterCount(message: string) {
 }
 
 export function smsUnitsPerRecipient(message: string) {
-  const characters = smsCharacterCount(message.trim());
+  return analyzeSmsMessage(message).units;
+}
 
-  if (characters === 0 || characters > MAX_SMS_MESSAGE_CHARACTERS) {
-    return 0;
+export function analyzeSmsMessage(message: string): SmsMessageAnalysis {
+  const normalizedMessage = message.trim();
+  const characterCount = smsCharacterCount(normalizedMessage);
+
+  if (characterCount === 0 || characterCount > MAX_SMS_MESSAGE_CHARACTERS) {
+    return {
+      encoding: "GSM-7",
+      characterCount,
+      encodedLength: 0,
+      units: 0,
+    };
   }
 
-  return Math.ceil(characters / 160);
+  let gsmLength = 0;
+  for (const character of Array.from(normalizedMessage)) {
+    if (GSM_7_BASIC_CHARACTERS.has(character)) {
+      gsmLength += 1;
+    } else if (GSM_7_EXTENSION_CHARACTERS.has(character)) {
+      gsmLength += 2;
+    } else {
+      const encodedLength = normalizedMessage.length;
+      return {
+        encoding: "Unicode",
+        characterCount,
+        encodedLength,
+        units: encodedLength <= 70 ? 1 : Math.ceil(encodedLength / 67),
+      };
+    }
+  }
+
+  return {
+    encoding: "GSM-7",
+    characterCount,
+    encodedLength: gsmLength,
+    units: gsmLength <= 160 ? 1 : Math.ceil(gsmLength / 153),
+  };
 }
 
 export function colomboMonthKey(date = new Date()) {

@@ -46,6 +46,7 @@ export class TextlkSmsProvider implements SmsProvider {
       provider: "textlk",
       providerMessageId: getProviderMessageId(responseBody),
       status: "sent",
+      unitsUsed: getProviderUnits(responseBody),
     };
   }
 }
@@ -91,6 +92,13 @@ function getProviderMessageId(responseBody: Record<string, unknown>) {
     responseBody.message_id;
 
   return String(id ?? `textlk_${crypto.randomUUID().replaceAll("-", "").slice(0, 18)}`);
+}
+
+function getProviderUnits(responseBody: Record<string, unknown>) {
+  const data = isRecord(responseBody.data) ? responseBody.data : {};
+  const value = Number(data.sms_count ?? responseBody.sms_count);
+
+  return Number.isInteger(value) && value > 0 ? value : undefined;
 }
 
 function getProviderError(responseBody: Record<string, unknown>, status: number) {

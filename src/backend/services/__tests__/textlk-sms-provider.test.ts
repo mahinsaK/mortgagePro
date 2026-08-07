@@ -13,7 +13,7 @@ describe("TextlkSmsProvider", () => {
       new Response(
         JSON.stringify({
           status: "success",
-          data: { uid: "sms_123" },
+          data: { uid: "sms_123", sms_count: 2 },
         }),
         {
           status: 200,
@@ -38,6 +38,7 @@ describe("TextlkSmsProvider", () => {
       provider: "textlk",
       providerMessageId: "sms_123",
       status: "sent",
+      unitsUsed: 2,
     });
 
     expect(fetchMock).toHaveBeenCalledWith(

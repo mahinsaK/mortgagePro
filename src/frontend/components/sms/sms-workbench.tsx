@@ -7,6 +7,8 @@ import {
   sendManualSmsAction,
   sendSelectedSmsAction,
 } from "@/backend/actions/sms-actions";
+import { PhoneInput } from "@/frontend/components/forms/phone-input";
+import { sanitizePhoneNumberDraft } from "@/shared/phone-number";
 
 type Recipient = {
   id: string;
@@ -199,10 +201,10 @@ export function SmsWorkbench({ count, message, phone, status }: SmsWorkbenchProp
             <label className="text-sm font-medium text-[#2d3745]">
               Add a custom phone number
               <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                <input
+                <PhoneInput
                   className="h-11 min-w-0 flex-1 rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
                   onChange={(event) => {
-                    setCustomNumber(event.target.value);
+                    setCustomNumber(sanitizePhoneNumberDraft(event.target.value));
                     setCustomNumberError("");
                   }}
                   onKeyDown={(event) => {
@@ -211,8 +213,7 @@ export function SmsWorkbench({ count, message, phone, status }: SmsWorkbenchProp
                       addCustomNumber();
                     }
                   }}
-                  placeholder="+94 77 123 4567"
-                  type="tel"
+                  placeholder="+94771234567"
                   value={customNumber}
                 />
                 <button
@@ -463,12 +464,11 @@ function QuickSmsPanel() {
       <form action={sendManualSmsAction} className="grid gap-4">
         <label className="text-sm font-medium text-[#2d3745]">
           Phone number
-          <input
+          <PhoneInput
             className="mt-2 h-11 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
             name="phone_number"
-            placeholder="+94 77 123 4567"
+            placeholder="+94771234567"
             required
-            type="tel"
           />
         </label>
 

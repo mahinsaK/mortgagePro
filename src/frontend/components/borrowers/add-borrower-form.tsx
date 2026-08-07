@@ -3,6 +3,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { Plus, X } from "lucide-react";
 import { createBorrowerAction } from "@/backend/actions/lending-actions";
+import { PhoneInput } from "@/frontend/components/forms/phone-input";
 
 export function AddBorrowerForm() {
   return (
@@ -50,7 +51,7 @@ export function AddBorrowerForm() {
                 name="business_name"
                 placeholder="Stone Hardware"
               />
-              <Field label="Phone" name="phone" placeholder="+1 555 0100" />
+              <PhoneField name="phone" />
               <Field label="Address" name="address" placeholder="Main Street" />
               <div className="flex items-end sm:col-span-2">
                 <button
@@ -65,6 +66,19 @@ export function AddBorrowerForm() {
         </Dialog.Portal>
       </Dialog.Root>
     </div>
+  );
+}
+
+function PhoneField({ name }: { name: string }) {
+  return (
+    <label className="text-sm font-medium text-[#2d3745]">
+      Phone
+      <PhoneInput
+        className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+        name={name}
+        placeholder="+15550100"
+      />
+    </label>
   );
 }
 

@@ -12,6 +12,7 @@ import {
   normalizeCollectorUsernameDraft,
   validateNewCollectorUsername,
 } from "@/backend/modules/collectors/username";
+import { PhoneInput } from "@/frontend/components/forms/phone-input";
 
 type Availability = "idle" | "checking" | "available" | "taken" | "invalid";
 
@@ -246,7 +247,14 @@ export function AddCollectorForm() {
                   value={name}
                 />
               </label>
-              <Field label="Phone" name="phone" placeholder="+1 555 0102" />
+              <label className="text-sm font-medium text-[#2d3745]">
+                Phone
+                <PhoneInput
+                  className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+                  name="phone"
+                  placeholder="+15550102"
+                />
+              </label>
               <label className="text-sm font-medium text-[#2d3745] sm:col-span-2">
                 Username
                 <div className="mt-2 grid gap-2 sm:flex">

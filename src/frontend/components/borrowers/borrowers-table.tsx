@@ -7,6 +7,7 @@ import {
   deleteBorrowerAction,
   updateBorrowerAction,
 } from "@/backend/actions/lending-actions";
+import { PhoneInput } from "@/frontend/components/forms/phone-input";
 
 type BorrowerRow = {
   id: string;
@@ -216,9 +217,8 @@ function EditBorrowerDialog({ borrower }: { borrower: BorrowerRow }) {
               label="Business"
               name="business_name"
             />
-            <Field
+            <PhoneField
               defaultValue={borrower.contactInfo}
-              label="Phone"
               name="phone"
             />
             <Field
@@ -249,6 +249,25 @@ function EditBorrowerDialog({ borrower }: { borrower: BorrowerRow }) {
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+  );
+}
+
+function PhoneField({
+  defaultValue,
+  name,
+}: {
+  defaultValue: string;
+  name: string;
+}) {
+  return (
+    <label className="text-sm font-medium text-[#2d3745]">
+      Phone
+      <PhoneInput
+        className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+        defaultValue={defaultValue}
+        name={name}
+      />
+    </label>
   );
 }
 

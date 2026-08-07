@@ -9,6 +9,7 @@ import {
   type UpdateCollectorActionState,
 } from "@/backend/actions/lending-actions";
 import type { CollectorRow } from "@/backend/services/lending-service";
+import { PhoneInput } from "@/frontend/components/forms/phone-input";
 
 const INITIAL_UPDATE_STATE: UpdateCollectorActionState = {
   status: "idle",
@@ -288,11 +289,14 @@ function EditCollectorDialog({ collector }: { collector: CollectorRow }) {
                 Usernames are permanent after creation.
               </span>
             </label>
-            <Field
-              defaultValue={collector.contactInfo}
-              label="Phone"
-              name="phone"
-            />
+            <label className="text-sm font-medium text-[#2d3745]">
+              Phone
+              <PhoneInput
+                className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+                defaultValue={collector.contactInfo}
+                name="phone"
+              />
+            </label>
             <Field defaultValue={collector.areaInfo} label="Area" name="area" />
             <Field
               defaultValue=""

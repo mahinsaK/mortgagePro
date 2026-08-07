@@ -20,13 +20,14 @@ import {
   requireTenantDocument,
   updateTenantDocument,
 } from "@/backend/services/tenant-data-service";
+import { normalizeOptionalPhoneNumber } from "@/shared/phone-number";
 
 export async function createBorrowerAction(formData: FormData) {
   const lender = await getRequiredLender();
   const borrowerId = createDocumentId("borrower");
   const now = new Date().toISOString();
   const name = readRequired(formData, "name");
-  const contact = readOptional(formData, "phone");
+  const contact = readPhone(formData);
   const address = readOptional(formData, "address");
 
   await createTenantDocument("borrowers", lender.id, borrowerId, {
@@ -50,7 +51,7 @@ export async function createBorrowerAction(formData: FormData) {
 export async function updateBorrowerAction(formData: FormData) {
   const lender = await getRequiredLender();
   const borrowerId = readRequired(formData, "borrower_id");
-  const contact = readOptional(formData, "phone");
+  const contact = readPhone(formData);
   const address = readOptional(formData, "address");
   const name = readRequired(formData, "name");
 
@@ -273,6 +274,13 @@ export async function createCollectorAction(
   const name = readOptional(formData, "name");
   const now = new Date().toISOString();
   const password = readOptional(formData, "password");
+  let phone: string;
+
+  try {
+    phone = readPhone(formData);
+  } catch (error) {
+    return collectorFormError(toErrorMessage(error), username);
+  }
 
   if (usernameError) {
     return collectorFormError(usernameError, username, usernameError);
@@ -315,7 +323,7 @@ export async function createCollectorAction(
     await createTenantDocument("collectors", lender.id, username, {
       name,
       contact_info: JSON.stringify({
-        phone: readOptional(formData, "phone"),
+        phone,
         area: readOptional(formData, "area"),
       }),
       password_hash: hashCollectorPassword(password),
@@ -350,10 +358,21 @@ export async function updateCollectorAction(
   const collectorId = readRequired(formData, "collector_id");
   const password = readOptional(formData, "password");
   const status = readStatus(formData);
+  let phone: string;
+
+  try {
+    phone = readPhone(formData);
+  } catch (error) {
+    return {
+      status: "error",
+      message: toErrorMessage(error),
+    };
+  }
+
   const data: Record<string, unknown> = {
     name: readRequired(formData, "name"),
     contact_info: JSON.stringify({
-      phone: readOptional(formData, "phone"),
+      phone,
       area: readOptional(formData, "area"),
     }),
     status,
@@ -407,7 +426,7 @@ export async function updateLenderProfileAction(formData: FormData) {
     data: {
       company_name: readRequired(formData, "company_name"),
       contact_info: JSON.stringify({
-        phone: readOptional(formData, "phone"),
+        phone: readPhone(formData),
         address: readOptional(formData, "address"),
       }),
       currency: normalizeCurrency(readOptional(formData, "currency")),
@@ -529,6 +548,14 @@ function readRequired(formData: FormData, key: string) {
 
 function readOptional(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function readPhone(formData: FormData) {
+  return normalizeOptionalPhoneNumber(readOptional(formData, "phone"));
+}
+
+function toErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Phone number is invalid.";
 }
 
 function readNumber(formData: FormData, key: string) {

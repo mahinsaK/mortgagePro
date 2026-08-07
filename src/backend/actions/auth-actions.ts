@@ -27,6 +27,7 @@ import {
 } from "@/backend/services/authentication-rate-limit-service";
 import { recordSecurityEvent } from "@/backend/services/security-event-service";
 import { appwriteServerConfig } from "@/backend/appwrite/config";
+import { normalizeOptionalPhoneNumber } from "@/shared/phone-number";
 
 const authController = new AuthController();
 
@@ -210,6 +211,17 @@ export async function registerLenderAction(formData: FormData) {
     );
   }
 
+  let phone: string;
+  try {
+    phone = normalizeOptionalPhoneNumber(readOptional(formData, "phone"));
+  } catch (error) {
+    redirectWithAuthStatus(
+      "/auth/register",
+      "error",
+      error instanceof Error ? error.message : "Phone number is invalid.",
+    );
+  }
+
   const requestHeaders = await headers();
   let rateLimit;
 
@@ -261,7 +273,7 @@ export async function registerLenderAction(formData: FormData) {
         company_name: result.data.companyName,
         email: result.data.email,
         contact_info: JSON.stringify({
-          phone: readOptional(formData, "phone"),
+          phone,
           address: readOptional(formData, "address"),
         }),
         status: "inactive",

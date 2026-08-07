@@ -1,4 +1,5 @@
 import { optionalString, requiredString, status } from "../shared";
+import { normalizeOptionalPhoneNumber } from "@/shared/phone-number";
 
 export type CreateBorrowerDto = {
   lenderId: string;
@@ -16,7 +17,7 @@ export function toCreateBorrowerDto(
     lenderId: requiredString(input.lenderId, "lenderId"),
     name: requiredString(input.name, "name"),
     businessName: optionalString(input.businessName),
-    contact: optionalString(input.phone),
+    contact: normalizeOptionalPhoneNumber(input.phone),
     address: optionalString(input.address),
     status: status(input.status),
   };

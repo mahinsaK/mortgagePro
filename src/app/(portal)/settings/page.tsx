@@ -3,6 +3,7 @@ import {
 } from "@/backend/actions/lending-actions";
 import { currencyOptions } from "@/backend/lib/currency";
 import { getPrimaryLender } from "@/backend/services/lender-service";
+import { PhoneInput } from "@/frontend/components/forms/phone-input";
 import { LenderPasswordForm } from "@/frontend/components/settings/lender-password-form";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,14 @@ export default async function SettingsPage() {
             required
           />
           <ReadOnlyField label="Email" value={lender?.email || "Not set"} />
-          <Field defaultValue={contact.phone} label="Phone" name="phone" />
+          <label className="text-sm font-medium text-[#2d3745]">
+            Phone
+            <PhoneInput
+              className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+              defaultValue={contact.phone}
+              name="phone"
+            />
+          </label>
           <Field
             defaultValue={contact.address}
             label="Address"

@@ -90,7 +90,21 @@ describe("dashboard-service", () => {
         joinedQueries.includes('"attribute":"end_date"') &&
         joinedQueries.includes('"method":"lessThan"')
       ) {
-        return Promise.resolve({ documents: [], total: 3 });
+        return Promise.resolve({
+          documents: [
+            {
+              $id: "loan_overdue",
+              borrower_id: "borrower_1",
+              amount: 800,
+              total_paid: 300,
+              remaining_amount: 500,
+              daily_payment: 40,
+              status: "overdue",
+              end_date: "2026-07-15T00:00:00.000Z",
+            },
+          ],
+          total: 3,
+        });
       }
 
       if (collectionId === "borrowers" && joinedQueries.includes('"attribute":"$id"')) {
@@ -138,8 +152,17 @@ describe("dashboard-service", () => {
     expect(dashboard.loans).toHaveLength(1);
     expect(dashboard.loans[0]).toMatchObject({
       id: "loan_1",
+      borrowerId: "borrower_1",
       borrower: "Avery Johnson",
       borrowerContact: "+1 555 0101",
+    });
+    expect(dashboard.overdueLoans).toHaveLength(1);
+    expect(dashboard.overdueLoans[0]).toMatchObject({
+      id: "loan_overdue",
+      borrowerId: "borrower_1",
+      borrower: "Avery Johnson",
+      remainingAmount: "$500.00",
+      status: "overdue",
     });
     expect(dashboard.stats[3]).toEqual({
       label: "Overdue loans",
@@ -157,5 +180,6 @@ describe("dashboard-service", () => {
     expect(overdueQueries).toContain('"attribute":"lender_id"');
     expect(overdueQueries).toContain('"values":["active","overdue"]');
     expect(overdueQueries).toContain('"attribute":"end_date"');
+    expect(overdueQueries).toContain('"method":"orderAsc"');
   });
 });

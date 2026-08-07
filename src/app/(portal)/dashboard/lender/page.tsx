@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { getLenderDashboardData } from "@/backend/services/dashboard-service";
 import { DashboardDateTime } from "@/frontend/components/dashboard/dashboard-date-time";
 import { LenderDashboardLoansPanel } from "@/frontend/components/dashboard/lender-dashboard-loans-panel";
+import { LenderDashboardStats } from "@/frontend/components/dashboard/lender-dashboard-stats";
 
 export const dynamic = "force-dynamic";
 
@@ -30,21 +30,11 @@ export default async function LenderDashboardPage({
         <DashboardDateTime initialIso={now.toISOString()} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
-        {dashboard.stats.map((stat, index) =>
-          stat.label === "Today's collection" ? (
-            <Link
-              className="block"
-              href={`/payments/daily?date=${today}`}
-              key={`${stat.label}-${index}`}
-            >
-              <StatCard stat={stat} />
-            </Link>
-          ) : (
-            <StatCard key={`${stat.label || "blank"}-${index}`} stat={stat} />
-          ),
-        )}
-      </div>
+      <LenderDashboardStats
+        overdueLoans={dashboard.overdueLoans}
+        stats={dashboard.stats}
+        today={today}
+      />
 
       <LenderDashboardLoansPanel
         loans={dashboard.loans}
@@ -65,26 +55,4 @@ function toColomboDateInputValue(date: Date) {
   const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
 
   return `${value.year}-${value.month}-${value.day}`;
-}
-
-function StatCard({
-  stat,
-}: {
-  stat: { label: string; value: string; change: string };
-}) {
-  return (
-    <article className="h-full min-h-28 rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm transition hover:border-[#c7d2fe] md:min-h-36 md:p-5">
-      {stat.label ? (
-        <>
-          <p className="text-sm font-medium text-[#657386]">{stat.label}</p>
-          <p className="mt-2 text-2xl font-semibold md:mt-3 md:text-3xl">
-            {stat.value}
-          </p>
-          <p className="mt-2 hidden text-sm text-[#166534] sm:block">
-            {stat.change}
-          </p>
-        </>
-      ) : null}
-    </article>
-  );
 }

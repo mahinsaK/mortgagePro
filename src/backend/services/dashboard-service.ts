@@ -12,6 +12,7 @@ type DashboardStat = {
 
 export type DashboardLoan = {
   id: string;
+  borrowerId: string;
   borrower: string;
   borrowerContact: string;
   borrowerPhone: string;
@@ -27,6 +28,7 @@ export type LenderDashboardData = {
   lender: Awaited<ReturnType<typeof getPrimaryLender>>;
   stats: DashboardStat[];
   loans: DashboardLoan[];
+  overdueLoans: DashboardLoan[];
   pageInfo: {
     page: number;
     pageSize: number;
@@ -44,6 +46,7 @@ type DashboardOptions = {
 const DEFAULT_PAGE_SIZE = 15;
 const MAX_DAILY_PAYMENT_LIMIT = 5000;
 const BORROWER_SEARCH_FALLBACK_LIMIT = 500;
+const OVERDUE_LOAN_PREVIEW_LIMIT = 20;
 
 export async function getLenderDashboardData(
   options: DashboardOptions = {},
@@ -56,6 +59,7 @@ export async function getLenderDashboardData(
       lender: null,
       stats: emptyStats(),
       loans: [],
+      overdueLoans: [],
       pageInfo: emptyPageInfo(pagination),
     };
   }
@@ -104,8 +108,18 @@ export async function getLenderDashboardData(
       listTenantDocuments("loans", lender.id, [
         Query.equal("status", ["active", "overdue"]),
         Query.lessThan("end_date", todayRange.end),
-        Query.limit(1),
-        Query.select(["$id"]),
+        Query.orderAsc("end_date"),
+        Query.limit(OVERDUE_LOAN_PREVIEW_LIMIT),
+        Query.select([
+          "$id",
+          "borrower_id",
+          "amount",
+          "total_paid",
+          "remaining_amount",
+          "daily_payment",
+          "status",
+          "end_date",
+        ]),
       ]),
     ]);
   const loans =
@@ -113,7 +127,9 @@ export async function getLenderDashboardData(
       ? await findLoansByBorrowerSearch(lender.id, searchQuery, pagination)
       : initialLoans;
   const borrowerIds = uniqueStrings(
-    loans.documents.map((loan) => String(loan.borrower_id ?? "")),
+    [...loans.documents, ...overdueLoans.documents].map((loan) =>
+      String(loan.borrower_id ?? ""),
+    ),
   );
   const borrowers =
     borrowerIds.length > 0
@@ -169,32 +185,45 @@ export async function getLenderDashboardData(
         change: "Past the end date",
       },
     ],
-    loans: loans.documents.map((loan) => {
-      const borrowerId = String(loan.borrower_id);
-      const contact = borrowerContacts.get(borrowerId) ?? {
-        display: "",
-        phone: "",
-      };
+    loans: loans.documents.map((loan) =>
+      toDashboardLoan(loan, lender.currency, borrowerNames, borrowerContacts),
+    ),
+    overdueLoans: overdueLoans.documents.map((loan) =>
+      toDashboardLoan(loan, lender.currency, borrowerNames, borrowerContacts),
+    ),
+  };
+}
 
-      return {
-        id: loan.$id,
-        borrower: borrowerNames.get(borrowerId) ?? "Unknown borrower",
-        borrowerContact: contact.display,
-        borrowerPhone: contact.phone,
-        amount: formatMoney(Number(loan.amount ?? 0), lender.currency),
-        totalPaid: formatMoney(Number(loan.total_paid ?? 0), lender.currency),
-        remainingAmount: formatMoney(
-          Number(
-            loan.remaining_amount ??
-              Math.max(Number(loan.amount ?? 0) - Number(loan.total_paid ?? 0), 0),
-          ),
-          lender.currency,
-        ),
-        dailyPayment: formatMoney(Number(loan.daily_payment ?? 0), lender.currency),
-        status: String(loan.status ?? "active"),
-        endDate: formatDate(String(loan.end_date ?? "")),
-      };
-    }),
+function toDashboardLoan(
+  loan: { $id: string; [key: string]: unknown },
+  currency: string,
+  borrowerNames: Map<string, string>,
+  borrowerContacts: Map<string, { display: string; phone: string }>,
+): DashboardLoan {
+  const borrowerId = String(loan.borrower_id ?? "");
+  const contact = borrowerContacts.get(borrowerId) ?? {
+    display: "",
+    phone: "",
+  };
+
+  return {
+    id: loan.$id,
+    borrowerId,
+    borrower: borrowerNames.get(borrowerId) ?? "Unknown borrower",
+    borrowerContact: contact.display,
+    borrowerPhone: contact.phone,
+    amount: formatMoney(Number(loan.amount ?? 0), currency),
+    totalPaid: formatMoney(Number(loan.total_paid ?? 0), currency),
+    remainingAmount: formatMoney(
+      Number(
+        loan.remaining_amount ??
+          Math.max(Number(loan.amount ?? 0) - Number(loan.total_paid ?? 0), 0),
+      ),
+      currency,
+    ),
+    dailyPayment: formatMoney(Number(loan.daily_payment ?? 0), currency),
+    status: String(loan.status ?? "active"),
+    endDate: formatDate(String(loan.end_date ?? "")),
   };
 }
 

@@ -2,23 +2,10 @@
 
 import { Search } from "lucide-react";
 import { useState } from "react";
+import type { DashboardLoan } from "@/backend/services/dashboard-service";
+import { DashboardLoanDetailsDialog } from "@/frontend/components/dashboard/dashboard-loan-details-dialog";
 import { DateRangeCsvExport } from "@/frontend/components/export/csv-export-button";
-import { LoanQrPanel } from "@/frontend/components/loans/loan-qr-panel";
-import { LoanPaymentsPanel } from "@/frontend/components/loans/loan-payments-panel";
 import { PaginationControls } from "@/frontend/components/ui/pagination-controls";
-
-type DashboardLoan = {
-  id: string;
-  borrower: string;
-  borrowerContact: string;
-  borrowerPhone: string;
-  amount: string;
-  totalPaid: string;
-  remainingAmount: string;
-  dailyPayment: string;
-  status: string;
-  endDate: string;
-};
 type PageInfo = {
   page: number;
   pageSize: number;
@@ -172,56 +159,10 @@ export function LenderDashboardLoansPanel({
       </section>
 
       {selectedLoan ? (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:px-4"
-          onClick={() => setSelectedLoan(null)}
-        >
-          <section
-            className="max-h-[calc(100dvh-0.75rem)] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white shadow-xl sm:max-h-[calc(100vh-48px)] sm:rounded-lg"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between border-b border-[#dfe5ec] px-4 py-4 sm:px-6 sm:py-5">
-              <div>
-                <p className="text-sm font-medium text-[#657386]">
-                  Loan details
-                </p>
-                <h2 className="mt-1 text-2xl font-semibold">
-                  {selectedLoan.borrower}
-                </h2>
-              </div>
-              <button
-                className="rounded-md border border-[#cfd8e3] px-3 py-2 text-sm font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
-                onClick={() => setSelectedLoan(null)}
-                type="button"
-              >
-                Close
-              </button>
-            </div>
-            <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6">
-              <dl className="grid gap-4 sm:grid-cols-2">
-                <Detail label="Borrower" value={selectedLoan.borrower} />
-                <Detail
-                  label="Contact"
-                  value={selectedLoan.borrowerContact || "No contact"}
-                />
-                <Detail label="Status" value={selectedLoan.status} />
-                <Detail label="Amount" value={selectedLoan.amount} />
-                <Detail label="Total paid" value={selectedLoan.totalPaid} />
-                <Detail
-                  label="Remaining"
-                  value={selectedLoan.remainingAmount}
-                />
-                <Detail
-                  label="Daily payment"
-                  value={selectedLoan.dailyPayment}
-                />
-                <Detail label="End date" value={selectedLoan.endDate} />
-              </dl>
-              <LoanQrPanel loanId={selectedLoan.id} />
-              <LoanPaymentsPanel loanId={selectedLoan.id} />
-            </div>
-          </section>
-        </div>
+        <DashboardLoanDetailsDialog
+          loan={selectedLoan}
+          onClose={() => setSelectedLoan(null)}
+        />
       ) : null}
     </div>
   );
@@ -231,17 +172,6 @@ function MobileDetail({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-xs font-semibold uppercase tracking-wide text-[#657386]">
-        {label}
-      </dt>
-      <dd className="mt-1 text-sm font-medium text-[#15191f]">{value}</dd>
-    </div>
-  );
-}
-
-function Detail({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-[#657386]">
         {label}
       </dt>
       <dd className="mt-1 text-sm font-medium text-[#15191f]">{value}</dd>

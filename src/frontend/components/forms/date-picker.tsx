@@ -7,6 +7,7 @@ import { useId, useMemo, useState } from "react";
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export function DatePicker({
+  hideLabel = false,
   label,
   max,
   min,
@@ -14,6 +15,7 @@ export function DatePicker({
   onChange,
   value,
 }: {
+  hideLabel?: boolean;
   label: string;
   max?: string;
   min?: string;
@@ -45,7 +47,9 @@ export function DatePicker({
 
   return (
     <div className="text-sm font-medium text-[#2d3745]">
-      <span id={labelId}>{label}</span>
+      <span className={hideLabel ? "sr-only" : undefined} id={labelId}>
+        {label}
+      </span>
       <input name={name} type="hidden" value={value} />
       <Popover.Root
         onOpenChange={(nextOpen) => {
@@ -59,7 +63,7 @@ export function DatePicker({
         <Popover.Trigger asChild>
           <button
             aria-labelledby={labelId}
-            className="mt-2 flex h-11 w-full items-center justify-between rounded-md border border-[#cfd8e3] bg-white px-3 text-left text-sm outline-none transition hover:bg-[#f8fafc] focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+            className={`${hideLabel ? "" : "mt-2"} flex h-11 w-full items-center justify-between rounded-md border border-[#cfd8e3] bg-white px-3 text-left text-sm outline-none transition hover:bg-[#f8fafc] focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]`}
             type="button"
           >
             <span className={value ? "text-[#15191f]" : "text-[#8793a2]"}>

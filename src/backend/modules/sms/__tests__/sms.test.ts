@@ -9,6 +9,7 @@ describe("SmsController", () => {
       phoneNumber: "+94 77 123 4567",
       message: "Payment reminder",
       purpose: "manual",
+      senderId: "MortgagePro",
     });
 
     expect(result.ok).toBe(true);
@@ -64,6 +65,7 @@ describe("SmsController", () => {
       lenderId: "lender_1",
       phoneNumber: "94771234567",
       message: "Hello",
+      senderId: "MortgagePro",
     });
 
     expect(result.ok).toBe(true);

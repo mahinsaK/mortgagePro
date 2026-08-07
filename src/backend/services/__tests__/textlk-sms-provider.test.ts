@@ -24,7 +24,6 @@ describe("TextlkSmsProvider", () => {
     const provider = new TextlkSmsProvider({
       apiToken: "token_123",
       apiUrl: "https://example.test/sms",
-      senderId: "TextLKDemo",
     });
 
     await expect(
@@ -33,6 +32,7 @@ describe("TextlkSmsProvider", () => {
         to: "+94771234567",
         message: "Hello there",
         purpose: "manual",
+        senderId: "TextLKDemo",
       }),
     ).resolves.toMatchObject({
       provider: "textlk",
@@ -74,7 +74,6 @@ describe("TextlkSmsProvider", () => {
     const provider = new TextlkSmsProvider({
       apiToken: "token_123",
       apiUrl: "https://example.test/sms",
-      senderId: "TextLKDemo",
     });
 
     await expect(
@@ -83,6 +82,7 @@ describe("TextlkSmsProvider", () => {
         to: "+94771234567",
         message: "Hello there",
         purpose: "manual",
+        senderId: "TextLKDemo",
       }),
     ).rejects.toThrow("The recipient field is required.");
   });

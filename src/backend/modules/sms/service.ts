@@ -16,6 +16,7 @@ export type SmsProviderInput = {
   message: string;
   purpose: SendSmsDto["purpose"];
   lenderId: string;
+  senderId: string;
 };
 
 export type SmsProviderResult = {
@@ -36,6 +37,7 @@ export class SmsService {
       lenderId: dto.lenderId,
       message: dto.message,
       purpose: dto.purpose,
+      senderId: dto.senderId,
       to: dto.phoneNumber,
     });
 

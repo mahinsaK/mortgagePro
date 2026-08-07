@@ -186,8 +186,9 @@ export function createAppwriteSchema(collections) {
       indexes: [
         keyIndex("idx_sms_sender_normalized", ["normalized_sender_id"]),
         keyIndex("idx_sms_sender_lender_status", ["lender_id", "status"]),
-        keyIndex("idx_sms_sender_lender_requested", [
+        keyIndex("idx_sms_sender_status_requested", [
           "lender_id",
+          "status",
           "requested_at",
         ]),
       ],

@@ -13,7 +13,6 @@ export class TextlkSmsProvider implements SmsProvider {
     private readonly config = {
       apiToken: process.env.TEXTLK_API_TOKEN ?? "",
       apiUrl: process.env.TEXTLK_API_URL || defaultTextlkApiUrl,
-      senderId: process.env.TEXTLK_SENDER_ID ?? "",
     },
   ) {}
 
@@ -22,16 +21,12 @@ export class TextlkSmsProvider implements SmsProvider {
       throw new Error("TEXTLK_API_TOKEN is not configured.");
     }
 
-    if (!this.config.senderId) {
-      throw new Error("TEXTLK_SENDER_ID is not configured.");
-    }
-
     const response = await fetch(this.config.apiUrl, {
       body: JSON.stringify(
         toRequestBody({
           message: input.message,
           recipient: input.to,
-          senderId: this.config.senderId,
+          senderId: input.senderId,
         }),
       ),
       headers: {

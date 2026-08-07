@@ -7,6 +7,7 @@ export type SendSmsDto = {
   phoneNumber: string;
   message: string;
   purpose: SmsPurpose;
+  senderId: string;
 };
 
 const smsPurposes: SmsPurpose[] = ["manual", "loan_welcome", "loan_completed"];
@@ -20,13 +21,14 @@ export function toSendSmsDto(input: Record<string, unknown>): SendSmsDto {
 
   return {
     lenderId: requiredString(input.lenderId, "lenderId"),
-    phoneNumber: normalizePhoneNumber(input.phoneNumber),
+    phoneNumber: normalizeSmsPhoneNumber(input.phoneNumber),
     message,
     purpose: smsPurpose(input.purpose),
+    senderId: requiredString(input.senderId, "senderId"),
   };
 }
 
-function normalizePhoneNumber(value: unknown) {
+export function normalizeSmsPhoneNumber(value: unknown) {
   const phoneNumber = requiredString(value, "phoneNumber");
   const digits = phoneNumber.replace(/\D/g, "");
 

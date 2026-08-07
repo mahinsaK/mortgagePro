@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  colomboMonthKey,
   normalizeSmsSenderId,
   normalizeSmsTemplateName,
+  previousSmsMonthKeys,
   smsCharacterCount,
   smsUnitsPerRecipient,
   validateSmsSenderId,
@@ -45,5 +47,16 @@ describe("SMS policy", () => {
     expect(validateSmsTemplate("", "Pay today")).toContain("name");
     expect(validateSmsTemplate("Reminder", "")).toContain("message");
     expect(validateSmsTemplate("Reminder", "a".repeat(481))).toContain("480");
+  });
+
+  it("uses Asia/Colombo months and returns a 12-month sequence", () => {
+    expect(colomboMonthKey(new Date("2026-01-31T19:00:00.000Z"))).toBe(
+      "2026-02",
+    );
+    expect(previousSmsMonthKeys("2026-02", 3)).toEqual([
+      "2026-02",
+      "2026-01",
+      "2025-12",
+    ]);
   });
 });

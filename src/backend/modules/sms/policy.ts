@@ -80,3 +80,42 @@ export function smsUnitsPerRecipient(message: string) {
 
   return Math.ceil(characters / 160);
 }
+
+export function colomboMonthKey(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    month: "2-digit",
+    timeZone: "Asia/Colombo",
+    year: "numeric",
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+
+  if (!year || !month) {
+    throw new Error("Could not determine the Asia/Colombo calendar month.");
+  }
+
+  return `${year}-${month}`;
+}
+
+export function previousSmsMonthKeys(currentMonth: string, count = 12) {
+  const match = /^(\d{4})-(\d{2})$/.exec(currentMonth);
+
+  if (!match || count < 1) {
+    throw new Error("A valid month and positive count are required.");
+  }
+
+  let year = Number(match[1]);
+  let month = Number(match[2]);
+  const values: string[] = [];
+
+  for (let index = 0; index < count; index += 1) {
+    values.push(`${year}-${String(month).padStart(2, "0")}`);
+    month -= 1;
+    if (month === 0) {
+      month = 12;
+      year -= 1;
+    }
+  }
+
+  return values;
+}

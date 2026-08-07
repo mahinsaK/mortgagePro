@@ -1,7 +1,7 @@
 "use client";
 
 import { Search, Send, Users, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   sendAllBorrowersSmsAction,
   sendManualSmsAction,
@@ -42,6 +42,8 @@ export function SmsWorkbench({
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const selectedRequestIdRef = useRef<HTMLInputElement>(null);
+  const allRequestIdRef = useRef<HTMLInputElement>(null);
   const selectedRecipientsPayload = useMemo(
     () => JSON.stringify(selectedRecipients),
     [selectedRecipients],
@@ -226,11 +228,32 @@ export function SmsWorkbench({
               recipients={selectedRecipients}
             />
 
-            <form action={sendSelectedSmsAction} className="grid gap-4">
+            <form
+              action={sendSelectedSmsAction}
+              className="grid gap-4"
+              onSubmit={() => {
+                if (selectedRequestIdRef.current) {
+                  selectedRequestIdRef.current.value ||= crypto.randomUUID();
+                }
+                if (allRequestIdRef.current) {
+                  allRequestIdRef.current.value ||= crypto.randomUUID();
+                }
+              }}
+            >
               <input
                 name="recipients"
                 type="hidden"
                 value={selectedRecipientsPayload}
+              />
+              <input
+                name="request_id"
+                ref={selectedRequestIdRef}
+                type="hidden"
+              />
+              <input
+                name="all_request_id"
+                ref={allRequestIdRef}
+                type="hidden"
               />
               <label className="text-sm font-medium text-[#2d3745]">
                 Message
@@ -410,6 +433,8 @@ function phoneIdentity(value: string) {
 }
 
 function QuickSmsPanel() {
+  const requestIdRef = useRef<HTMLInputElement>(null);
+
   return (
     <section className="rounded-lg border border-[#dfe5ec] bg-white p-5 shadow-sm">
       <div className="mb-5">
@@ -417,7 +442,16 @@ function QuickSmsPanel() {
         <h2 className="mt-1 text-lg font-semibold">Single number</h2>
       </div>
 
-      <form action={sendManualSmsAction} className="grid gap-4">
+      <form
+        action={sendManualSmsAction}
+        className="grid gap-4"
+        onSubmit={() => {
+          if (requestIdRef.current) {
+            requestIdRef.current.value ||= crypto.randomUUID();
+          }
+        }}
+      >
+        <input name="request_id" ref={requestIdRef} type="hidden" />
         <label className="text-sm font-medium text-[#2d3745]">
           Phone number
           <input

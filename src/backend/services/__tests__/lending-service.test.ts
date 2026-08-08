@@ -142,6 +142,50 @@ describe("lending-service", () => {
     expect(queries).toContain('"values":["active"]');
   });
 
+  it("searches borrowers through tenant-scoped full-text indexes", async () => {
+    await getBorrowersPageData({
+      page: 2,
+      pageSize: 10,
+      query: "  Avery +94 77  ",
+    });
+
+    const queries = mocks.listDocuments.mock.calls[0][0].queries as string[];
+    const joinedQueries = queries.join(" ");
+
+    expect(joinedQueries).toContain('"attribute":"lender_id"');
+    expect(joinedQueries).toContain('"method":"or"');
+    expect(joinedQueries).toContain('"attribute":"search_text"');
+    expect(joinedQueries).toContain('"attribute":"name"');
+    expect(joinedQueries).toContain('"attribute":"business_name"');
+    expect(joinedQueries).toContain('"attribute":"contact"');
+    expect(joinedQueries).toContain('"attribute":"address"');
+    expect(joinedQueries).toContain('"values":["avery 94 77"]');
+    expect(joinedQueries).toContain('"method":"offset"');
+    expect(joinedQueries).toContain('"values":[10]');
+  });
+
+  it("combines borrower search with the missing-phone attention filter", async () => {
+    mocks.listDocuments.mockResolvedValueOnce({
+      documents: [
+        borrowerDocument("borrower_missing", "", "2026-07-04"),
+      ],
+      total: 1,
+    });
+
+    const result = await getBorrowersPageData({
+      attention: "missing-phone",
+      page: 1,
+      pageSize: 10,
+      query: "North Shop",
+    });
+
+    const joinedQueries = mocks.listDocuments.mock.calls[0][0].queries.join(" ");
+    expect(joinedQueries).toContain('"attribute":"status"');
+    expect(joinedQueries).toContain('"method":"or"');
+    expect(joinedQueries).toContain('"values":["north shop"]');
+    expect(result.borrowers).toHaveLength(1);
+  });
+
   it("filters ending-soon loans with balances and preserves correct pagination", async () => {
     mocks.listDocuments.mockImplementation((params) => {
       if (params.collectionId === "loans") {

@@ -2,6 +2,19 @@
 
 MortgagePro is a Next.js application for managing a small lending operation end to end. It brings together borrower records, loans, repayments, collector workflows, SMS notifications, and analytics in one portal.
 
+## Live Demo
+
+Explore the deployed lender workspace at
+[mortgage-pro-five.vercel.app](https://mortgage-pro-five.vercel.app/auth/login).
+
+| Field | Demo credential |
+| --- | --- |
+| Email | `sample@gmail.com` |
+| Password | `sample@123` |
+
+This is a shared demonstration account. Its records may be changed by other
+visitors. Do not enter real personal, borrower, or financial information.
+
 ## What It Does
 
 - Manages lenders, borrowers, collectors, loans, and payments in Appwrite.

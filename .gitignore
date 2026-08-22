@@ -36,6 +36,7 @@ test-results/
 # deployment
 .vercel/
 .security-backups/
+/private-security/
 
 # logs
 npm-debug.log*

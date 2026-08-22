@@ -51,6 +51,10 @@ For a complete new-computer and new-Appwrite-project walkthrough, follow
 Before any pilot release, follow the automated and manual gate in
 [`TESTING.md`](./TESTING.md).
 
+For a concise overview of tenant isolation, session protection, payment
+integrity, security testing, and known limitations, see
+[`SECURITY.md`](./SECURITY.md).
+
 1. Install dependencies.
 
 ```bash

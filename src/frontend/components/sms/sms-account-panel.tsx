@@ -8,6 +8,7 @@ import {
   useTransition,
 } from "react";
 import {
+  deleteSmsSenderAction,
   requestSmsSenderAction,
   type SmsManagementActionState,
   updateAutomaticPaymentSmsAction,
@@ -27,6 +28,10 @@ export function SmsAccountPanel({
 }) {
   const [state, action, isPending] = useActionState(
     requestSmsSenderAction,
+    INITIAL_STATE,
+  );
+  const [deleteState, deleteAction, isDeleting] = useActionState(
+    deleteSmsSenderAction,
     INITIAL_STATE,
   );
   const suspended = management.account?.status === "suspended";
@@ -51,47 +56,87 @@ export function SmsAccountPanel({
           </h3>
           <SenderStatus management={management} suspended={suspended} />
 
-          <form action={action} className="mt-3 grid gap-2">
-            <label className="text-sm font-medium text-[#2d3745]">
-              {management.activeSender
-                ? "Request a replacement sender ID"
-                : "Request a sender ID"}
+          {management.activeSender ? (
+            <form action={deleteAction} className="mt-3 grid gap-2">
               <input
-                autoCapitalize="none"
-                className="mt-1.5 h-10 w-full rounded-md border border-[#cfd8e3] bg-white px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe] disabled:bg-[#f1f5f9]"
-                disabled={Boolean(management.pendingRequest) || isPending}
-                maxLength={11}
-                minLength={3}
-                name="sender_id"
-                pattern="[A-Za-z][A-Za-z0-9]{2,10}"
-                placeholder="MortgagePro"
-                required
+                name="sender_request_id"
+                type="hidden"
+                value={management.activeSender.id}
               />
-            </label>
-            <p className="text-xs leading-4 text-[#657386]">
-              3–11 letters or numbers, beginning with a letter. Administrator
-              approval is required.
-            </p>
-            {state.message ? (
-              <p
-                aria-live="polite"
-                className={
-                  state.status === "success"
-                    ? "text-sm font-medium text-[#166534]"
-                    : "text-sm font-medium text-[#b91c1c]"
-                }
-              >
-                {state.message}
+              <p className="text-xs leading-5 text-[#657386]">
+                Delete the approved sender before requesting a different one.
+                Automatic payment SMS will be turned off.
               </p>
-            ) : null}
-            <button
-              className="inline-flex h-10 items-center justify-center rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2] sm:justify-self-start"
-              disabled={Boolean(management.pendingRequest) || isPending}
-              type="submit"
-            >
-              {isPending ? "Submitting…" : "Request sender ID"}
-            </button>
-          </form>
+              {deleteState.message ? (
+                <p
+                  aria-live="polite"
+                  className={
+                    deleteState.status === "success"
+                      ? "text-sm font-medium text-[#166534]"
+                      : "text-sm font-medium text-[#b91c1c]"
+                  }
+                >
+                  {deleteState.message}
+                </p>
+              ) : null}
+              <button
+                className="inline-flex h-10 items-center justify-center rounded-md border border-[#fecaca] bg-white px-4 text-sm font-semibold text-[#b91c1c] transition hover:bg-[#fef2f2] disabled:cursor-not-allowed disabled:text-[#9aa6b2] sm:justify-self-start"
+                disabled={isDeleting}
+                onClick={(event) => {
+                  if (
+                    !confirm(
+                      "Delete this approved sender ID? SMS sending will stop until another sender is approved.",
+                    )
+                  ) {
+                    event.preventDefault();
+                  }
+                }}
+                type="submit"
+              >
+                {isDeleting ? "Deleting…" : "Delete sender ID"}
+              </button>
+            </form>
+          ) : (
+            <form action={action} className="mt-3 grid gap-2">
+              <label className="text-sm font-medium text-[#2d3745]">
+                Request a sender ID
+                <input
+                  autoCapitalize="none"
+                  className="mt-1.5 h-10 w-full rounded-md border border-[#cfd8e3] bg-white px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe] disabled:bg-[#f1f5f9]"
+                  disabled={Boolean(management.pendingRequest) || isPending}
+                  maxLength={11}
+                  minLength={3}
+                  name="sender_id"
+                  pattern="[A-Za-z][A-Za-z0-9]{2,10}"
+                  placeholder="MortgagePro"
+                  required
+                />
+              </label>
+              <p className="text-xs leading-4 text-[#657386]">
+                3–11 letters or numbers, beginning with a letter. Administrator
+                approval is required.
+              </p>
+              {state.message ? (
+                <p
+                  aria-live="polite"
+                  className={
+                    state.status === "success"
+                      ? "text-sm font-medium text-[#166534]"
+                      : "text-sm font-medium text-[#b91c1c]"
+                  }
+                >
+                  {state.message}
+                </p>
+              ) : null}
+              <button
+                className="inline-flex h-10 items-center justify-center rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2] sm:justify-self-start"
+                disabled={Boolean(management.pendingRequest) || isPending}
+                type="submit"
+              >
+                {isPending ? "Submitting…" : "Request sender ID"}
+              </button>
+            </form>
+          )}
         </div>
 
         <AutomaticPaymentSettings

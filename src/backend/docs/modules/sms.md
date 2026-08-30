@@ -49,8 +49,9 @@ Administration is manual in Appwrite Console:
 3. Open the lender document in `sms_accounts`, set `monthly_quota`, and keep its
    status `active` (or use `suspended` to stop sends).
 
-The newest approved request is the active sender. A pending or rejected
-replacement does not disable the lender's previous approved sender.
+An approved sender must be deleted before the lender can request a different
+sender ID. Deleting it removes prior approved sender records and turns off
+automatic payment SMS so an older sender cannot silently become active again.
 
 ## Automatic payment receipts
 

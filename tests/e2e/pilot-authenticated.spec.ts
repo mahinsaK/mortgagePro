@@ -111,6 +111,12 @@ test.describe("dedicated pilot lender journey", () => {
     await expect(
       page.getByRole("heading", { name: "Recent SMS batches" }),
     ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Delete sender ID" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Request sender ID" }),
+    ).toHaveCount(0);
     const smsSectionHeadings = await page.locator("h2").allTextContents();
     expect(smsSectionHeadings.indexOf("Current month")).toBeLessThan(
       smsSectionHeadings.indexOf("Sender and automatic payments"),

@@ -46,6 +46,7 @@ vi.mock("@/backend/services/tenant-data-service", () => ({
 
 import {
   createSmsTemplate,
+  deleteApprovedSmsSender,
   deleteSmsTemplate,
   getSmsManagementData,
   requestSmsSenderId,
@@ -130,13 +131,13 @@ describe("SMS management transactions", () => {
     );
   });
 
-  it("allows only one pending replacement request per lender", async () => {
+  it("allows only one pending sender request per lender", async () => {
     mocks.listDocuments.mockImplementation(
       ({ collectionId }: { collectionId: string }) =>
         Promise.resolve({
           documents:
             collectionId === "sms_sender_requests"
-              ? [{ $id: "anotherid" }]
+              ? [{ $id: "anotherid", status: "pending" }]
               : [],
           total: 0,
         }),
@@ -146,6 +147,53 @@ describe("SMS management transactions", () => {
       requestSmsSenderId("lender_A", "LoanPro"),
     ).rejects.toMatchObject({ code: "pending_sender" });
     expect(mocks.createDocument).not.toHaveBeenCalled();
+  });
+
+  it("requires the approved sender to be deleted before another request", async () => {
+    mocks.listDocuments.mockImplementation(
+      ({ collectionId }: { collectionId: string }) =>
+        Promise.resolve({
+          documents:
+            collectionId === "sms_sender_requests"
+              ? [{ $id: "current", status: "approved" }]
+              : [],
+          total: 0,
+        }),
+    );
+
+    await expect(
+      requestSmsSenderId("lender_A", "LoanPro"),
+    ).rejects.toMatchObject({ code: "active_sender" });
+    expect(mocks.createDocument).not.toHaveBeenCalled();
+  });
+
+  it("deletes approved sender history and disables automatic payment SMS", async () => {
+    mocks.listDocuments.mockResolvedValue({
+      documents: [{ $id: "current" }, { $id: "older" }],
+      total: 2,
+    });
+    mocks.getDocument.mockImplementation(
+      ({ collectionId }: { collectionId: string }) =>
+        collectionId === "sms_accounts"
+          ? Promise.resolve({ $id: "lender_A", lender_id: "lender_A" })
+          : Promise.reject({ code: 404 }),
+    );
+
+    await deleteApprovedSmsSender("lender_A", "current");
+
+    expect(mocks.deleteDocument).toHaveBeenCalledTimes(2);
+    expect(mocks.updateDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collectionId: "sms_accounts",
+        documentId: "lender_A",
+        data: expect.objectContaining({ payment_sms_enabled: false }),
+        transactionId: "transaction_1",
+      }),
+    );
+    expect(mocks.updateTransaction).toHaveBeenCalledWith({
+      transactionId: "transaction_1",
+      commit: true,
+    });
   });
 
   it("reports a clean duplicate error when a concurrent sender request wins", async () => {

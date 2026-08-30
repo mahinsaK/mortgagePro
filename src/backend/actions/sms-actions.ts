@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getPrimaryLender } from "@/backend/services/lender-service";
 import {
   createSmsTemplate,
+  deleteApprovedSmsSender,
   deleteSmsTemplate,
   requestSmsSenderId,
   SmsManagementError,
@@ -22,6 +23,7 @@ export type SmsManagementActionState = {
   message: string;
   operation?:
     | "sender"
+    | "sender_delete"
     | "automatic_payment"
     | "template_create"
     | "template_update";
@@ -34,6 +36,18 @@ export async function requestSmsSenderAction(
   return runManagementAction("sender", async (lenderId) => {
     await requestSmsSenderId(lenderId, readField(formData, "sender_id"));
   }, "Sender ID request submitted for review.");
+}
+
+export async function deleteSmsSenderAction(
+  _previousState: SmsManagementActionState,
+  formData: FormData,
+): Promise<SmsManagementActionState> {
+  return runManagementAction("sender_delete", async (lenderId) => {
+    await deleteApprovedSmsSender(
+      lenderId,
+      readField(formData, "sender_request_id"),
+    );
+  }, "Sender ID deleted. You can now request another one.");
 }
 
 export async function createSmsTemplateAction(

@@ -55,7 +55,9 @@ export class SmsManagementError extends Error {
     public readonly code:
       | "duplicate_sender"
       | "pending_sender"
+      | "active_sender"
       | "account_not_found"
+      | "sender_not_found"
       | "template_duplicate"
       | "template_limit"
       | "template_not_found"
@@ -129,7 +131,7 @@ export async function requestSmsSenderId(lenderId: string, value: string) {
     const transactionId = transaction.$id;
 
     try {
-      const [existingSender, pendingRequests, account, templates] =
+      const [existingSender, senderStates, account, templates] =
         await Promise.all([
           getDocumentOrNull(
             appwriteServerConfig.collections.smsSenderRequests,
@@ -141,9 +143,10 @@ export async function requestSmsSenderId(lenderId: string, value: string) {
             collectionId: appwriteServerConfig.collections.smsSenderRequests,
             queries: [
               Query.equal("lender_id", lenderId),
-              Query.equal("status", "pending"),
-              Query.limit(1),
-              Query.select(["$id"]),
+              Query.equal("status", ["pending", "approved"]),
+              Query.orderDesc("requested_at"),
+              Query.limit(100),
+              Query.select(["$id", "status"]),
             ],
             transactionId,
           }),
@@ -174,7 +177,21 @@ export async function requestSmsSenderId(lenderId: string, value: string) {
         );
       }
 
-      const pendingId = String(pendingRequests.documents[0]?.$id ?? "");
+      const approvedSender = senderStates.documents.find(
+        (document) => String(document.status ?? "") === "approved",
+      );
+      if (approvedSender) {
+        throw new SmsManagementError(
+          "active_sender",
+          "Delete the current approved sender ID before requesting another one.",
+        );
+      }
+
+      const pendingId = String(
+        senderStates.documents.find(
+          (document) => String(document.status ?? "") === "pending",
+        )?.$id ?? "",
+      );
       if (pendingId && pendingId !== normalizedSenderId) {
         throw new SmsManagementError(
           "pending_sender",
@@ -266,6 +283,71 @@ export async function requestSmsSenderId(lenderId: string, value: string) {
 
       throw error;
     }
+  }
+}
+
+export async function deleteApprovedSmsSender(
+  lenderId: string,
+  senderRequestId: string,
+) {
+  const transaction = await databases.createTransaction({ ttl: 60 });
+  const transactionId = transaction.$id;
+
+  try {
+    const [approvedSenders, account] = await Promise.all([
+      databases.listDocuments({
+        databaseId: appwriteServerConfig.databaseId,
+        collectionId: appwriteServerConfig.collections.smsSenderRequests,
+        queries: [
+          Query.equal("lender_id", lenderId),
+          Query.equal("status", "approved"),
+          Query.orderDesc("requested_at"),
+          Query.limit(100),
+          Query.select(["$id"]),
+        ],
+        transactionId,
+      }),
+      getDocumentOrNull(
+        appwriteServerConfig.collections.smsAccounts,
+        lenderId,
+        transactionId,
+      ),
+    ]);
+    const currentSenderId = String(approvedSenders.documents[0]?.$id ?? "");
+
+    if (!currentSenderId || currentSenderId !== senderRequestId) {
+      throw new SmsManagementError(
+        "sender_not_found",
+        "The approved sender ID was not found.",
+      );
+    }
+
+    for (const sender of approvedSenders.documents) {
+      await databases.deleteDocument({
+        databaseId: appwriteServerConfig.databaseId,
+        collectionId: appwriteServerConfig.collections.smsSenderRequests,
+        documentId: sender.$id,
+        transactionId,
+      });
+    }
+
+    if (account && String(account.lender_id ?? "") === lenderId) {
+      await databases.updateDocument({
+        databaseId: appwriteServerConfig.databaseId,
+        collectionId: appwriteServerConfig.collections.smsAccounts,
+        documentId: lenderId,
+        data: {
+          payment_sms_enabled: false,
+          updated_at: new Date().toISOString(),
+        },
+        transactionId,
+      });
+    }
+
+    await databases.updateTransaction({ transactionId, commit: true });
+  } catch (error) {
+    await rollbackTransaction(transactionId);
+    throw error;
   }
 }
 

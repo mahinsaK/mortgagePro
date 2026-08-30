@@ -11,7 +11,7 @@ export type SmsReportingData = {
 
 export function SmsUsageDashboard({ data }: { data: SmsReportingData }) {
   return (
-    <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
+    <section className="w-full max-w-5xl rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-[#657386]">

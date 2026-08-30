@@ -13,6 +13,7 @@ import {
   updateAutomaticPaymentSmsAction,
 } from "@/backend/actions/sms-actions";
 import type { SmsManagementData } from "@/backend/services/sms-management-service";
+import { SmsTemplatePlaceholderHelp } from "@/frontend/components/sms/sms-template-placeholder-help";
 
 const INITIAL_STATE: SmsManagementActionState = {
   status: "idle",
@@ -215,15 +216,7 @@ function AutomaticPaymentSettings({
         </p>
       </div>
 
-      <details className="text-xs leading-5 text-[#657386]">
-        <summary className="cursor-pointer font-semibold text-[#526174]">
-          Template placeholders
-        </summary>
-        <p className="mt-1">
-          {"{{borrowerName}}"}, {"{{amount}}"}, {"{{remainingBalance}}"},{" "}
-          {"{{paymentDate}}"}, {"{{companyName}}"}
-        </p>
-      </details>
+      <SmsTemplatePlaceholderHelp />
 
       {!canConfigure ? (
         <p className="text-sm font-medium text-[#9a6700]">

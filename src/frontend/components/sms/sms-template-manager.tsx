@@ -9,6 +9,7 @@ import {
   updateSmsTemplateAction,
 } from "@/backend/actions/sms-actions";
 import type { SmsTemplate } from "@/backend/services/sms-management-service";
+import { SmsTemplatePlaceholderHelp } from "@/frontend/components/sms/sms-template-placeholder-help";
 
 const INITIAL_STATE: SmsManagementActionState = {
   status: "idle",
@@ -49,6 +50,8 @@ export function SmsTemplateManager({
           {isCreating ? "Cancel" : "New template"}
         </button>
       </div>
+
+      <SmsTemplatePlaceholderHelp className="mt-3 rounded-md bg-[#f8fafc] px-3 py-2" />
 
       {isCreating ? (
         <CreateTemplateForm onSaved={() => setIsCreating(false)} />

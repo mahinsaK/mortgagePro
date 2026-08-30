@@ -156,12 +156,12 @@ export function SmsWorkbench({
   return (
     <div className="grid gap-4 md:gap-5">
       <StatusBanner count={count} message={message} phone={phone} status={status} />
-      <div className="grid items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+      {reporting ? <SmsUsageDashboard data={reporting} /> : null}
+      <div className="max-w-md">
         <QuickSmsPanel
           requestId={requestIds?.quick ?? ""}
           sendingEnabled={sendingEnabled}
         />
-        {management ? <SmsAccountPanel management={management} /> : null}
       </div>
       {!sendingEnabled ? (
         <div className="rounded-md border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 text-sm font-medium text-[#9a3412]">
@@ -344,8 +344,8 @@ export function SmsWorkbench({
           />
         ) : null}
       </div>
-      {reporting ? <SmsUsageDashboard data={reporting} /> : null}
       {reporting ? <SmsRecentBatches batches={reporting.latestBatches} /> : null}
+      {management ? <SmsAccountPanel management={management} /> : null}
     </div>
   );
 }

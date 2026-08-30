@@ -410,6 +410,39 @@ describe("SMS management transactions", () => {
       ]),
     );
   });
+
+  it("returns lender-owned saved templates for automatic payment selection", async () => {
+    mocks.listTenantDocuments.mockImplementation(
+      (collection: string) =>
+        Promise.resolve({
+          documents:
+            collection === "smsTemplates"
+              ? [
+                  {
+                    $id: "template_A",
+                    name: "Payment received",
+                    message: "We received {{amount}}.",
+                    created_at: "2026-01-01T00:00:00.000Z",
+                    updated_at: "2026-01-02T00:00:00.000Z",
+                  },
+                ]
+              : [],
+          total: collection === "smsTemplates" ? 1 : 0,
+        }),
+    );
+
+    const management = await getSmsManagementData("lender_A");
+
+    expect(management.templates).toEqual([
+      {
+        id: "template_A",
+        name: "Payment received",
+        message: "We received {{amount}}.",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-02T00:00:00.000Z",
+      },
+    ]);
+  });
 });
 
 function smsTemplateId(lenderId: string, normalizedName: string) {

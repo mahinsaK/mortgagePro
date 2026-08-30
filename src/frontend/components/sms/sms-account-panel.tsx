@@ -1,7 +1,12 @@
 "use client";
 
 import { CheckCircle2, Clock3, ShieldAlert } from "lucide-react";
-import { useActionState, useState } from "react";
+import {
+  type FormEvent,
+  useActionState,
+  useState,
+  useTransition,
+} from "react";
 import {
   requestSmsSenderAction,
   type SmsManagementActionState,
@@ -88,7 +93,13 @@ export function SmsAccountPanel({
           </form>
         </div>
 
-        <AutomaticPaymentSettings management={management} />
+        <AutomaticPaymentSettings
+          key={[
+            management.account ? "account" : "no-account",
+            ...management.templates.map((template) => template.id),
+          ].join(":")}
+          management={management}
+        />
       </div>
     </section>
   );
@@ -105,14 +116,41 @@ function AutomaticPaymentSettings({
   const [templateId, setTemplateId] = useState(
     management.account?.paymentSmsTemplateId ?? "",
   );
-  const [state, action, isPending] = useActionState(
-    updateAutomaticPaymentSmsAction,
-    INITIAL_STATE,
-  );
+  const [state, setState] = useState(INITIAL_STATE);
+  const [isPending, startTransition] = useTransition();
+  const savedEnabled = management.account?.paymentSmsEnabled ?? false;
+  const savedTemplateId = management.account?.paymentSmsTemplateId ?? "";
+  const hasTemplates = management.templates.length > 0;
   const canConfigure = Boolean(management.account && management.templates.length);
 
+  function submitSettings(form: HTMLFormElement | null) {
+    if (!form) return;
+    queueMicrotask(() => form.requestSubmit());
+  }
+
+  function saveSettings(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    startTransition(async () => {
+      const nextState = await updateAutomaticPaymentSmsAction(
+        INITIAL_STATE,
+        formData,
+      );
+      setState(nextState);
+
+      if (nextState.status === "error") {
+        setEnabled(savedEnabled);
+        setTemplateId(savedTemplateId);
+      }
+    });
+  }
+
   return (
-    <form action={action} className="grid gap-3 rounded-md bg-[#f8fafc] p-3">
+    <form
+      className="grid gap-3 rounded-md bg-[#f8fafc] p-3"
+      onSubmit={saveSettings}
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-[#15191f]">
@@ -126,9 +164,14 @@ function AutomaticPaymentSettings({
           <input
             checked={enabled}
             className="peer sr-only"
-            disabled={!canConfigure || isPending}
+            disabled={
+              !canConfigure || isPending || (!enabled && !templateId)
+            }
             name="enabled"
-            onChange={(event) => setEnabled(event.target.checked)}
+            onChange={(event) => {
+              setEnabled(event.currentTarget.checked);
+              submitSettings(event.currentTarget.form);
+            }}
             role="switch"
             type="checkbox"
           />
@@ -139,18 +182,25 @@ function AutomaticPaymentSettings({
         </label>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+      <div className="grid gap-2">
         <label className="text-sm font-medium text-[#2d3745]">
           Payment template
           <select
             className="mt-1.5 h-10 w-full rounded-md border border-[#cfd8e3] bg-white px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe] disabled:bg-[#f1f5f9]"
-            disabled={!canConfigure || isPending}
+            disabled={!management.account || !hasTemplates || isPending}
             name="template_id"
-            onChange={(event) => setTemplateId(event.target.value)}
+            onChange={(event) => {
+              setTemplateId(event.currentTarget.value);
+              submitSettings(event.currentTarget.form);
+            }}
             required={enabled}
             value={templateId}
           >
-            <option value="">Choose a saved template</option>
+            <option disabled={enabled} value="">
+              {hasTemplates
+                ? "Choose a saved template"
+                : "No saved templates available"}
+            </option>
             {management.templates.map((template) => (
               <option key={template.id} value={template.id}>
                 {template.name}
@@ -158,13 +208,11 @@ function AutomaticPaymentSettings({
             ))}
           </select>
         </label>
-        <button
-          className="h-10 rounded-md bg-[#15191f] px-3 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
-          disabled={!canConfigure || isPending || (enabled && !templateId)}
-          type="submit"
-        >
-          {isPending ? "Saving…" : "Save"}
-        </button>
+        <p className="text-xs leading-5 text-[#657386]">
+          {management.templates.length} saved template
+          {management.templates.length === 1 ? "" : "s"} available. Template
+          and switch changes save automatically.
+        </p>
       </div>
 
       <details className="text-xs leading-5 text-[#657386]">
@@ -193,6 +241,11 @@ function AutomaticPaymentSettings({
           }
         >
           {state.message}
+        </p>
+      ) : null}
+      {isPending ? (
+        <p aria-live="polite" className="text-sm font-medium text-[#526174]">
+          Saving automatic payment settings…
         </p>
       ) : null}
     </form>

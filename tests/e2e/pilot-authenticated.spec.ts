@@ -98,6 +98,10 @@ test.describe("dedicated pilot lender journey", () => {
 
     await loginLender(page);
     await page.goto("/sms");
+    const smsSectionHeadings = await page.locator("h2").allTextContents();
+    expect(smsSectionHeadings.indexOf("Current month")).toBeLessThan(
+      smsSectionHeadings.indexOf("Sender and automatic payments"),
+    );
     await deleteSmsTemplateIfPresent(page, templateName);
     await deleteSmsTemplateIfPresent(page, renamedTemplate);
 
@@ -117,6 +121,29 @@ test.describe("dedicated pilot lender journey", () => {
       await expect(
         page.getByRole("button", { name: `Edit ${templateName}` }),
       ).toBeVisible();
+      const paymentTemplate = page.getByLabel("Payment template");
+      await expect(
+        paymentTemplate.getByRole("option", { name: templateName }),
+      ).toHaveCount(1);
+      await paymentTemplate.selectOption({ label: templateName });
+      await expect(
+        page.getByText("Automatic payment settings saved."),
+      ).toBeVisible();
+
+      const automaticPaymentSwitch = page.getByRole("switch");
+      const wasEnabled = await automaticPaymentSwitch.isChecked();
+      await automaticPaymentSwitch.click();
+      await expect(automaticPaymentSwitch).toBeChecked({ checked: !wasEnabled });
+      await expect(
+        page.getByText("Automatic payment settings saved."),
+      ).toBeVisible();
+      const settingsSection = page
+        .getByRole("heading", { name: "Sender and automatic payments" })
+        .locator("xpath=ancestor::section");
+      await expect(
+        settingsSection.getByRole("button", { name: "Save", exact: true }),
+      ).toHaveCount(0);
+
       await page.getByRole("button", { name: `Edit ${templateName}` }).click();
 
       const editForm = page.locator("form").filter({

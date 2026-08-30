@@ -62,9 +62,7 @@ export async function updateAutomaticPaymentSmsAction(
         readField(formData, "template_id"),
       );
     },
-    formData.get("enabled") === "on"
-      ? "Automatic payment messages enabled."
-      : "Automatic payment messages disabled.",
+    "Automatic payment settings saved.",
   );
 }
 

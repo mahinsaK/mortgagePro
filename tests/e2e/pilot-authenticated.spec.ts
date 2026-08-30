@@ -98,6 +98,19 @@ test.describe("dedicated pilot lender journey", () => {
 
     await loginLender(page);
     await page.goto("/sms");
+    await expect(
+      page.getByRole("heading", { name: "Current month" }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "Recent SMS batches" }),
+    ).toHaveCount(0);
+    await page.getByRole("button", { name: "Check usage" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Current month" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Recent SMS batches" }),
+    ).toBeVisible();
     const smsSectionHeadings = await page.locator("h2").allTextContents();
     expect(smsSectionHeadings.indexOf("Current month")).toBeLessThan(
       smsSectionHeadings.indexOf("Sender and automatic payments"),
@@ -206,6 +219,7 @@ test.describe("dedicated pilot lender journey", () => {
       }
     });
     await page.goto("/sms");
+    await page.getByRole("button", { name: "Check usage" }).click();
 
     const quickSms = page.getByRole("heading", { name: "Single number" }).locator(
       "xpath=ancestor::section",

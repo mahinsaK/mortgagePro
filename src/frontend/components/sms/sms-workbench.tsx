@@ -56,6 +56,7 @@ export function SmsWorkbench({
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [usageVisible, setUsageVisible] = useState(false);
   const selectedRecipientsPayload = useMemo(
     () => JSON.stringify(selectedRecipients),
     [selectedRecipients],
@@ -156,7 +157,25 @@ export function SmsWorkbench({
   return (
     <div className="grid gap-4 md:gap-5">
       <StatusBanner count={count} message={message} phone={phone} status={status} />
-      {reporting ? <SmsUsageDashboard data={reporting} /> : null}
+      {reporting ? (
+        <div>
+          <button
+            aria-controls="sms-usage-history"
+            aria-expanded={usageVisible}
+            className="inline-flex h-10 items-center justify-center rounded-md border border-[#cfd8e3] bg-white px-4 text-sm font-semibold text-[#2d3745] shadow-sm transition hover:bg-[#f8fafc]"
+            onClick={() => setUsageVisible((current) => !current)}
+            type="button"
+          >
+            {usageVisible ? "Hide usage" : "Check usage"}
+          </button>
+          {usageVisible ? (
+            <div className="mt-4 grid gap-4" id="sms-usage-history">
+              <SmsUsageDashboard data={reporting} />
+              <SmsRecentBatches batches={reporting.latestBatches} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       <div className="max-w-md">
         <QuickSmsPanel
           requestId={requestIds?.quick ?? ""}
@@ -344,7 +363,6 @@ export function SmsWorkbench({
           />
         ) : null}
       </div>
-      {reporting ? <SmsRecentBatches batches={reporting.latestBatches} /> : null}
       {management ? <SmsAccountPanel management={management} /> : null}
     </div>
   );

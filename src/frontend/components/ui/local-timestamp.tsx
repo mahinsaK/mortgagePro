@@ -5,9 +5,11 @@ import { useSyncExternalStore } from "react";
 const subscribe = () => () => {};
 
 export function LocalTimestamp({
+  timeZone,
   value,
   timeOnly = false,
 }: {
+  timeZone?: string;
   value: string;
   timeOnly?: boolean;
 }) {
@@ -25,6 +27,7 @@ export function LocalTimestamp({
             : { day: "2-digit", month: "short", year: "numeric" }),
           hour: "numeric",
           minute: "2-digit",
+          ...(timeZone ? { timeZone } : {}),
         }).format(date)
       : "—";
 

@@ -2,6 +2,7 @@ import type {
   SmsBatchSummary,
   SmsUsageSummary,
 } from "@/backend/services/sms-sending-service";
+import { LocalTimestamp } from "@/frontend/components/ui/local-timestamp";
 
 export type SmsReportingData = {
   current: SmsUsageSummary;
@@ -116,8 +117,12 @@ export function SmsRecentBatches({ batches }: { batches: SmsBatchSummary[] }) {
                   {batchPurposeLabel(batch.purpose)} · {batch.sentRecipients} sent
                 </p>
                 <p className="mt-1 text-xs text-[#657386]">
-                  {batch.senderId} · {formatSmsTimestamp(batch.createdAt)} ·{" "}
-                  {batch.usedUnits} units · {batch.failedRecipients} failed
+                  {batch.senderId} ·{" "}
+                  <LocalTimestamp
+                    timeZone="Asia/Colombo"
+                    value={batch.createdAt}
+                  />{" "}
+                  · {batch.usedUnits} units · {batch.failedRecipients} failed
                 </p>
               </div>
               <span className={batchStatusClass(batch.status)}>
@@ -154,16 +159,6 @@ function formatMonth(value: string) {
     timeZone: "Asia/Colombo",
     year: "numeric",
   }).format(new Date(Date.UTC(year, month - 1, 15)));
-}
-
-function formatSmsTimestamp(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Date unavailable";
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Colombo",
-  }).format(date);
 }
 
 function batchStatusLabel(status: SmsBatchSummary["status"]) {

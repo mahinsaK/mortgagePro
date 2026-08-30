@@ -196,6 +196,15 @@ test.describe("dedicated pilot lender journey", () => {
       "Mobile-only SMS workflow",
     );
     await loginLender(page);
+    const hydrationErrors: string[] = [];
+    page.on("console", (message) => {
+      if (
+        message.type() === "error" &&
+        message.text().includes("Hydration failed")
+      ) {
+        hydrationErrors.push(message.text());
+      }
+    });
     await page.goto("/sms");
 
     const quickSms = page.getByRole("heading", { name: "Single number" }).locator(
@@ -217,6 +226,7 @@ test.describe("dedicated pilot lender journey", () => {
     await expect(page.getByText(/1 unit for the selected list/)).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expectNoSeriousAccessibilityViolations(page);
+    expect(hydrationErrors).toEqual([]);
   });
 
   test("cross-tenant loans, QR codes, and exports remain isolated", async ({

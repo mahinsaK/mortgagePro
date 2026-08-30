@@ -100,10 +100,10 @@ The first sender request creates the Loan welcome, Payment reminder, and Loan
 completed starter templates. Lenders can create, rename, edit, use, and delete
 up to 20 templates. Names are unique per lender.
 
-The SMS page is ordered for daily work: Quick SMS, sender and automatic-payment
-settings, recipients, templates, current-month usage, an expandable 12-month
-report, and recent sanitized batch summaries. Templates and history remain
-available when sending is not configured or is suspended.
+The SMS page is ordered for daily work: recipients and message composition,
+templates, collapsible usage and recent batch summaries, and sender and
+automatic-payment settings. Templates and history remain available when
+sending is not configured or is suspended.
 
 ## Borrower recipients
 

@@ -105,16 +105,6 @@ export async function deleteSmsTemplateAction(formData: FormData) {
   revalidatePath("/sms");
 }
 
-export async function sendManualSmsAction(formData: FormData) {
-  const result = await sendSmsToNumbers({
-    message: readField(formData, "message"),
-    phoneNumbers: [readField(formData, "phone_number")],
-    requestId: readField(formData, "request_id"),
-  });
-
-  redirectWithSendResult(result);
-}
-
 export async function sendSelectedSmsAction(formData: FormData) {
   const result = await sendSmsToNumbers({
     message: readField(formData, "message"),

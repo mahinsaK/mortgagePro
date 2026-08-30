@@ -4,7 +4,6 @@ import { Search, Send, Users, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   sendAllBorrowersSmsAction,
-  sendManualSmsAction,
   sendSelectedSmsAction,
 } from "@/backend/actions/sms-actions";
 import { analyzeSmsMessage } from "@/backend/modules/sms/policy";
@@ -32,7 +31,6 @@ type SmsWorkbenchProps = {
   reporting?: SmsReportingData | null;
   requestIds?: {
     all: string;
-    quick: string;
     selected: string;
   };
   status?: string;
@@ -176,12 +174,6 @@ export function SmsWorkbench({
           ) : null}
         </div>
       ) : null}
-      <div className="max-w-md">
-        <QuickSmsPanel
-          requestId={requestIds?.quick ?? ""}
-          sendingEnabled={sendingEnabled}
-        />
-      </div>
       {!sendingEnabled ? (
         <div className="rounded-md border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 text-sm font-medium text-[#9a3412]">
           Sending is unavailable until the account is active, a sender ID is
@@ -487,72 +479,6 @@ function SelectedRecipients({
 
 function phoneIdentity(value: string) {
   return value.replace(/\D/g, "");
-}
-
-function QuickSmsPanel({
-  requestId,
-  sendingEnabled,
-}: {
-  requestId: string;
-  sendingEnabled: boolean;
-}) {
-  const [message, setMessage] = useState("");
-  const analysis = analyzeSmsMessage(message);
-
-  return (
-    <section className="self-start rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
-      <div className="mb-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[#657386]">
-          Quick SMS
-        </p>
-        <h2 className="mt-1 text-base font-semibold">Single number</h2>
-      </div>
-
-      <form
-        action={sendManualSmsAction}
-        className="grid gap-3"
-      >
-        <input name="request_id" type="hidden" value={requestId} />
-        <label className="text-sm font-medium text-[#2d3745]">
-          Phone number
-          <input
-            className="mt-1.5 h-10 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
-            name="phone_number"
-            placeholder="+94 77 123 4567"
-            required
-            type="tel"
-          />
-        </label>
-
-        <label className="text-sm font-medium text-[#2d3745]">
-          Message
-          <textarea
-            className="mt-1.5 min-h-24 w-full resize-y rounded-md border border-[#cfd8e3] px-3 py-2 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
-            maxLength={480}
-            name="message"
-            onChange={(event) => setMessage(event.target.value)}
-            placeholder="Type the customer message"
-            required
-            value={message}
-          />
-        </label>
-
-        <p className="text-xs font-medium text-[#657386]">
-          {analysis.characterCount} characters · {analysis.encoding} ·{" "}
-          {analysis.units} unit{analysis.units === 1 ? "" : "s"}
-        </p>
-
-        <button
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
-          disabled={!sendingEnabled || !message.trim()}
-          type="submit"
-        >
-          <Send aria-hidden="true" size={17} />
-          Send SMS
-        </button>
-      </form>
-    </section>
-  );
 }
 
 function StatusBanner({ count, message, phone, status }: SmsWorkbenchProps) {

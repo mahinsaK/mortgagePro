@@ -227,14 +227,6 @@ test.describe("dedicated pilot lender journey", () => {
     await page.goto("/sms");
     await page.getByRole("button", { name: "Check usage" }).click();
 
-    const quickSms = page.getByRole("heading", { name: "Single number" }).locator(
-      "xpath=ancestor::section",
-    );
-    await quickSms.getByLabel("Phone number").fill("+94776666666");
-    await quickSms.getByLabel("Message").fill("Mobile payment reminder");
-    await expect(quickSms.getByText(/1 unit$/)).toBeVisible();
-    await expect(quickSms.getByRole("button", { name: "Send SMS" })).toBeDisabled();
-
     await page.getByLabel("Add a custom phone number").fill("+94777777777");
     await page.getByRole("button", { name: "Add", exact: true }).click();
     const selectedForm = page.locator("form").filter({

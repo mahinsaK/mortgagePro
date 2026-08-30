@@ -42,7 +42,6 @@ export default async function SmsPage({
         reporting={reporting}
         requestIds={{
           all: randomUUID(),
-          quick: randomUUID(),
           selected: randomUUID(),
         }}
         status={status}

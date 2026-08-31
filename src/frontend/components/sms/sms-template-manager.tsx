@@ -26,8 +26,8 @@ export function SmsTemplateManager({
   const [isCreating, setIsCreating] = useState(false);
 
   return (
-    <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm xl:sticky xl:top-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="flex aspect-square min-h-0 w-full flex-col overflow-hidden rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm xl:sticky xl:top-4">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-[#15191f]">
             Message templates
@@ -51,26 +51,33 @@ export function SmsTemplateManager({
         </button>
       </div>
 
-      <SmsTemplatePlaceholderHelp className="mt-3 rounded-md bg-[#f8fafc] px-3 py-2" />
+      <div
+        aria-label="Saved message templates"
+        className="mt-3 min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain pr-1"
+        role="region"
+        tabIndex={0}
+      >
+        <SmsTemplatePlaceholderHelp className="rounded-md bg-[#f8fafc] px-3 py-2" />
 
-      {isCreating ? (
-        <CreateTemplateForm onSaved={() => setIsCreating(false)} />
-      ) : null}
-
-      <div className="mt-3 flex gap-3 overflow-x-auto pb-1 xl:grid xl:max-h-[560px] xl:overflow-x-hidden xl:overflow-y-auto xl:pr-1">
-        {templates.map((template) => (
-          <TemplateCard
-            key={template.id}
-            onSelect={onSelect}
-            template={template}
-          />
-        ))}
-        {templates.length === 0 && !isCreating ? (
-          <p className="text-sm text-[#657386]">
-            Submit your first sender request to add starter templates, or create
-            one here.
-          </p>
+        {isCreating ? (
+          <CreateTemplateForm onSaved={() => setIsCreating(false)} />
         ) : null}
+
+        <div className="mt-3 grid gap-3 pb-1">
+          {templates.map((template) => (
+            <TemplateCard
+              key={template.id}
+              onSelect={onSelect}
+              template={template}
+            />
+          ))}
+          {templates.length === 0 && !isCreating ? (
+            <p className="text-sm text-[#657386]">
+              Submit your first sender request to add starter templates, or create
+              one here.
+            </p>
+          ) : null}
+        </div>
       </div>
     </section>
   );
@@ -129,7 +136,7 @@ function TemplateCard({
     return (
       <form
         action={action}
-        className="grid w-[min(280px,85vw)] shrink-0 gap-3 rounded-md border border-[#bfdbfe] bg-[#f8fafc] p-3 xl:w-full"
+        className="grid w-full gap-3 rounded-md border border-[#bfdbfe] bg-[#f8fafc] p-3"
       >
         <input name="template_id" type="hidden" value={template.id} />
         <TemplateFields disabled={isPending} template={template} />
@@ -155,7 +162,7 @@ function TemplateCard({
   }
 
   return (
-    <article className="w-[min(280px,85vw)] shrink-0 rounded-md border border-[#dfe5ec] bg-white p-3 xl:w-full">
+    <article className="w-full rounded-md border border-[#dfe5ec] bg-white p-3">
       <div className="flex items-start justify-between gap-3">
         <button
           className="min-w-0 flex-1 text-left"
@@ -225,7 +232,7 @@ function TemplateFields({
       <label className="text-sm font-medium text-[#2d3745]">
         Message
         <textarea
-          className="mt-1 min-h-28 w-full resize-y rounded-md border border-[#cfd8e3] bg-white px-3 py-2 text-sm"
+          className="mt-1 min-h-28 w-full resize-none rounded-md border border-[#cfd8e3] bg-white px-3 py-2 text-sm"
           defaultValue={template?.message}
           disabled={disabled}
           maxLength={480}

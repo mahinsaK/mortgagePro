@@ -67,6 +67,15 @@ test.describe("dedicated pilot lender journey", () => {
   }) => {
     await loginLender(page);
     await page.goto("/loans");
+    await page.getByRole("button", { name: "Preview QR" }).first().click();
+    await expect(
+      page.getByRole("heading", { name: "Loan QR code" }),
+    ).toBeVisible();
+    await expect(page.getByAltText("QR code for this loan")).toBeVisible();
+    await page.getByRole("button", { name: "Close QR preview" }).click();
+    await expect(
+      page.getByRole("button", { name: "Download QR" }).first(),
+    ).toBeEnabled();
     await page.getByRole("cell", { name: "E2E Alpha Borrower" }).click();
 
     await expect(page.getByRole("button", { name: "Download QR" })).toBeEnabled();

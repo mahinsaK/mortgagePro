@@ -5,10 +5,11 @@ import { useEffect, useState } from "react";
 import {
   downloadLoanQrBlob,
   fetchLoanQrPng,
+  getLoanQrDataUrl,
 } from "@/frontend/lib/loan-qr-file";
 
 export function LoanQrPanel({ loanId }: { loanId: string }) {
-  const qrUrl = `/api/loans/${encodeURIComponent(loanId)}/qr`;
+  const [qrDataUrl, setQrDataUrl] = useState("");
   const [qrFile, setQrFile] = useState<File | null>(null);
   const [isPreparing, setIsPreparing] = useState(true);
   const [activeAction, setActiveAction] = useState<"print" | "share" | null>(
@@ -21,10 +22,9 @@ export function LoanQrPanel({ loanId }: { loanId: string }) {
 
     async function prepareQrFile() {
       try {
-        const blob = await fetchLoanQrPng(
-          `${qrUrl}?display=1`,
-          controller.signal,
-        );
+        const dataUrl = await getLoanQrDataUrl(loanId);
+        const blob = await fetchLoanQrPng(dataUrl, controller.signal);
+        setQrDataUrl(dataUrl);
         setQrFile(
           new File([blob], "loan-qr-code.png", {
             type: blob.type || "image/png",
@@ -46,7 +46,7 @@ export function LoanQrPanel({ loanId }: { loanId: string }) {
     void prepareQrFile();
 
     return () => controller.abort();
-  }, [qrUrl]);
+  }, [loanId]);
 
   async function shareQrCode() {
     if (!qrFile) {
@@ -166,15 +166,25 @@ export function LoanQrPanel({ loanId }: { loanId: string }) {
   return (
     <section className="mt-5 flex flex-col items-center gap-4 rounded-lg border border-[#dfe5ec] bg-[#f8fafc] p-5 sm:flex-row sm:items-center">
       <div className="shrink-0 rounded-lg border border-[#dfe5ec] bg-white p-2 shadow-sm">
-        {/* The authenticated QR route must load directly in the browser. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          alt="QR code for this loan"
-          className="size-44"
-          height={176}
-          src={`${qrUrl}?display=1`}
-          width={176}
-        />
+        {qrDataUrl ? (
+          // The QR data URL is generated locally from the authorized loan row.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            alt="QR code for this loan"
+            className="size-44"
+            height={176}
+            src={qrDataUrl}
+            width={176}
+          />
+        ) : (
+          <div className="flex size-44 items-center justify-center">
+            <LoaderCircle
+              aria-label="Preparing loan QR code"
+              className="animate-spin text-[#1d4ed8]"
+              size={28}
+            />
+          </div>
+        )}
       </div>
 
       <div className="text-center sm:text-left">

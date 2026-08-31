@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchLoanQrPng } from "../loan-qr-file";
+import { fetchLoanQrPng, getLoanQrDataUrl } from "../loan-qr-file";
 
 const VALID_PNG = new Uint8Array([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00,
@@ -25,6 +25,17 @@ describe("loan QR file validation", () => {
 
     expect(blob.type).toBe("image/png");
     expect(blob.size).toBe(VALID_PNG.length);
+  });
+
+  it("generates and caches a PNG data URL for the loan identifier", async () => {
+    const firstRequest = getLoanQrDataUrl("loan_A");
+    const secondRequest = getLoanQrDataUrl("loan_A");
+
+    expect(secondRequest).toBe(firstRequest);
+    await expect(firstRequest).resolves.toMatch(/^data:image\/png;base64,/);
+    const blob = await fetchLoanQrPng(await firstRequest);
+    expect(blob.type).toBe("image/png");
+    expect(blob.size).toBeGreaterThan(8);
   });
 
   it("rejects an unsuccessful response before saving it", async () => {

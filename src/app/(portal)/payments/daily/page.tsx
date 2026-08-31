@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { getDailyCollectionsData } from "@/backend/services/lending-service";
-import { DailyCollectionsDateFilter } from "@/frontend/components/payments/daily-collections-date-filter";
 import { DailyCollectionsTable } from "@/frontend/components/payments/daily-collections-table";
 
 export const dynamic = "force-dynamic";
@@ -30,12 +29,6 @@ export default async function DailyCollectionsPage({
           Back
         </Link>
       </div>
-
-      <section className="mb-5 rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm md:mb-6 md:p-5">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <DailyCollectionsDateFilter selectedDate={selectedDate} />
-        </div>
-      </section>
 
       <DailyCollectionsTable payments={payments} selectedDate={selectedDate} />
     </div>

@@ -7,10 +7,12 @@ import { appwriteServerConfig } from "@/backend/appwrite/config";
 import { databases, Query } from "@/backend/appwrite/server-client";
 import {
   clearCollectorSession,
+  normalizeSessionVersion,
   requireActiveCollectorPrincipal,
   setCollectorSession,
   verifyCollectorPassword,
 } from "@/backend/services/collector-auth-service";
+import { getLenderCurrencyById } from "@/backend/services/lender-service";
 import {
   PaymentWriteError,
   recordTenantLoanPayment,
@@ -25,6 +27,7 @@ import {
   RATE_LIMITED_MESSAGE,
 } from "@/backend/services/authentication-rate-limit-service";
 import { recordSecurityEvent } from "@/backend/services/security-event-service";
+import { updateTenantDocument } from "@/backend/services/tenant-data-service";
 
 export async function collectorLoginAction(formData: FormData) {
   const collectorId = readRequired(formData, "username");
@@ -81,6 +84,7 @@ export async function collectorLoginAction(formData: FormData) {
           "lender_id",
           "name",
           "password_hash",
+          "session_version",
         ]),
       ],
     });
@@ -116,12 +120,32 @@ export async function collectorLoginAction(formData: FormData) {
     );
   }
 
+  const lenderId = String(collector.lender_id ?? "");
+  let currency: string;
+
+  try {
+    currency = await getLenderCurrencyById(lenderId);
+  } catch {
+    await recordSecurityEvent({
+      eventType: "collector_login_error",
+      outcome: "error",
+      principalType: "collector",
+      principalIdentifier: collectorId,
+      lenderId,
+      headers: requestHeaders,
+      reasonCode: "lender_currency_unavailable",
+    });
+    redirect("/auth/unavailable");
+  }
+
   try {
     await setCollectorSession({
       collectorId: collector.$id,
-      lenderId: String(collector.lender_id ?? ""),
+      currency,
+      lenderId,
       name: String(collector.name ?? collectorId),
       passwordHash: String(collector.password_hash ?? ""),
+      sessionVersion: normalizeSessionVersion(collector.session_version),
     });
   } catch {
     await recordSecurityEvent({
@@ -129,7 +153,7 @@ export async function collectorLoginAction(formData: FormData) {
       outcome: "error",
       principalType: "collector",
       principalIdentifier: collectorId,
-      lenderId: String(collector.lender_id ?? ""),
+      lenderId,
       headers: requestHeaders,
       reasonCode: "session_storage_failed",
     });
@@ -141,7 +165,7 @@ export async function collectorLoginAction(formData: FormData) {
     outcome: "success",
     principalType: "collector",
     principalIdentifier: collectorId,
-    lenderId: String(collector.lender_id ?? ""),
+    lenderId,
     headers: requestHeaders,
   });
   redirect("/collector/scan");
@@ -230,6 +254,30 @@ function paymentSuccessMessage(result: AutomaticPaymentSmsResult) {
 export async function collectorLogoutAction() {
   await clearCollectorSession();
   redirect("/collector/login");
+}
+
+export async function collectorLogoutAllDevicesAction() {
+  const session = await requireActiveCollectorPrincipal();
+
+  if (session) {
+    try {
+      await updateTenantDocument(
+        "collectors",
+        session.lenderId,
+        session.collectorId,
+        { session_version: session.sessionVersion + 1 },
+      );
+    } catch {
+      redirectWithStatus(
+        "/collector/scan",
+        "error",
+        "Could not log out other devices. Please try again.",
+      );
+    }
+  }
+
+  await clearCollectorSession();
+  redirect("/collector/login?status=success&message=All+devices+were+signed+out.");
 }
 
 function readRequired(formData: FormData, key: string) {

@@ -7,7 +7,7 @@ describe("BorrowerController", () => {
       lenderId: "lender_1",
       name: "Avery Johnson",
       businessName: "Johnson Market",
-      phone: "555",
+      phone: "+94 77 123 4567",
       address: "Cedar Road",
     });
 
@@ -15,7 +15,7 @@ describe("BorrowerController", () => {
     expect(result.data).toMatchObject({
       lender_id: "lender_1",
       name: "Avery Johnson",
-      contact: "555",
+      contact: "+94771234567",
       address: "Cedar Road",
       status: "active",
     });
@@ -26,5 +26,16 @@ describe("BorrowerController", () => {
 
     expect(result.ok).toBe(false);
     expect(result.error).toBe("name is required.");
+  });
+
+  it("rejects borrower phone numbers containing letters", () => {
+    const result = new BorrowerController().create({
+      lenderId: "lender_1",
+      name: "Avery Johnson",
+      phone: "call0771234567",
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("only digits");
   });
 });

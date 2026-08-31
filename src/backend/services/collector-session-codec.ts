@@ -4,7 +4,9 @@ export type CollectorSessionClaims = {
   collectorId: string;
   lenderId: string;
   name: string;
+  currency?: string;
   credentialFingerprint: string;
+  sessionVersion: number;
   issuedAt: number;
   expiresAt: number;
 };
@@ -41,6 +43,7 @@ export function decodeCollectorSession(
     const parsed = JSON.parse(
       Buffer.from(payload, "base64url").toString("utf8"),
     ) as Partial<CollectorSessionClaims>;
+    const sessionVersion = parsed.sessionVersion ?? 1;
 
     if (
       typeof parsed.collectorId !== "string" ||
@@ -49,8 +52,13 @@ export function decodeCollectorSession(
       !parsed.lenderId ||
       typeof parsed.name !== "string" ||
       !parsed.name ||
+      (parsed.currency !== undefined &&
+        (typeof parsed.currency !== "string" || !parsed.currency)) ||
       typeof parsed.credentialFingerprint !== "string" ||
       !parsed.credentialFingerprint ||
+      typeof sessionVersion !== "number" ||
+      !Number.isInteger(sessionVersion) ||
+      sessionVersion < 1 ||
       typeof parsed.issuedAt !== "number" ||
       !Number.isFinite(parsed.issuedAt) ||
       typeof parsed.expiresAt !== "number" ||
@@ -62,7 +70,7 @@ export function decodeCollectorSession(
       return null;
     }
 
-    return parsed as CollectorSessionClaims;
+    return { ...parsed, sessionVersion } as CollectorSessionClaims;
   } catch {
     return null;
   }

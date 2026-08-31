@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { Check, Copy, Pencil, Trash2, X } from "lucide-react";
+import { Check, Copy, LoaderCircle, Pencil, Trash2, X } from "lucide-react";
 import { useActionState, useState } from "react";
 import {
   deleteCollectorAction,
@@ -9,6 +9,8 @@ import {
   type UpdateCollectorActionState,
 } from "@/backend/actions/lending-actions";
 import type { CollectorRow } from "@/backend/services/lending-service";
+import { PhoneInput } from "@/frontend/components/forms/phone-input";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 
 const INITIAL_UPDATE_STATE: UpdateCollectorActionState = {
   status: "idle",
@@ -170,13 +172,13 @@ function CollectorActions({ collector }: { collector: CollectorRow }) {
         }}
       >
         <input name="collector_id" type="hidden" value={collector.id} />
-        <button
+        <PendingSubmitButton
           aria-label={`Delete ${collector.name}`}
           className="flex size-9 items-center justify-center rounded-md border border-[#fecaca] text-[#b91c1c] transition hover:bg-[#fef2f2]"
-          type="submit"
+          pendingLabel={null}
         >
           <Trash2 aria-hidden="true" size={16} />
-        </button>
+        </PendingSubmitButton>
       </form>
     </div>
   );
@@ -288,11 +290,14 @@ function EditCollectorDialog({ collector }: { collector: CollectorRow }) {
                 Usernames are permanent after creation.
               </span>
             </label>
-            <Field
-              defaultValue={collector.contactInfo}
-              label="Phone"
-              name="phone"
-            />
+            <label className="text-sm font-medium text-[#2d3745]">
+              Phone
+              <PhoneInput
+                className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
+                defaultValue={collector.contactInfo}
+                name="phone"
+              />
+            </label>
             <Field defaultValue={collector.areaInfo} label="Area" name="area" />
             <Field
               defaultValue=""
@@ -315,11 +320,16 @@ function EditCollectorDialog({ collector }: { collector: CollectorRow }) {
             </label>
             <div className="flex items-end sm:col-span-2">
               <button
-                className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
                 disabled={isPending}
                 type="submit"
               >
-                {isPending ? "Updating collector..." : "Update collector"}
+                {isPending ? (
+                  <>
+                    <LoaderCircle aria-hidden="true" className="animate-spin" size={16} />
+                    Updating collector…
+                  </>
+                ) : "Update collector"}
               </button>
             </div>
           </form>

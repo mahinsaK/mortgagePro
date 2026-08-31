@@ -41,7 +41,7 @@ src/backend
   server-derived `lender_id`, overwrites tenant IDs on create, and strips tenant
   ID changes on update.
 - `src/backend/services/collector-auth-service.ts`
-  Resolves active collectors from signed 12-hour sessions and revalidates the
+  Resolves active collectors from rolling 90-day sessions and revalidates the
   collector record for every protected collector operation.
 - `src/backend/services/authentication-rate-limit-service.ts`
   Applies shared Appwrite-backed login, OAuth, registration, and password-reset limits.
@@ -85,24 +85,16 @@ For form submissions:
 4. The lender document is loaded with `Query.equal("appwrite_user_id", currentUser.$id)`.
 5. Portal routes redirect to `/auth/login` when no active lender session exists.
 
-## Important security note
+## Security
 
-The critical-release source now uses server-only Appwrite database access,
-empty client collection permissions, shared tenant-aware helpers, collector
-username login, signed collector sessions, distributed authentication limits,
-and sanitized security events. Live Appwrite permission and direct-session
-verification passed on July 20, 2026. Preview deployment/configuration smoke
-testing remains a merge gate, and the app remains approved for demo/testing
-only.
+The public security architecture, implemented controls, responsible disclosure
+guidance, and known limitations are documented in
+[`SECURITY.md`](../../../SECURITY.md). Detailed attack-path analysis, rollout
+evidence, and internal remediation records are intentionally kept outside the
+public repository.
 
 ## More docs
 
-- `security-tenant-isolation-assessment.md`: current tenant isolation,
-  collector authorization, payment integrity, and enterprise-readiness audit.
-- `critical-tenant-isolation-rollout.md`: exact key, migration, permission,
-  verification, rotation, and rollback procedure for this release.
-- `internal-security-test-report.md`: July 20 internal test scope, evidence,
-  findings, limitations, deferred risks, and current merge decision.
 - `database-schema.md`: collections, attributes, and indexes.
 - `database-queries.md`: every Appwrite query/write currently used by the app.
 - `modules/*.md`: module-by-module explanation.

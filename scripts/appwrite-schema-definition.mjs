@@ -49,6 +49,7 @@ export function createAppwriteSchema(collections) {
         stringAttr("name", 160, true),
         stringAttr("contact_info", 1000, false),
         stringAttr("password_hash", 256, false),
+        integerAttr("session_version", false, 1, undefined, 1),
         enumAttr("status", ["active", "inactive"], true),
         datetimeAttr("created_at", true),
       ],

@@ -27,6 +27,32 @@ table tbody {
   box-sizing: border-box;
 }
 
+@keyframes navigation-progress {
+  0% {
+    transform: translateX(-110%);
+  }
+  55% {
+    transform: translateX(90%);
+  }
+  100% {
+    transform: translateX(260%);
+  }
+}
+
+.navigation-progress-bar {
+  animation: navigation-progress 1.15s ease-in-out infinite;
+  width: 38%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navigation-progress-bar {
+    animation: none;
+    opacity: 0.75;
+    transform: none;
+    width: 100%;
+  }
+}
+
 @media (max-width: 767px) {
   input:not([type="checkbox"]):not([type="radio"]),
   select,

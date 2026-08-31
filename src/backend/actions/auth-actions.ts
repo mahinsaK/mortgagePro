@@ -27,6 +27,7 @@ import {
 } from "@/backend/services/authentication-rate-limit-service";
 import { recordSecurityEvent } from "@/backend/services/security-event-service";
 import { appwriteServerConfig } from "@/backend/appwrite/config";
+import { normalizeOptionalPhoneNumber } from "@/shared/phone-number";
 
 const authController = new AuthController();
 
@@ -210,6 +211,17 @@ export async function registerLenderAction(formData: FormData) {
     );
   }
 
+  let phone: string;
+  try {
+    phone = normalizeOptionalPhoneNumber(readOptional(formData, "phone"));
+  } catch (error) {
+    redirectWithAuthStatus(
+      "/auth/register",
+      "error",
+      error instanceof Error ? error.message : "Phone number is invalid.",
+    );
+  }
+
   const requestHeaders = await headers();
   let rateLimit;
 
@@ -261,7 +273,7 @@ export async function registerLenderAction(formData: FormData) {
         company_name: result.data.companyName,
         email: result.data.email,
         contact_info: JSON.stringify({
-          phone: readOptional(formData, "phone"),
+          phone,
           address: readOptional(formData, "address"),
         }),
         status: "inactive",
@@ -407,6 +419,12 @@ export async function completePasswordResetAction(formData: FormData) {
     );
   }
 
+  try {
+    await users.deleteSessions({ userId });
+  } catch {
+    // Appwrite's password-change invalidation policy remains the primary guard.
+  }
+
   redirectWithAuthStatus(
     "/auth/login",
     "success",
@@ -427,6 +445,28 @@ export async function logoutAction() {
 
   await clearAuthSession();
   redirect("/auth/login");
+}
+
+export async function logoutAllLenderDevicesAction() {
+  const session = await getAuthSessionSecret();
+  let allSessionsClosed = true;
+
+  if (session) {
+    try {
+      await createAccountClient(session).deleteSessions();
+    } catch {
+      allSessionsClosed = false;
+    }
+  }
+
+  await clearAuthSession();
+  redirectWithAuthStatus(
+    "/auth/login",
+    allSessionsClosed ? "success" : "error",
+    allSessionsClosed
+      ? "All devices were signed out."
+      : "This device was signed out, but other sessions could not be closed. Try again after signing in.",
+  );
 }
 
 function formDataToRecord(formData: FormData) {

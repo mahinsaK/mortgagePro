@@ -11,11 +11,13 @@ const now = Date.parse("2026-07-11T00:00:00.000Z");
 function claims(overrides: Partial<CollectorSessionClaims> = {}) {
   return {
     collectorId: "collector_A",
+    currency: "LKR",
     lenderId: "lender_A",
     name: "Jordan Lee",
     credentialFingerprint: "credential-fingerprint",
+    sessionVersion: 1,
     issuedAt: now,
-    expiresAt: now + 12 * 60 * 60 * 1000,
+    expiresAt: now + 90 * 24 * 60 * 60 * 1000,
     ...overrides,
   };
 }
@@ -25,6 +27,20 @@ describe("collector-session-codec", () => {
     const token = encodeCollectorSession(claims(), secret);
 
     expect(decodeCollectorSession(token, secret, now)).toEqual(claims());
+  });
+
+  it("keeps pre-version collector cookies compatible as generation one", () => {
+    const legacyClaims = claims();
+    delete (legacyClaims as Partial<CollectorSessionClaims>).sessionVersion;
+    const token = encodeCollectorSession(
+      legacyClaims as CollectorSessionClaims,
+      secret,
+    );
+
+    expect(decodeCollectorSession(token, secret, now)).toMatchObject({
+      collectorId: "collector_A",
+      sessionVersion: 1,
+    });
   });
 
   it("rejects a tampered session", () => {
@@ -44,7 +60,7 @@ describe("collector-session-codec", () => {
     const token = encodeCollectorSession(claims(), secret);
 
     expect(
-      decodeCollectorSession(token, secret, now + 12 * 60 * 60 * 1000),
+      decodeCollectorSession(token, secret, now + 90 * 24 * 60 * 60 * 1000),
     ).toBeNull();
   });
 

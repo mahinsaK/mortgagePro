@@ -1,5 +1,6 @@
 import { normalizeCurrency } from "../../lib/currency";
 import { contactInfo, optionalString, requiredString, status } from "../shared";
+import { normalizeOptionalPhoneNumber } from "@/shared/phone-number";
 
 export type UpdateLenderProfileDto = {
   companyName: string;
@@ -16,7 +17,7 @@ export function toUpdateLenderProfileDto(
     companyName: requiredString(input.companyName, "companyName"),
     email: requiredString(input.email, "email").toLowerCase(),
     contactInfo: contactInfo({
-      phone: optionalString(input.phone),
+      phone: normalizeOptionalPhoneNumber(input.phone),
       address: optionalString(input.address),
     }),
     status: status(input.status),

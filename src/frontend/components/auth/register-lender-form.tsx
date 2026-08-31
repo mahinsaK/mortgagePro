@@ -2,7 +2,8 @@
 
 import { useRef, useState, type Ref } from "react";
 import { useFormStatus } from "react-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, LoaderCircle } from "lucide-react";
+import { PhoneInput } from "@/frontend/components/forms/phone-input";
 
 type RegisterLenderFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -57,11 +58,15 @@ export function RegisterLenderForm({
             name="companyName"
             placeholder="Northstar Lending"
           />
-          <Field
-            label="Contact phone"
-            name="phone"
-            placeholder="+1 555 0100"
-          />
+          <label className="block text-sm font-medium text-[#2d3745]">
+            Contact phone
+            <PhoneInput
+              className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
+              name="phone"
+              placeholder="+15550100"
+              required
+            />
+          </label>
           <label className="sm:col-span-2 text-sm font-medium text-[#2d3745]">
             Business address
             <textarea
@@ -118,8 +123,17 @@ function SubmitButton() {
       disabled={pending}
       type="submit"
     >
-      {pending ? "Creating account" : "Register lender"}
-      <ArrowRight aria-hidden="true" size={17} />
+      {pending ? (
+        <>
+          <LoaderCircle aria-hidden="true" className="animate-spin" size={17} />
+          Creating account…
+        </>
+      ) : (
+        <>
+          Register lender
+          <ArrowRight aria-hidden="true" size={17} />
+        </>
+      )}
     </button>
   );
 }

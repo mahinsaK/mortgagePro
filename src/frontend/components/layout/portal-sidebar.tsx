@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/backend/actions/auth-actions";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 import {
   Banknote,
   BarChart3,
@@ -104,17 +105,17 @@ export function PortalSidebar({
 
       <div className="mt-auto border-t border-[#dfe5ec] p-3">
         <form action={logoutAction}>
-          <button
+          <PendingSubmitButton
             aria-label="Sign out"
-            className="flex h-11 w-full items-center justify-center rounded-md bg-[#15191f] px-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#2d3745] focus:outline-none focus:ring-2 focus:ring-[#cbd5e1] focus:ring-offset-2"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#15191f] px-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#2d3745] focus:outline-none focus:ring-2 focus:ring-[#cbd5e1] focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
+            pendingLabel={collapsed ? null : "Signing out…"}
             title={collapsed ? "Sign out" : undefined}
-            type="submit"
           >
             <LogOut aria-hidden="true" className="shrink-0" size={18} />
             <span className={collapsed ? "ml-2 md:sr-only" : "ml-2"}>
               Sign out
             </span>
-          </button>
+          </PendingSubmitButton>
         </form>
       </div>
     </aside>

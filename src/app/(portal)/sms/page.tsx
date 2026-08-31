@@ -3,6 +3,8 @@ import { getPrimaryLender } from "@/backend/services/lender-service";
 import { getSmsManagementData } from "@/backend/services/sms-management-service";
 import { getSmsUsageAndHistory } from "@/backend/services/sms-sending-service";
 import { SmsWorkbench } from "@/frontend/components/sms/sms-workbench";
+import { FeatureMaintenanceCover } from "@/frontend/components/maintenance/feature-maintenance-cover";
+import { getFeatureAvailability } from "@/shared/feature-availability";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +18,11 @@ export default async function SmsPage({
     status?: string;
   }>;
 }) {
+  const availability = getFeatureAvailability("sms");
+  if (!availability.available) {
+    return <FeatureMaintenanceCover {...availability} />;
+  }
+
   const { count, message, phone, status } = await searchParams;
   const lender = await getPrimaryLender();
   const management = lender ? await getSmsManagementData(lender.id) : null;

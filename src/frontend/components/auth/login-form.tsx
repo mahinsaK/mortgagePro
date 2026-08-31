@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, LoaderCircle } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 type LoginFormProps = {
@@ -107,8 +107,17 @@ function SubmitButton() {
       disabled={pending}
       type="submit"
     >
-      {pending ? "Signing in" : "Sign in"}
-      <ArrowRight aria-hidden="true" size={17} />
+      {pending ? (
+        <>
+          <LoaderCircle aria-hidden="true" className="animate-spin" size={17} />
+          Signing in…
+        </>
+      ) : (
+        <>
+          Sign in
+          <ArrowRight aria-hidden="true" size={17} />
+        </>
+      )}
     </button>
   );
 }

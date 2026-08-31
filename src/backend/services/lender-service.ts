@@ -1,5 +1,5 @@
 import { appwriteServerConfig } from "@/backend/appwrite/config";
-import { databases, Query } from "@/backend/appwrite/server-client";
+import { databases, Query, users } from "@/backend/appwrite/server-client";
 import { normalizeCurrency } from "@/backend/lib/currency";
 import {
   AuthenticationServiceUnavailableError,
@@ -52,6 +52,11 @@ export async function resolvePrimaryLender(): Promise<LenderAuthResolution> {
   const lender = lenders.documents[0];
 
   if (!lender || String(lender.status ?? "") !== "active") {
+    try {
+      await users.deleteSessions({ userId: session.user.$id });
+    } catch {
+      // Access remains denied even when best-effort revocation is unavailable.
+    }
     return { status: "inactive" };
   }
 
@@ -81,4 +86,15 @@ export async function getPrimaryLender(): Promise<LenderProfile | null> {
   }
 
   return null;
+}
+
+export async function getLenderCurrencyById(lenderId: string) {
+  const lender = await databases.getDocument({
+    databaseId: appwriteServerConfig.databaseId,
+    collectionId: appwriteServerConfig.collections.lenders,
+    documentId: lenderId,
+    queries: [Query.select(["currency"])],
+  });
+
+  return normalizeCurrency(String(lender.currency ?? ""));
 }

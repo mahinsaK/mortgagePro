@@ -34,6 +34,17 @@ describe("SmsController", () => {
     expect(result.error).toContain("7 to 15 digits");
   });
 
+  it("rejects phone numbers containing letters", async () => {
+    const result = await new SmsController().send({
+      lenderId: "lender_1",
+      phoneNumber: "call94771234567",
+      message: "Hello",
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("only digits");
+  });
+
   it("creates loan lifecycle message templates", () => {
     const controller = new SmsController();
 

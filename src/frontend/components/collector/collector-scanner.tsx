@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import QrScanner from "qr-scanner";
 import { useEffect, useRef, useState } from "react";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 
 type LoanPreview = {
   id: string;
@@ -14,12 +15,14 @@ type LoanPreview = {
 
 type CollectorScannerProps = {
   collectAction: (formData: FormData) => void | Promise<void>;
+  currency: string;
   message?: string;
   status?: string;
 };
 
 export function CollectorScanner({
   collectAction,
+  currency,
   message,
   status,
 }: CollectorScannerProps) {
@@ -261,16 +264,19 @@ export function CollectorScanner({
                   type="button"
                 >
                   Use scheduled amount ·{" "}
-                  {formatMoney(Math.min(loan.dailyPayment, loan.remainingAmount))}
+                  {formatMoney(
+                    Math.min(loan.dailyPayment, loan.remainingAmount),
+                    currency,
+                  )}
                 </button>
 
-                <button
-                  className="mt-4 h-11 w-full rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
+                <PendingSubmitButton
+                  className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
                   disabled={!paymentRequestId || loan.remainingAmount <= 0}
-                  type="submit"
+                  pendingLabel="Collecting…"
                 >
                   Collect payment
-                </button>
+                </PendingSubmitButton>
 
                 <button
                   aria-expanded={showLoanDetails}
@@ -286,11 +292,11 @@ export function CollectorScanner({
                     <Detail label="Borrower" value={loan.borrowerName} />
                     <Detail
                       label="Daily payment"
-                      value={formatMoney(loan.dailyPayment)}
+                      value={formatMoney(loan.dailyPayment, currency)}
                     />
                     <Detail
                       label="Remaining"
-                      value={formatMoney(loan.remainingAmount)}
+                      value={formatMoney(loan.remainingAmount, currency)}
                     />
                   </dl>
                 ) : null}
@@ -338,9 +344,10 @@ function StatusMessage({
   );
 }
 
-function formatMoney(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    currency: "USD",
+function formatMoney(value: number, currency: string) {
+  return new Intl.NumberFormat(currency === "LKR" ? "en-LK" : "en-US", {
+    currency,
+    currencyDisplay: "code",
     style: "currency",
   }).format(value);
 }

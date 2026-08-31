@@ -21,6 +21,7 @@ vi.mock("../tenant-data-service", () => ({
 
 import {
   createCollectorCredentialFingerprint,
+  refreshActiveCollectorSession,
   requireActiveCollectorPrincipal,
 } from "../collector-auth-service";
 import { encodeCollectorSession } from "../collector-session-codec";
@@ -36,12 +37,14 @@ describe("requireActiveCollectorPrincipal", () => {
     const token = encodeCollectorSession(
       {
         collectorId: "collector_A",
+        currency: "LKR",
         lenderId: "lender_A",
         name: "Old name",
         credentialFingerprint: createCollectorCredentialFingerprint(
           passwordHash,
           secret,
         ),
+        sessionVersion: 1,
         issuedAt: now,
         expiresAt: now + 60_000,
       },
@@ -53,6 +56,7 @@ describe("requireActiveCollectorPrincipal", () => {
       lender_id: "lender_A",
       name: "Current name",
       password_hash: passwordHash,
+      session_version: 1,
       status: "active",
     });
   });
@@ -60,6 +64,7 @@ describe("requireActiveCollectorPrincipal", () => {
   it("returns a revalidated active collector principal", async () => {
     await expect(requireActiveCollectorPrincipal()).resolves.toMatchObject({
       collectorId: "collector_A",
+      currency: "LKR",
       lenderId: "lender_A",
       name: "Current name",
     });
@@ -67,7 +72,61 @@ describe("requireActiveCollectorPrincipal", () => {
       "collectors",
       "lender_A",
       "collector_A",
-      ["$id", "lender_id", "name", "password_hash", "status"],
+      [
+        "$id",
+        "lender_id",
+        "name",
+        "password_hash",
+        "session_version",
+        "status",
+      ],
+    );
+  });
+
+  it("keeps legacy sessions usable with the LKR display default", async () => {
+    const now = Date.now();
+    const passwordHash = "salt:current-password-hash";
+    const token = encodeCollectorSession(
+      {
+        collectorId: "collector_A",
+        lenderId: "lender_A",
+        name: "Old name",
+        credentialFingerprint: createCollectorCredentialFingerprint(
+          passwordHash,
+          secret,
+        ),
+        sessionVersion: 1,
+        issuedAt: now,
+        expiresAt: now + 60_000,
+      },
+      secret,
+    );
+    mocks.cookieGet.mockReturnValue({ value: token });
+
+    await expect(requireActiveCollectorPrincipal()).resolves.toMatchObject({
+      currency: "LKR",
+    });
+  });
+
+  it("renews an active collector for 90 days", async () => {
+    const before = Date.now();
+
+    await expect(refreshActiveCollectorSession()).resolves.toMatchObject({
+      collectorId: "collector_A",
+      sessionVersion: 1,
+    });
+
+    expect(mocks.cookieSet).toHaveBeenCalledWith(
+      "mortgagepro_collector_session",
+      expect.any(String),
+      expect.objectContaining({
+        maxAge: 90 * 24 * 60 * 60,
+        expires: expect.any(Date),
+      }),
+    );
+    const options = mocks.cookieSet.mock.calls[0][2];
+    expect(options.expires.getTime()).toBeGreaterThanOrEqual(
+      before + 90 * 24 * 60 * 60 * 1000,
     );
   });
 
@@ -80,6 +139,7 @@ describe("requireActiveCollectorPrincipal", () => {
         lender_id: "lender_A",
         name: "Collector",
         password_hash: "salt:current-password-hash",
+        session_version: 1,
         status: "inactive",
       },
     ],
@@ -90,6 +150,7 @@ describe("requireActiveCollectorPrincipal", () => {
         lender_id: "lender_A",
         name: "Collector",
         password_hash: "salt:new-password-hash",
+        session_version: 1,
         status: "active",
       },
     ],
@@ -100,6 +161,18 @@ describe("requireActiveCollectorPrincipal", () => {
         lender_id: "lender_B",
         name: "Collector",
         password_hash: "salt:current-password-hash",
+        session_version: 1,
+        status: "active",
+      },
+    ],
+    [
+      "version-mismatched",
+      {
+        $id: "collector_A",
+        lender_id: "lender_A",
+        name: "Collector",
+        password_hash: "salt:current-password-hash",
+        session_version: 2,
         status: "active",
       },
     ],

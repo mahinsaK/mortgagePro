@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { PaymentRow } from "@/backend/services/lending-service";
 import { CsvExportButton } from "@/frontend/components/export/csv-export-button";
 import { LocalTimestamp } from "@/frontend/components/ui/local-timestamp";
+import { DailyCollectionsDateFilter } from "@/frontend/components/payments/daily-collections-date-filter";
 import { DeletePaymentButton } from "@/frontend/components/payments/delete-payment-button";
 
 export function DailyCollectionsTable({
@@ -55,7 +56,8 @@ export function DailyCollectionsTable({
             Showing {filteredPayments.length} of {payments.length} payments
           </p>
         </div>
-        <div className="flex w-full items-end gap-3 sm:w-auto sm:flex-wrap">
+        <div className="grid w-full items-end gap-3 xl:w-auto xl:grid-cols-[auto_auto_auto]">
+          <DailyCollectionsDateFilter selectedDate={selectedDate} />
           <label className="min-w-0 flex-1 text-sm font-medium text-[#2d3745] sm:flex-none">
             Collector
             <select

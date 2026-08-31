@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { LoanRow } from "@/backend/services/lending-service";
 import { LoanDetailsDialog } from "@/frontend/components/loans/loan-details-dialog";
-import { LoanQrDownloadButton } from "@/frontend/components/loans/loan-qr-download-button";
+import { LoanQrTableActions } from "@/frontend/components/loans/loan-qr-table-actions";
 
 export function LoansTable({ loans }: { loans: LoanRow[] }) {
   const [selectedLoan, setSelectedLoan] = useState<LoanRow | null>(null);
@@ -70,11 +70,7 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
                 onClick={() => setSelectedLoan(loan)}
               >
                 <td className="px-5 py-4">
-                  <LoanQrDownloadButton
-                    className="inline-flex h-9 items-center gap-2 rounded-md border border-[#cfd8e3] px-3 text-xs font-semibold text-[#1d4ed8] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-60"
-                    label="Download"
-                    loanId={loan.id}
-                  />
+                  <LoanQrTableActions loanId={loan.id} />
                 </td>
                 <td className="px-5 py-4">{loan.borrowerName}</td>
                 <td className="px-5 py-4">{loan.amount}</td>

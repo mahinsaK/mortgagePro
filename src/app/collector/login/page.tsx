@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Building2 } from "lucide-react";
 import { collectorLoginAction } from "@/backend/actions/collector-actions";
 import { requireActiveCollectorPrincipal } from "@/backend/services/collector-auth-service";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -64,12 +65,12 @@ export default async function CollectorLoginPage({
               type="password"
             />
           </label>
-          <button
-            className="h-12 w-full rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8]"
-            type="submit"
+          <PendingSubmitButton
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-wait disabled:opacity-70"
+            pendingLabel="Signing in…"
           >
             Continue to scanner
-          </button>
+          </PendingSubmitButton>
         </form>
       </section>
     </main>

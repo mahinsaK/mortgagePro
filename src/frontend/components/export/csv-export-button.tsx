@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { Download } from "lucide-react";
+import { DatePicker } from "@/frontend/components/forms/date-picker";
 
 type CsvValue = string | number | boolean | null | undefined;
 type CsvRow = Record<string, CsvValue>;
@@ -100,24 +101,20 @@ export function DateRangeCsvExport({
             <h2 className="mt-1 text-lg font-semibold">Select date range</h2>
           </div>
           <div className="grid gap-3">
-            <label className="text-sm font-medium text-[#2d3745]">
-              Start date
-              <input
-                className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
-                onChange={(event) => setStartDate(event.target.value)}
-                type="date"
-                value={startDate}
-              />
-            </label>
-            <label className="text-sm font-medium text-[#2d3745]">
-              End date
-              <input
-                className="mt-2 h-10 w-full rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
-                onChange={(event) => setEndDate(event.target.value)}
-                type="date"
-                value={endDate}
-              />
-            </label>
+            <DatePicker
+              label="Start date"
+              max={endDate || undefined}
+              name="export_start_date"
+              onChange={setStartDate}
+              value={startDate}
+            />
+            <DatePicker
+              label="End date"
+              min={startDate || undefined}
+              name="export_end_date"
+              onChange={setEndDate}
+              value={endDate}
+            />
             {serverExportOptions.length > 0 ? (
               <div className="grid gap-2">
                 {serverExportOptions.map((option) => (

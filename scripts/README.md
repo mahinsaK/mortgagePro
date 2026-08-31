@@ -15,6 +15,7 @@ Script jobs:
 
 - `create-appwrite-tables-and-attributes.mjs` creates the database, collections, and attributes.
 - `create-appwrite-indexes.mjs` creates the collection indexes after attributes are ready.
+- `configure-appwrite-auth-policies.mjs` sets lender sessions to 90 days and makes lender password changes revoke existing sessions.
 - `seed-appwrite-demo-data.mjs` creates demo users and demo records.
 - `manage-appwrite-permissions.mjs` checks or applies deny-by-default collection permissions.
 - `verify-appwrite-isolation.mjs` verifies direct client access is blocked and server runtime access still works.

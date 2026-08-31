@@ -1,10 +1,11 @@
 "use client";
 
-import { LoaderCircle } from "lucide-react";
+import { Download, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import {
   downloadLoanQrBlob,
   fetchLoanQrPng,
+  getLoanQrDataUrl,
 } from "@/frontend/lib/loan-qr-file";
 
 export function LoanQrDownloadButton({
@@ -24,9 +25,8 @@ export function LoanQrDownloadButton({
     setStatus("downloading");
 
     try {
-      const qrUrl = `/api/loans/${encodeURIComponent(loanId)}/qr?display=1`;
-      const blob = await fetchLoanQrPng(qrUrl);
-      downloadLoanQrBlob(blob);
+      const dataUrl = await getLoanQrDataUrl(loanId);
+      downloadLoanQrBlob(await fetchLoanQrPng(dataUrl));
       setStatus("idle");
     } catch {
       setStatus("error");
@@ -51,14 +51,16 @@ export function LoanQrDownloadButton({
       }}
       title={
         status === "error"
-          ? "The QR image could not be downloaded. Try again."
-          : undefined
+          ? "The QR image could not be prepared. Try again."
+          : "Download QR"
       }
       type="button"
     >
       {status === "downloading" ? (
-        <LoaderCircle className="animate-spin" aria-hidden="true" size={14} />
-      ) : null}
+        <LoaderCircle aria-hidden="true" className="animate-spin" size={14} />
+      ) : (
+        <Download aria-hidden="true" size={14} />
+      )}
       {buttonLabel}
     </button>
   );

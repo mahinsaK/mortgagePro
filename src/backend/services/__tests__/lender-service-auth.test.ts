@@ -6,8 +6,10 @@ const mocks = vi.hoisted(() => ({
     databaseId: "database",
     collections: { lenders: "lenders" },
   },
+  getDocument: vi.fn(),
   listDocuments: vi.fn(),
   resolveAppwriteSession: vi.fn(),
+  deleteUserSessions: vi.fn(),
 }));
 
 vi.mock("@/backend/appwrite/config", () => ({
@@ -16,7 +18,14 @@ vi.mock("@/backend/appwrite/config", () => ({
 
 vi.mock("@/backend/appwrite/server-client", async () => {
   const { Query } = await import("node-appwrite");
-  return { databases: { listDocuments: mocks.listDocuments }, Query };
+  return {
+    databases: {
+      getDocument: mocks.getDocument,
+      listDocuments: mocks.listDocuments,
+    },
+    Query,
+    users: { deleteSessions: mocks.deleteUserSessions },
+  };
 });
 
 vi.mock("@/backend/services/auth-session-service", async () => {
@@ -29,7 +38,10 @@ vi.mock("@/backend/services/auth-session-service", async () => {
   };
 });
 
-import { resolvePrimaryLender } from "../lender-service";
+import {
+  getLenderCurrencyById,
+  resolvePrimaryLender,
+} from "../lender-service";
 
 describe("lender authentication resolution", () => {
   beforeEach(() => {
@@ -96,6 +108,7 @@ describe("lender authentication resolution", () => {
     await expect(resolvePrimaryLender()).resolves.toEqual({
       status: "inactive",
     });
+    expect(mocks.deleteUserSessions).toHaveBeenCalledWith({ userId: "user_A" });
   });
 
   it("preserves invalid and unavailable session states", async () => {
@@ -120,5 +133,17 @@ describe("lender authentication resolution", () => {
     await expect(resolvePrimaryLender()).resolves.toEqual({
       status: "unavailable",
     });
+  });
+
+  it("loads the collector display currency directly from its lender", async () => {
+    mocks.getDocument.mockResolvedValue({ currency: "lkr" });
+
+    await expect(getLenderCurrencyById("lender_A")).resolves.toBe("LKR");
+    expect(mocks.getDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collectionId: "lenders",
+        documentId: "lender_A",
+      }),
+    );
   });
 });

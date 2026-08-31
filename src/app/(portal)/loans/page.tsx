@@ -41,6 +41,7 @@ export default async function LoansPage({
           <Link
             className="shrink-0 text-sm font-semibold text-[#9a3412] underline-offset-4 hover:underline"
             href="/loans"
+            scroll={false}
           >
             Clear filter
           </Link>

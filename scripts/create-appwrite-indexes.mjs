@@ -15,13 +15,18 @@ const config = {
     collectors: requireEnv("NEXT_PUBLIC_APPWRITE_COLLECTORS_COLLECTION_ID"),
     loans: requireEnv("NEXT_PUBLIC_APPWRITE_LOANS_COLLECTION_ID"),
     payments: requireEnv("NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID"),
-    authRateLimits: requireEnv("APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID"),
-    securityEvents: requireEnv("APPWRITE_SECURITY_EVENTS_COLLECTION_ID"),
-    smsAccounts: requireEnv("APPWRITE_SMS_ACCOUNTS_COLLECTION_ID"),
-    smsSenderRequests: requireEnv("APPWRITE_SMS_SENDER_REQUESTS_COLLECTION_ID"),
-    smsTemplates: requireEnv("APPWRITE_SMS_TEMPLATES_COLLECTION_ID"),
-    smsMonthlyUsage: requireEnv("APPWRITE_SMS_MONTHLY_USAGE_COLLECTION_ID"),
-    smsSendLogs: requireEnv("APPWRITE_SMS_SEND_LOGS_COLLECTION_ID"),
+    authRateLimits:
+      env.APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID || "auth_rate_limits",
+    securityEvents:
+      env.APPWRITE_SECURITY_EVENTS_COLLECTION_ID || "security_events",
+    smsAccounts: env.APPWRITE_SMS_ACCOUNTS_COLLECTION_ID || "sms_accounts",
+    smsSenderRequests:
+      env.APPWRITE_SMS_SENDER_REQUESTS_COLLECTION_ID || "sms_sender_requests",
+    smsTemplates: env.APPWRITE_SMS_TEMPLATES_COLLECTION_ID || "sms_templates",
+    smsMonthlyUsage:
+      env.APPWRITE_SMS_MONTHLY_USAGE_COLLECTION_ID || "sms_monthly_usage",
+    smsSendLogs:
+      env.APPWRITE_SMS_SEND_LOGS_COLLECTION_ID || "sms_send_logs",
   },
 };
 

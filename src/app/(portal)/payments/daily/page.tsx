@@ -30,28 +30,6 @@ export default async function DailyCollectionsPage({
         </Link>
       </div>
 
-      <section className="mb-5 rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm md:mb-6 md:p-5">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <form className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-end gap-2 sm:flex sm:w-auto sm:gap-3">
-            <label className="min-w-0 text-sm font-medium text-[#2d3745]">
-              <span className="sr-only">Collection date</span>
-              <input
-                className="h-10 w-full min-w-0 rounded-md border border-[#cfd8e3] px-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#dbeafe]"
-                defaultValue={selectedDate}
-                name="date"
-                type="date"
-              />
-            </label>
-            <button
-              className="h-10 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
-              type="submit"
-            >
-              View day
-            </button>
-          </form>
-        </div>
-      </section>
-
       <DailyCollectionsTable payments={payments} selectedDate={selectedDate} />
     </div>
   );

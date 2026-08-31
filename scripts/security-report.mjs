@@ -8,7 +8,8 @@ const config = {
   projectId: requireEnv("NEXT_PUBLIC_APPWRITE_PROJECT_ID"),
   apiKey: requireEnv("APPWRITE_SETUP_API_KEY"),
   databaseId: requireEnv("NEXT_PUBLIC_APPWRITE_DATABASE_ID"),
-  collectionId: requireEnv("APPWRITE_SECURITY_EVENTS_COLLECTION_ID"),
+  collectionId:
+    env.APPWRITE_SECURITY_EVENTS_COLLECTION_ID || "security_events",
 };
 const databases = new Databases(
   new Client()

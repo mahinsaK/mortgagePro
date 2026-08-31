@@ -1,4 +1,5 @@
 import { contactInfo, optionalString, requiredString, status } from "../shared";
+import { normalizeOptionalPhoneNumber } from "@/shared/phone-number";
 
 export type CreateCollectorDto = {
   lenderId: string;
@@ -14,7 +15,7 @@ export function toCreateCollectorDto(
     lenderId: requiredString(input.lenderId, "lenderId"),
     name: requiredString(input.name, "name"),
     contactInfo: contactInfo({
-      phone: optionalString(input.phone),
+      phone: normalizeOptionalPhoneNumber(input.phone),
       area: optionalString(input.area),
     }),
     status: status(input.status),

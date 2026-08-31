@@ -7,8 +7,10 @@ const config = {
   projectId: requireEnv("NEXT_PUBLIC_APPWRITE_PROJECT_ID"),
   apiKey: requireEnv("APPWRITE_SETUP_API_KEY"),
   databaseId: requireEnv("NEXT_PUBLIC_APPWRITE_DATABASE_ID"),
-  rateLimitsCollectionId: requireEnv("APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID"),
-  securityEventsCollectionId: requireEnv("APPWRITE_SECURITY_EVENTS_COLLECTION_ID"),
+  rateLimitsCollectionId:
+    env.APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID || "auth_rate_limits",
+  securityEventsCollectionId:
+    env.APPWRITE_SECURITY_EVENTS_COLLECTION_ID || "security_events",
 };
 const databases = new Databases(
   new Client()

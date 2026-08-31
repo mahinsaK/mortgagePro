@@ -1,4 +1,5 @@
 import { optionalString, requiredString } from "../shared";
+import { normalizeRequiredPhoneNumber } from "@/shared/phone-number";
 
 export type SmsPurpose =
   | "manual"
@@ -30,7 +31,7 @@ export function toSendSmsDto(input: Record<string, unknown>): SendSmsDto {
 
   return {
     lenderId: requiredString(input.lenderId, "lenderId"),
-    phoneNumber: normalizeSmsPhoneNumber(input.phoneNumber),
+    phoneNumber: normalizeRequiredPhoneNumber(input.phoneNumber, "phoneNumber"),
     message,
     purpose: smsPurpose(input.purpose),
     senderId: requiredString(input.senderId, "senderId"),
@@ -38,14 +39,7 @@ export function toSendSmsDto(input: Record<string, unknown>): SendSmsDto {
 }
 
 export function normalizeSmsPhoneNumber(value: unknown) {
-  const phoneNumber = requiredString(value, "phoneNumber");
-  const digits = phoneNumber.replace(/\D/g, "");
-
-  if (digits.length < 7 || digits.length > 15) {
-    throw new Error("phoneNumber must contain 7 to 15 digits.");
-  }
-
-  return phoneNumber.trim().startsWith("+") ? `+${digits}` : digits;
+  return normalizeRequiredPhoneNumber(value, "phoneNumber");
 }
 
 function smsPurpose(value: unknown): SmsPurpose {

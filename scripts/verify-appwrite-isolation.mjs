@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { Account, Client, Databases } from "node-appwrite";
+import { Account, Client, Databases, Users } from "node-appwrite";
 import { loadScriptEnv } from "./lib/load-env.mjs";
 
 const env = loadScriptEnv();
@@ -9,32 +9,30 @@ const config = {
   databaseId: requireEnv("NEXT_PUBLIC_APPWRITE_DATABASE_ID"),
   runtimeKey: requireEnv("APPWRITE_RUNTIME_API_KEY"),
   setupKey: requireEnv("APPWRITE_SETUP_API_KEY"),
-  email:
-    env.ISOLATION_TEST_LENDER_EMAIL ||
-    env.DEMO_LENDER_EMAIL ||
-    requireEnv("ISOLATION_TEST_LENDER_EMAIL"),
-  password:
-    env.ISOLATION_TEST_LENDER_PASSWORD ||
-    env.DEMO_LENDER_PASSWORD ||
-    requireEnv("ISOLATION_TEST_LENDER_PASSWORD"),
   collections: {
     lenders: requireEnv("NEXT_PUBLIC_APPWRITE_LENDERS_COLLECTION_ID"),
     borrowers: requireEnv("NEXT_PUBLIC_APPWRITE_BORROWERS_COLLECTION_ID"),
     collectors: requireEnv("NEXT_PUBLIC_APPWRITE_COLLECTORS_COLLECTION_ID"),
     loans: requireEnv("NEXT_PUBLIC_APPWRITE_LOANS_COLLECTION_ID"),
     payments: requireEnv("NEXT_PUBLIC_APPWRITE_PAYMENTS_COLLECTION_ID"),
-    authRateLimits: requireEnv("APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID"),
-    securityEvents: requireEnv("APPWRITE_SECURITY_EVENTS_COLLECTION_ID"),
-    smsAccounts: requireEnv("APPWRITE_SMS_ACCOUNTS_COLLECTION_ID"),
-    smsSenderRequests: requireEnv("APPWRITE_SMS_SENDER_REQUESTS_COLLECTION_ID"),
-    smsTemplates: requireEnv("APPWRITE_SMS_TEMPLATES_COLLECTION_ID"),
-    smsMonthlyUsage: requireEnv("APPWRITE_SMS_MONTHLY_USAGE_COLLECTION_ID"),
-    smsSendLogs: requireEnv("APPWRITE_SMS_SEND_LOGS_COLLECTION_ID"),
+    authRateLimits:
+      env.APPWRITE_AUTH_RATE_LIMITS_COLLECTION_ID || "auth_rate_limits",
+    securityEvents:
+      env.APPWRITE_SECURITY_EVENTS_COLLECTION_ID || "security_events",
+    smsAccounts: env.APPWRITE_SMS_ACCOUNTS_COLLECTION_ID || "sms_accounts",
+    smsSenderRequests:
+      env.APPWRITE_SMS_SENDER_REQUESTS_COLLECTION_ID || "sms_sender_requests",
+    smsTemplates: env.APPWRITE_SMS_TEMPLATES_COLLECTION_ID || "sms_templates",
+    smsMonthlyUsage:
+      env.APPWRITE_SMS_MONTHLY_USAGE_COLLECTION_ID || "sms_monthly_usage",
+    smsSendLogs:
+      env.APPWRITE_SMS_SEND_LOGS_COLLECTION_ID || "sms_send_logs",
   },
 };
 
 const setupDatabases = createDatabasesWithKey(config.setupKey);
 const runtimeDatabases = createDatabasesWithKey(config.runtimeKey);
+const setupUsers = createUsersWithKey(config.setupKey);
 const loginClient = new Client()
   .setEndpoint(config.endpoint)
   .setProject(config.projectId)
@@ -44,11 +42,24 @@ let sessionAccount;
 let guardProbe;
 let runtimeProbe;
 let directCreateProbe;
+let testUserId;
 
 try {
+  const suffix = randomBytes(6).toString("hex");
+  testUserId = id(`isolation_user_${suffix}`);
+  const email = `isolation-${suffix}@mortgagepro.local`;
+  const password = `${randomBytes(24).toString("base64url")}Aa1!`;
+
+  await setupUsers.create({
+    userId: testUserId,
+    email,
+    password,
+    name: "Isolation verifier",
+  });
+
   const session = await loginAccount.createEmailPasswordSession({
-    email: config.email,
-    password: config.password,
+    email,
+    password,
   });
 
   if (!session.secret) {
@@ -61,8 +72,6 @@ try {
     .setSession(session.secret);
   const sessionDatabases = new Databases(sessionClient);
   sessionAccount = new Account(sessionClient);
-  const suffix = randomBytes(6).toString("hex");
-
   guardProbe = makeProbe(`guard_${suffix}`, session.userId);
   runtimeProbe = makeProbe(`runtime_${suffix}`, session.userId);
   directCreateProbe = makeProbe(`direct_${suffix}`, session.userId);
@@ -128,6 +137,14 @@ try {
       // The verification result is more important than logout cleanup errors.
     }
   }
+
+  if (testUserId) {
+    try {
+      await setupUsers.delete({ userId: testUserId });
+    } catch {
+      console.error("Cleanup warning for the temporary isolation user.");
+    }
+  }
 }
 
 function createDatabasesWithKey(key) {
@@ -136,6 +153,14 @@ function createDatabasesWithKey(key) {
     .setProject(config.projectId)
     .setKey(key);
   return new Databases(client);
+}
+
+function createUsersWithKey(key) {
+  const client = new Client()
+    .setEndpoint(config.endpoint)
+    .setProject(config.projectId)
+    .setKey(key);
+  return new Users(client);
 }
 
 function collectionNames() {
@@ -200,6 +225,7 @@ function makeProbe(prefix, appwriteUserId) {
         name: "Isolation collector",
         contact_info: "",
         password_hash: "probe:probe",
+        session_version: 1,
         status: "active",
         created_at: now,
       },

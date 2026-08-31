@@ -4,6 +4,7 @@ import {
   completePasswordResetAction,
   requestPasswordResetAction,
 } from "@/backend/actions/auth-actions";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 
 export default async function PasswordResetPage({
   searchParams,
@@ -80,12 +81,12 @@ export default async function PasswordResetPage({
             />
           )}
 
-          <button
-            className="flex h-12 w-full items-center justify-center rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8]"
-            type="submit"
+          <PendingSubmitButton
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-wait disabled:opacity-70"
+            pendingLabel={isCompletingReset ? "Updating…" : "Sending…"}
           >
             {isCompletingReset ? "Update password" : "Send reset link"}
-          </button>
+          </PendingSubmitButton>
         </form>
 
         <p className="mt-6 text-center text-sm text-[#657386]">

@@ -17,6 +17,7 @@ import {
   sendTenantSmsBatch,
   SmsSendingError,
 } from "@/backend/services/sms-sending-service";
+import { isFeatureAvailable } from "@/shared/feature-availability";
 
 export type SmsManagementActionState = {
   status: "idle" | "error" | "success";
@@ -106,6 +107,7 @@ export async function deleteSmsTemplateAction(formData: FormData) {
 }
 
 export async function sendSelectedSmsAction(formData: FormData) {
+  requireSmsAvailability();
   const result = await sendSmsToNumbers({
     message: readField(formData, "message"),
     phoneNumbers: readSelectedRecipients(formData).map(
@@ -118,6 +120,7 @@ export async function sendSelectedSmsAction(formData: FormData) {
 }
 
 export async function sendAllBorrowersSmsAction(formData: FormData) {
+  requireSmsAvailability();
   const recipients = await getAllBorrowerSmsRecipients();
   const result = await sendSmsToNumbers({
     message: readField(formData, "message"),
@@ -236,5 +239,11 @@ async function runManagementAction(
       message: "The SMS setting could not be saved. Please try again.",
       operation,
     };
+  }
+}
+
+function requireSmsAvailability() {
+  if (!isFeatureAvailable("sms")) {
+    redirectWithError("SMS is currently under maintenance.");
   }
 }

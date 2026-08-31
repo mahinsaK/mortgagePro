@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   accountDeleteSession: vi.fn(),
+  accountDeleteSessions: vi.fn(),
   adminCreateSession: vi.fn(),
   clearAuthSession: vi.fn(),
   clearIdentityLimit: vi.fn(),
@@ -33,6 +34,7 @@ vi.mock("@/backend/appwrite/server-client", async () => {
   return {
     createAccountClient: vi.fn(() => ({
       deleteSession: mocks.accountDeleteSession,
+      deleteSessions: mocks.accountDeleteSessions,
     })),
     createAdminAccountClient: vi.fn(() => ({
       createEmailPasswordSession: mocks.adminCreateSession,
@@ -67,6 +69,7 @@ vi.mock("@/backend/services/security-event-service", () => ({
 
 import {
   loginAction,
+  logoutAllLenderDevicesAction,
   logoutAction,
   registerLenderAction,
 } from "../auth-actions";
@@ -208,6 +211,18 @@ describe("lender session actions", () => {
     );
 
     await expect(logoutAction()).rejects.toThrow("redirect:/auth/login");
+    expect(mocks.clearAuthSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("revokes every lender session only when explicitly requested", async () => {
+    mocks.getAuthSessionSecret.mockResolvedValue("valid-session");
+
+    await expect(logoutAllLenderDevicesAction()).rejects.toThrow(
+      "redirect:/auth/login?status=success",
+    );
+
+    expect(mocks.accountDeleteSessions).toHaveBeenCalledTimes(1);
+    expect(mocks.accountDeleteSession).not.toHaveBeenCalled();
     expect(mocks.clearAuthSession).toHaveBeenCalledTimes(1);
   });
 

@@ -7,7 +7,10 @@ import { databases, Query, users } from "@/backend/appwrite/server-client";
 import { normalizeCurrency } from "@/backend/lib/currency";
 import { validateNewCollectorUsername } from "@/backend/modules/collectors/username";
 import { PaymentService } from "@/backend/modules/payments/service";
-import { hashCollectorPassword } from "@/backend/services/collector-auth-service";
+import {
+  hashCollectorPassword,
+  normalizeSessionVersion,
+} from "@/backend/services/collector-auth-service";
 import { getPrimaryLender } from "@/backend/services/lender-service";
 import {
   createBorrowerSearchText,
@@ -20,13 +23,15 @@ import {
   requireTenantDocument,
   updateTenantDocument,
 } from "@/backend/services/tenant-data-service";
+import { normalizeOptionalPhoneNumber } from "@/shared/phone-number";
+import { clearAuthSession } from "@/backend/services/auth-session-service";
 
 export async function createBorrowerAction(formData: FormData) {
   const lender = await getRequiredLender();
   const borrowerId = createDocumentId("borrower");
   const now = new Date().toISOString();
   const name = readRequired(formData, "name");
-  const contact = readOptional(formData, "phone");
+  const contact = readPhone(formData);
   const address = readOptional(formData, "address");
 
   await createTenantDocument("borrowers", lender.id, borrowerId, {
@@ -50,7 +55,7 @@ export async function createBorrowerAction(formData: FormData) {
 export async function updateBorrowerAction(formData: FormData) {
   const lender = await getRequiredLender();
   const borrowerId = readRequired(formData, "borrower_id");
-  const contact = readOptional(formData, "phone");
+  const contact = readPhone(formData);
   const address = readOptional(formData, "address");
   const name = readRequired(formData, "name");
 
@@ -133,6 +138,12 @@ export async function createLoanForBorrowerAction(
   const loanId = createDocumentId("loan");
   const now = new Date().toISOString();
   const amount = readNumber(formData, "amount");
+  const startDate = readDate(formData, "start_date");
+  const endDate = readDate(formData, "end_date");
+
+  if (new Date(endDate).getTime() <= new Date(startDate).getTime()) {
+    throw new Error("end_date must be after start_date.");
+  }
 
   await createTenantDocument("loans", lender.id, loanId, {
     borrower_id: borrowerId,
@@ -141,8 +152,8 @@ export async function createLoanForBorrowerAction(
     daily_payment: readNumber(formData, "daily_payment"),
     total_paid: 0,
     remaining_amount: amount,
-    start_date: readDate(formData, "start_date"),
-    end_date: readDate(formData, "end_date"),
+    start_date: startDate,
+    end_date: endDate,
     status: "active",
     qr_code: loanId,
     search_text: createLoanSearchText({
@@ -267,6 +278,13 @@ export async function createCollectorAction(
   const name = readOptional(formData, "name");
   const now = new Date().toISOString();
   const password = readOptional(formData, "password");
+  let phone: string;
+
+  try {
+    phone = readPhone(formData);
+  } catch (error) {
+    return collectorFormError(toErrorMessage(error), username);
+  }
 
   if (usernameError) {
     return collectorFormError(usernameError, username, usernameError);
@@ -309,10 +327,11 @@ export async function createCollectorAction(
     await createTenantDocument("collectors", lender.id, username, {
       name,
       contact_info: JSON.stringify({
-        phone: readOptional(formData, "phone"),
+        phone,
         area: readOptional(formData, "area"),
       }),
       password_hash: hashCollectorPassword(password),
+      session_version: 1,
       status: readStatus(formData),
       created_at: now,
     });
@@ -344,10 +363,30 @@ export async function updateCollectorAction(
   const collectorId = readRequired(formData, "collector_id");
   const password = readOptional(formData, "password");
   const status = readStatus(formData);
+  const currentCollector = await requireTenantDocument(
+    "collectors",
+    lender.id,
+    collectorId,
+    ["$id", "session_version", "status"],
+  );
+  const currentSessionVersion = normalizeSessionVersion(
+    currentCollector.session_version,
+  );
+  let phone: string;
+
+  try {
+    phone = readPhone(formData);
+  } catch (error) {
+    return {
+      status: "error",
+      message: toErrorMessage(error),
+    };
+  }
+
   const data: Record<string, unknown> = {
     name: readRequired(formData, "name"),
     contact_info: JSON.stringify({
-      phone: readOptional(formData, "phone"),
+      phone,
       area: readOptional(formData, "area"),
     }),
     status,
@@ -362,6 +401,10 @@ export async function updateCollectorAction(
     }
 
     data.password_hash = hashCollectorPassword(password);
+  }
+
+  if (password || String(currentCollector.status ?? "") !== status) {
+    data.session_version = currentSessionVersion + 1;
   }
 
   await updateTenantDocument("collectors", lender.id, collectorId, data);
@@ -401,7 +444,7 @@ export async function updateLenderProfileAction(formData: FormData) {
     data: {
       company_name: readRequired(formData, "company_name"),
       contact_info: JSON.stringify({
-        phone: readOptional(formData, "phone"),
+        phone: readPhone(formData),
         address: readOptional(formData, "address"),
       }),
       currency: normalizeCurrency(readOptional(formData, "currency")),
@@ -452,12 +495,16 @@ export async function updateLenderPasswordAction(
     };
   }
 
-  revalidatePath("/settings");
+  try {
+    await users.deleteSessions({ userId: lender.appwriteUserId });
+  } catch {
+    // Appwrite's password-change invalidation policy remains the primary guard.
+  }
 
-  return {
-    status: "success",
-    message: "Password updated successfully.",
-  };
+  await clearAuthSession();
+  redirect(
+    "/auth/login?status=success&message=Password+updated.+All+devices+were+signed+out.",
+  );
 }
 
 export async function updateLenderPasswordFormAction(
@@ -523,6 +570,14 @@ function readRequired(formData: FormData, key: string) {
 
 function readOptional(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function readPhone(formData: FormData) {
+  return normalizeOptionalPhoneNumber(readOptional(formData, "phone"));
+}
+
+function toErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Phone number is invalid.";
 }
 
 function readNumber(formData: FormData, key: string) {

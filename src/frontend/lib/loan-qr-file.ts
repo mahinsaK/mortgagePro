@@ -1,4 +1,27 @@
+import QRCode from "qrcode";
+
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const qrDataUrlCache = new Map<string, Promise<string>>();
+
+export function getLoanQrDataUrl(loanId: string) {
+  const cached = qrDataUrlCache.get(loanId);
+
+  if (cached) {
+    return cached;
+  }
+
+  const qrDataUrl = QRCode.toDataURL(loanId, {
+    errorCorrectionLevel: "M",
+    margin: 2,
+    width: 320,
+  }).catch((error) => {
+    qrDataUrlCache.delete(loanId);
+    throw error;
+  });
+  qrDataUrlCache.set(loanId, qrDataUrl);
+
+  return qrDataUrl;
+}
 
 export async function fetchLoanQrPng(url: string, signal?: AbortSignal) {
   const response = await fetch(url, {

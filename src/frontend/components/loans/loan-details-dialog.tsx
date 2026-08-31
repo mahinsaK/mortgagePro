@@ -9,6 +9,7 @@ import {
 import type { LoanRow } from "@/backend/services/lending-service";
 import { LoanPaymentsPanel } from "@/frontend/components/loans/loan-payments-panel";
 import { LoanQrPanel } from "@/frontend/components/loans/loan-qr-panel";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 
 export function LoanDetailsDialog({
   loan,
@@ -71,12 +72,12 @@ export function LoanDetailsDialog({
                     }}
                   >
                     <input name="loan_id" type="hidden" value={loan.id} />
-                    <button
-                      className="flex h-9 w-full items-center rounded px-3 text-left font-medium text-[#b91c1c] transition hover:bg-[#fef2f2]"
-                      type="submit"
+                    <PendingSubmitButton
+                      className="flex h-9 w-full items-center gap-2 rounded px-3 text-left font-medium text-[#b91c1c] transition hover:bg-[#fef2f2] disabled:cursor-wait disabled:opacity-70"
+                      pendingLabel="Deleting…"
                     >
                       Delete loan
-                    </button>
+                    </PendingSubmitButton>
                   </form>
                 </div>
               ) : null}
@@ -168,12 +169,12 @@ export function LoanDetailsDialog({
                 type="date"
               />
               <div className="flex items-end sm:col-span-2">
-                <button
-                  className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
-                  type="submit"
+                <PendingSubmitButton
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-wait disabled:opacity-70"
+                  pendingLabel="Updating loan…"
                 >
                   Update loan
-                </button>
+                </PendingSubmitButton>
               </div>
             </form>
           ) : null}

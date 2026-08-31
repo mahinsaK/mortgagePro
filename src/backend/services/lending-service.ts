@@ -11,6 +11,7 @@ import {
   type TenantDocument,
 } from "./tenant-data-service";
 import { getPrimaryLender } from "./lender-service";
+import { normalizeSearchText } from "./search-text-service";
 
 export type BorrowerRow = {
   id: string;
@@ -46,6 +47,7 @@ export type LoanRow = {
 
 export type BorrowerProfileData = {
   borrower: BorrowerRow | null;
+  currency: string;
   loans: LoanRow[];
   pageInfo: PageInfo;
 };
@@ -105,6 +107,7 @@ export type LoanAttentionFilter = "overdue" | "ending-today" | "ending-soon";
 
 type BorrowersPageOptions = PaginationOptions & {
   attention?: BorrowerAttentionFilter;
+  query?: string;
 };
 
 type LoansPageOptions = PaginationOptions & {
@@ -123,6 +126,7 @@ const MAX_LOOKUP_LIMIT = 5000;
 export async function getBorrowersPageData(options: BorrowersPageOptions = {}) {
   const lender = await getPrimaryLender();
   const pagination = normalizePagination(options);
+  const searchQuery = normalizeSearchText(options.query ?? "").slice(0, 100);
 
   if (!lender) {
     return {
@@ -142,12 +146,19 @@ export async function getBorrowersPageData(options: BorrowersPageOptions = {}) {
     "status",
     "created_at",
   ];
+  const searchQueries = borrowerSearchQueries(searchQuery);
   const borrowers = options.attention === "missing-phone"
-    ? await getBorrowersMissingPhone(lender.id, pagination, select)
+    ? await getBorrowersMissingPhone(
+        lender.id,
+        pagination,
+        select,
+        searchQueries,
+      )
     : await listForLender("borrowers", lender.id, {
         page: pagination.page,
         pageSize: pagination.pageSize,
         orderBy: "created_at",
+        extraQueries: searchQueries,
         select,
       });
 
@@ -177,7 +188,12 @@ export async function getBorrowerProfileData(
   });
 
   if (!lender) {
-    return { borrower: null, loans: [], pageInfo: emptyPageInfo(pagination) };
+    return {
+      borrower: null,
+      currency: "USD",
+      loans: [],
+      pageInfo: emptyPageInfo(pagination),
+    };
   }
 
   const borrowers = await listTenantDocuments("borrowers", lender.id, [
@@ -197,7 +213,12 @@ export async function getBorrowerProfileData(
   const borrower = borrowers.documents[0];
 
   if (!borrower) {
-    return { borrower: null, loans: [], pageInfo: emptyPageInfo(pagination) };
+    return {
+      borrower: null,
+      currency: lender.currency,
+      loans: [],
+      pageInfo: emptyPageInfo(pagination),
+    };
   }
 
   const loanFilters = [
@@ -260,6 +281,7 @@ export async function getBorrowerProfileData(
       activeLoanCount: activeLoans.total,
       completedLoanCount: completedLoans.total,
     },
+    currency: lender.currency,
     loans: loanRows,
     pageInfo: toPageInfo(loans.total, pagination),
   };
@@ -741,9 +763,11 @@ async function getBorrowersMissingPhone(
   lenderId: string,
   pagination: { page: number; pageSize: number },
   select: string[],
+  searchQueries: string[] = [],
 ) {
   const borrowers = await listTenantDocuments("borrowers", lenderId, [
     Query.equal("status", "active"),
+    ...searchQueries,
     Query.limit(MAX_LOOKUP_LIMIT),
     Query.select(select),
   ]);
@@ -754,6 +778,20 @@ async function getBorrowersMissingPhone(
   );
 
   return paginatedDocuments(filtered, pagination);
+}
+
+function borrowerSearchQueries(query: string) {
+  if (!query) return [];
+
+  return [
+    Query.or([
+      Query.search("search_text", query),
+      Query.search("name", query),
+      Query.search("business_name", query),
+      Query.search("contact", query),
+      Query.search("address", query),
+    ]),
+  ];
 }
 
 async function getAttentionLoans(

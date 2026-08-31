@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   createTenantDocument: vi.fn(),
+  clearAuthSession: vi.fn(),
   getPrimaryLender: vi.fn(),
   hashCollectorPassword: vi.fn(),
   listDocuments: vi.fn(),
@@ -9,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   updateDocument: vi.fn(),
   updateTenantDocument: vi.fn(),
   updateUserPassword: vi.fn(),
+  deleteUserSessions: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -27,7 +29,10 @@ vi.mock("@/backend/appwrite/server-client", async () => {
       updateDocument: mocks.updateDocument,
     },
     Query,
-    users: { updatePassword: mocks.updateUserPassword },
+    users: {
+      updatePassword: mocks.updateUserPassword,
+      deleteSessions: mocks.deleteUserSessions,
+    },
   };
 });
 vi.mock("@/backend/lib/currency", () => ({
@@ -38,6 +43,10 @@ vi.mock("@/backend/modules/payments/service", () => ({
 }));
 vi.mock("@/backend/services/collector-auth-service", () => ({
   hashCollectorPassword: mocks.hashCollectorPassword,
+  normalizeSessionVersion: vi.fn((value: unknown) => Number(value ?? 1)),
+}));
+vi.mock("@/backend/services/auth-session-service", () => ({
+  clearAuthSession: mocks.clearAuthSession,
 }));
 vi.mock("@/backend/services/lender-service", () => ({
   getPrimaryLender: mocks.getPrimaryLender,
@@ -113,7 +122,11 @@ describe("collector writes", () => {
       appwriteUserId: "user_A",
     });
     mocks.listDocuments.mockResolvedValue({ documents: [], total: 0 });
-    mocks.requireTenantDocument.mockResolvedValue({ $id: "collector_A" });
+    mocks.requireTenantDocument.mockResolvedValue({
+      $id: "collector_A",
+      session_version: 1,
+      status: "active",
+    });
     mocks.hashCollectorPassword.mockReturnValue("new-hash");
     mocks.createTenantDocument.mockResolvedValue({ $id: "jordanlee4821" });
   });
@@ -137,8 +150,9 @@ describe("collector writes", () => {
         password_hash: "new-hash",
       }),
     );
-    expect(mocks.createTenantDocument.mock.calls[0][3]).not.toHaveProperty(
+    expect(mocks.createTenantDocument.mock.calls[0][3]).toHaveProperty(
       "session_version",
+      1,
     );
   });
 
@@ -195,6 +209,7 @@ describe("collector writes", () => {
       "collector_A",
       expect.objectContaining({
         password_hash: "new-hash",
+        session_version: 2,
       }),
     );
   });
@@ -206,7 +221,7 @@ describe("collector writes", () => {
       "collectors",
       "lender_A",
       "collector_A",
-      expect.objectContaining({ status: "inactive" }),
+      expect.objectContaining({ status: "inactive", session_version: 2 }),
     );
   });
 
@@ -234,6 +249,9 @@ describe("collector writes", () => {
       "collector_A",
       expect.not.objectContaining({ username: expect.anything() }),
     );
+    expect(mocks.updateTenantDocument.mock.calls[0][3]).not.toHaveProperty(
+      "session_version",
+    );
   });
 
   it("returns inline lender password validation errors", async () => {
@@ -250,21 +268,18 @@ describe("collector writes", () => {
     expect(mocks.updateUserPassword).not.toHaveBeenCalled();
   });
 
-  it("updates a lender password and returns success", async () => {
+  it("updates a lender password and signs out every device", async () => {
     const formData = new FormData();
     formData.set("password", "NewPassword123!");
     formData.set("confirm_password", "NewPassword123!");
 
-    const result = await updateLenderPasswordAction(formData);
-
-    expect(result).toEqual({
-      status: "success",
-      message: "Password updated successfully.",
-    });
+    await updateLenderPasswordAction(formData);
     expect(mocks.updateUserPassword).toHaveBeenCalledWith({
       userId: "user_A",
       password: "NewPassword123!",
     });
+    expect(mocks.deleteUserSessions).toHaveBeenCalledWith({ userId: "user_A" });
+    expect(mocks.clearAuthSession).toHaveBeenCalledTimes(1);
   });
 });
 

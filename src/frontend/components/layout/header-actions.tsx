@@ -118,7 +118,7 @@ function TooltipButton({
       <Tooltip.Trigger asChild>
         <button
           aria-label={label}
-          className="flex h-10 w-10 items-center justify-center rounded-md border border-[#cfd8e3] bg-white text-[#2d3745] transition hover:border-[#94a3b8] hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#dbeafe]"
+          className="flex size-11 items-center justify-center rounded-md border border-[#cfd8e3] bg-white text-[#2d3745] transition hover:border-[#94a3b8] hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#dbeafe] md:size-10"
           onClick={onClick}
           type="button"
         >
@@ -143,7 +143,7 @@ function PopoverIconButton({
         <Popover.Trigger asChild>
           <button
             aria-label={label}
-            className="flex h-10 w-10 items-center justify-center rounded-md border border-[#cfd8e3] bg-white text-[#2d3745] transition hover:border-[#94a3b8] hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#dbeafe]"
+            className="flex size-11 items-center justify-center rounded-md border border-[#cfd8e3] bg-white text-[#2d3745] transition hover:border-[#94a3b8] hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#dbeafe] md:size-10"
             type="button"
           >
             {children}

@@ -20,15 +20,15 @@ export function DashboardLoanDetailsDialog({
       <section
         aria-labelledby="dashboard-loan-details-title"
         aria-modal="true"
-        className="max-h-[calc(100dvh-0.75rem)] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white shadow-xl sm:max-h-[calc(100vh-48px)] sm:rounded-lg"
+        className="max-h-[calc(100dvh-0.5rem)] w-full max-w-2xl touch-pan-y overflow-y-auto overscroll-contain rounded-t-2xl bg-white shadow-xl sm:max-h-[calc(100vh-48px)] sm:rounded-lg"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
       >
-        <div className="flex items-start justify-between gap-3 border-b border-[#dfe5ec] px-4 py-4 sm:px-6 sm:py-5">
+        <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-[#dfe5ec] bg-white px-4 py-3 sm:px-6 sm:py-5">
           <div className="min-w-0">
             <p className="text-sm font-medium text-[#657386]">Loan details</p>
             <h2
-              className="mt-1 truncate text-2xl font-semibold"
+              className="mt-1 truncate text-xl font-semibold sm:text-2xl"
               id="dashboard-loan-details-title"
             >
               {loan.borrower}

@@ -22,12 +22,13 @@ export default async function CollectorsPage({
         <h1 className="mt-1 text-2xl font-semibold md:mt-2 md:text-3xl">Collector profiles</h1>
       </div>
 
-      <div className="mb-5 grid grid-cols-3 gap-2 md:mb-6 md:gap-4">
+      <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3 md:mb-6 md:gap-4">
         <SummaryCard label="Total collectors" value={String(summary.total)} />
         <SummaryCard label="Active collectors" value={String(summary.active)} />
         <SummaryCard
           label="Inactive collectors"
           value={String(summary.inactive)}
+          wideOnMobile
         />
       </div>
 
@@ -46,9 +47,17 @@ export default async function CollectorsPage({
   );
 }
 
-function SummaryCard({ label, value }: { label: string; value: string }) {
+function SummaryCard({
+  label,
+  value,
+  wideOnMobile = false,
+}: {
+  label: string;
+  value: string;
+  wideOnMobile?: boolean;
+}) {
   return (
-    <article className="rounded-lg border border-[#dfe5ec] bg-white p-3 shadow-sm md:p-5">
+    <article className={`rounded-lg border border-[#dfe5ec] bg-white p-3 shadow-sm sm:col-span-1 md:p-5 ${wideOnMobile ? "col-span-2" : ""}`}>
       <p className="text-xs font-medium leading-tight text-[#657386] md:text-sm">{label}</p>
       <p className="mt-2 text-xl font-semibold md:mt-3 md:text-2xl">{value}</p>
     </article>

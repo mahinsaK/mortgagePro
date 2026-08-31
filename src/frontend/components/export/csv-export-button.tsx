@@ -24,7 +24,7 @@ export function CsvExportButton({
   return (
     <button
       aria-label={label}
-      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#15191f] text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
+      className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#15191f] text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2] sm:size-10"
       disabled={rows.length === 0}
       onClick={() => downloadCsv(filename, rows)}
       title={label}
@@ -82,7 +82,7 @@ export function DateRangeCsvExport({
       <Popover.Trigger asChild>
         <button
           aria-label="Export CSV"
-          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#15191f] text-white shadow-sm transition hover:bg-[#2d3745]"
+          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#15191f] text-white shadow-sm transition hover:bg-[#2d3745] md:size-9"
           title="Export CSV"
           type="button"
         >

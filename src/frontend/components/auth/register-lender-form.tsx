@@ -54,6 +54,7 @@ export function RegisterLenderForm({
         </h2>
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           <Field
+            autoComplete="organization"
             label="Company name"
             name="companyName"
             placeholder="Northstar Lending"
@@ -61,6 +62,7 @@ export function RegisterLenderForm({
           <label className="block text-sm font-medium text-[#2d3745]">
             Contact phone
             <PhoneInput
+              autoComplete="tel"
               className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
               name="phone"
               placeholder="+15550100"
@@ -70,6 +72,7 @@ export function RegisterLenderForm({
           <label className="sm:col-span-2 text-sm font-medium text-[#2d3745]">
             Business address
             <textarea
+              autoComplete="street-address"
               className="mt-2 min-h-24 w-full rounded-md border border-[#cfd8e3] px-4 py-3 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
               name="address"
               placeholder="Street, city, region"
@@ -84,6 +87,7 @@ export function RegisterLenderForm({
         </h2>
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           <Field
+            autoComplete="email"
             className="sm:col-span-2"
             label="Business email"
             name="email"
@@ -91,6 +95,7 @@ export function RegisterLenderForm({
             type="email"
           />
           <Field
+            autoComplete="new-password"
             inputRef={passwordRef}
             label="Password"
             minLength={8}
@@ -99,6 +104,7 @@ export function RegisterLenderForm({
             type="password"
           />
           <Field
+            autoComplete="new-password"
             inputRef={confirmPasswordRef}
             label="Confirm password"
             minLength={8}
@@ -153,11 +159,13 @@ function AuthStatus({
 
   return (
     <p
+      aria-live="polite"
       className={`rounded-md border px-3 py-2 text-sm font-medium ${
         isError
           ? "border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]"
           : "border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]"
       }`}
+      role={isError ? "alert" : "status"}
     >
       {message}
     </p>
@@ -165,6 +173,7 @@ function AuthStatus({
 }
 
 function Field({
+  autoComplete,
   className = "",
   inputRef,
   label,
@@ -173,6 +182,7 @@ function Field({
   placeholder,
   type = "text",
 }: {
+  autoComplete?: string;
   className?: string;
   inputRef?: Ref<HTMLInputElement>;
   label: string;
@@ -185,6 +195,7 @@ function Field({
     <label className={`${className} block text-sm font-medium text-[#2d3745]`}>
       {label}
       <input
+        autoComplete={autoComplete}
         className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
         minLength={minLength}
         name={name}

@@ -3,6 +3,7 @@
 import { Menu } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { HeaderActions } from "@/frontend/components/layout/header-actions";
+import { MobileBottomNavigation } from "@/frontend/components/layout/mobile-bottom-navigation";
 import { PortalSidebar } from "@/frontend/components/layout/portal-sidebar";
 import { NotificationOwnerProvider } from "@/frontend/components/notifications/notification-owner-context";
 import { SessionKeepAlive } from "@/frontend/components/auth/session-keep-alive";
@@ -72,7 +73,7 @@ export function PortalShell({
       ownerKey={notificationOwnerKey}
     >
       <SessionKeepAlive kind="lender" />
-      <div className="min-h-screen bg-[#f6f7f9] text-[#15191f]">
+      <div className="min-h-[100dvh] overflow-x-clip bg-[#f6f7f9] text-[#15191f]">
       {mobileMenuOpen ? (
         <button
           aria-label="Close navigation menu"
@@ -93,11 +94,11 @@ export function PortalShell({
         }`}
       >
         <header className="portal-topbar sticky top-0 z-20 border-b border-[#dfe5ec] backdrop-blur">
-          <div className="flex min-h-16 items-center justify-between gap-3 px-4 md:min-h-20 md:gap-4 md:px-8">
+          <div className="flex min-h-16 items-center justify-between gap-2 px-3 sm:gap-3 sm:px-4 md:min-h-20 md:gap-4 md:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <button
                 aria-label="Open navigation menu"
-                className="flex size-10 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#2d3745] md:hidden"
+                className="flex size-11 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#2d3745] md:hidden"
                 onClick={() => setMobileMenuOpen(true)}
                 type="button"
               >
@@ -124,8 +125,11 @@ export function PortalShell({
             </div>
           </div>
         </header>
-        <main className="px-4 py-5 md:px-8 md:py-8">{children}</main>
+        <main className="portal-content mx-auto w-full max-w-[1600px] px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-5 sm:px-4 md:px-8 md:py-8">
+          {children}
+        </main>
       </div>
+      <MobileBottomNavigation onOpenMenu={() => setMobileMenuOpen(true)} />
       </div>
     </NotificationOwnerProvider>
   );

@@ -29,14 +29,14 @@ export function PaginationControls({
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:flex">
         {pageInfo.page > 1 ? (
           <Link
-            className="rounded-md border border-[#cfd8e3] px-3 py-2 text-center font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
+            className="flex min-h-11 items-center justify-center rounded-md border border-[#cfd8e3] px-3 py-2 text-center font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
             href={pageHref(basePath, previousPage, query)}
             scroll={false}
           >
             Previous
           </Link>
         ) : (
-          <span className="cursor-not-allowed rounded-md border border-[#dfe5ec] px-3 py-2 text-center font-medium text-[#9aa6b2]">
+          <span className="flex min-h-11 cursor-not-allowed items-center justify-center rounded-md border border-[#dfe5ec] px-3 py-2 text-center font-medium text-[#9aa6b2]">
             Previous
           </span>
         )}
@@ -45,14 +45,14 @@ export function PaginationControls({
         </span>
         {pageInfo.page < pageInfo.totalPages ? (
           <Link
-            className="rounded-md border border-[#cfd8e3] px-3 py-2 text-center font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
+            className="flex min-h-11 items-center justify-center rounded-md border border-[#cfd8e3] px-3 py-2 text-center font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
             href={pageHref(basePath, nextPage, query)}
             scroll={false}
           >
             Next
           </Link>
         ) : (
-          <span className="cursor-not-allowed rounded-md border border-[#dfe5ec] px-3 py-2 text-center font-medium text-[#9aa6b2]">
+          <span className="flex min-h-11 cursor-not-allowed items-center justify-center rounded-md border border-[#dfe5ec] px-3 py-2 text-center font-medium text-[#9aa6b2]">
             Next
           </span>
         )}

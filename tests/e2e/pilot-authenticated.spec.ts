@@ -261,6 +261,34 @@ test.describe("dedicated pilot lender journey", () => {
     expect(hydrationErrors).toEqual([]);
   });
 
+  test("@critical lender mobile navigation keeps primary pages within reach", async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      !["iphone-critical", "android-critical"].includes(testInfo.project.name),
+      "Mobile-only portal navigation",
+    );
+    await loginLender(page);
+
+    const mobileNavigation = page.getByRole("navigation", {
+      name: "Primary mobile navigation",
+    });
+    await expect(mobileNavigation).toBeVisible();
+    await expect(
+      mobileNavigation.getByRole("link", { name: "Dashboard" }),
+    ).toHaveAttribute("aria-current", "page");
+
+    await mobileNavigation.getByRole("link", { name: "Borrowers" }).click();
+    await expect(page).toHaveURL(/\/borrowers(?:\?|$)/);
+    await expectNoHorizontalOverflow(page);
+
+    await mobileNavigation
+      .getByRole("button", { name: "Open all navigation options" })
+      .click();
+    await expect(page.getByRole("link", { name: "SMS" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Close navigation menu" })).toBeVisible();
+  });
+
   test("cross-tenant loans, QR codes, and exports remain isolated", async ({
     page,
   }) => {

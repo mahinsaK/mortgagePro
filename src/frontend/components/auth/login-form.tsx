@@ -37,6 +37,9 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
         <label className="block">
           <span className="text-sm font-medium text-[#2d3745]">Email</span>
           <input
+            autoCapitalize="none"
+            autoComplete="email"
+            autoCorrect="off"
             className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
             name="email"
             placeholder="owner@company.com"
@@ -48,6 +51,7 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
         <label className="block">
           <span className="text-sm font-medium text-[#2d3745]">Password</span>
           <input
+            autoComplete="current-password"
             className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
             name="password"
             placeholder="Enter password"
@@ -56,13 +60,9 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
           />
         </label>
 
-        <div className="flex items-center justify-between gap-3">
-          <label className="flex items-center gap-2 text-sm text-[#657386]">
-            <input className="h-4 w-4 rounded border-[#cfd8e3]" type="checkbox" />
-            Remember me
-          </label>
+        <div className="flex justify-end">
           <Link
-            className="text-sm font-semibold text-[#2563eb] hover:underline"
+            className="inline-flex min-h-11 items-center text-sm font-semibold text-[#2563eb] hover:underline"
             href="/auth/password-reset"
           >
             Forgot password?
@@ -137,11 +137,13 @@ function AuthStatus({
 
   return (
     <p
+      aria-live="polite"
       className={`rounded-md border px-3 py-2 text-sm font-medium ${
         isError
           ? "border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]"
           : "border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]"
       }`}
+      role={isError ? "alert" : "status"}
     >
       {message}
     </p>

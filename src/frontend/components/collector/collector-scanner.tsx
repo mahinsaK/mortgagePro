@@ -149,13 +149,13 @@ export function CollectorScanner({
   }
 
   return (
-    <section className="rounded-lg border border-[#d9e0e8] bg-white p-4 shadow-sm">
+    <section className="rounded-lg border border-[#d9e0e8] bg-white p-3 shadow-sm sm:p-4">
       <StatusMessage message={lookupError || message} status={lookupError ? "error" : status} />
 
       <div className="relative mt-4 overflow-hidden rounded-md bg-black">
         <video
           aria-label="QR code camera preview"
-          className="aspect-[3/4] w-full object-cover"
+          className="aspect-[3/4] max-h-[min(62dvh,34rem)] w-full object-cover"
           muted
           playsInline
           ref={videoRef}
@@ -205,7 +205,7 @@ export function CollectorScanner({
                 paymentDialogCloseRef.current?.focus({ preventScroll: true });
               }}
             >
-              <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[#dfe5ec] px-5 py-4">
+              <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[#dfe5ec] px-4 py-3 sm:px-5 sm:py-4">
                 <div>
                   <Dialog.Title className="text-xl font-semibold">
                     Record payment
@@ -217,7 +217,7 @@ export function CollectorScanner({
                 <Dialog.Close asChild>
                   <button
                     aria-label="Close payment details"
-                    className="flex size-9 shrink-0 items-center justify-center rounded-md border border-[#dfe5ec] text-[#657386] transition hover:bg-[#f8fafc]"
+                    className="flex size-11 shrink-0 items-center justify-center rounded-md border border-[#dfe5ec] text-[#657386] transition hover:bg-[#f8fafc] sm:size-10"
                     ref={paymentDialogCloseRef}
                     type="button"
                   >
@@ -228,7 +228,7 @@ export function CollectorScanner({
 
               <form
                 action={collectAction}
-                className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+                className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:p-5"
               >
                 <input name="loan_id" type="hidden" value={loan.id} />
                 <input

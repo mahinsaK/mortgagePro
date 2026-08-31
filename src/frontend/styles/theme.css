@@ -27,6 +27,11 @@
   background-color: rgb(23 29 36 / 95%);
 }
 
+:root[data-theme="dark"] .mobile-bottom-navigation {
+  background-color: rgb(23 29 36 / 95%) !important;
+  border-color: var(--mp-border) !important;
+}
+
 :root[data-theme="dark"] .bg-white,
 :root[data-theme="dark"] .bg-\[\#ffffff\] {
   background-color: var(--mp-surface) !important;

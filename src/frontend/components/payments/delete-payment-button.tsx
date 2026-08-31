@@ -39,7 +39,7 @@ export function DeletePaymentButton({
   return (
     <button
       aria-label="Delete payment"
-      className="flex size-9 shrink-0 items-center justify-center rounded-md border border-[#fecaca] text-[#b91c1c] transition hover:bg-[#fef2f2] disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex size-11 shrink-0 items-center justify-center rounded-md border border-[#fecaca] text-[#b91c1c] transition hover:bg-[#fef2f2] disabled:cursor-not-allowed disabled:opacity-50 md:size-9"
       disabled={isPending}
       onClick={deletePayment}
       title="Delete payment"

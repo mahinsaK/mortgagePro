@@ -149,7 +149,7 @@ function BorrowerActions({ borrower }: { borrower: BorrowerRow }) {
         <input name="borrower_id" type="hidden" value={borrower.id} />
         <PendingSubmitButton
           aria-label={`Delete ${borrower.name}`}
-          className="flex size-9 items-center justify-center rounded-md border border-[#fecaca] text-[#b91c1c] transition hover:bg-[#fef2f2]"
+          className="flex size-11 items-center justify-center rounded-md border border-[#fecaca] text-[#b91c1c] transition hover:bg-[#fef2f2] md:size-9"
           pendingLabel={null}
         >
           <Trash2 aria-hidden="true" size={16} />
@@ -178,7 +178,7 @@ function EditBorrowerDialog({ borrower }: { borrower: BorrowerRow }) {
       <Dialog.Trigger asChild>
         <button
           aria-label={`Edit ${borrower.name}`}
-          className="flex size-9 items-center justify-center rounded-md border border-[#cfd8e3] text-[#2d3745] transition hover:bg-[#f8fafc]"
+          className="flex size-11 items-center justify-center rounded-md border border-[#cfd8e3] text-[#2d3745] transition hover:bg-[#f8fafc] md:size-9"
           type="button"
         >
           <Pencil aria-hidden="true" size={16} />
@@ -199,7 +199,7 @@ function EditBorrowerDialog({ borrower }: { borrower: BorrowerRow }) {
             <Dialog.Close asChild>
               <button
                 aria-label="Close"
-                className="flex size-9 items-center justify-center rounded-md border border-[#dfe5ec] text-[#657386] transition hover:bg-[#f8fafc]"
+                className="flex size-11 items-center justify-center rounded-md border border-[#dfe5ec] text-[#657386] transition hover:bg-[#f8fafc] sm:size-10"
                 type="button"
               >
                 <X aria-hidden="true" size={17} />

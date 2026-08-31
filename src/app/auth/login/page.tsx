@@ -28,7 +28,7 @@ export default async function LoginPage({
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#eef2f6] px-4 py-6 md:px-5 md:py-10">
+    <main className="flex min-h-[100dvh] items-center justify-center bg-[#eef2f6] px-3 py-[max(1rem,env(safe-area-inset-top))] sm:px-4 sm:py-6 md:px-5 md:py-10">
       <section className="grid w-full max-w-md overflow-hidden rounded-xl border border-[#d9e0e8] bg-white shadow-sm md:max-w-5xl md:grid-cols-[1fr_430px] md:rounded-lg">
         <div className="hidden min-h-[560px] flex-col justify-between bg-[#102235] p-10 text-white md:flex">
           <div>
@@ -58,14 +58,14 @@ export default async function LoginPage({
           </div>
         </div>
 
-        <div className="flex flex-col justify-center p-5 sm:p-8">
+        <div className="flex flex-col justify-center p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:p-8">
           <div>
             <div className="flex items-center justify-between gap-4">
               <p className="text-sm font-medium text-[#657386]">
                 Lender portal
               </p>
               <Link
-                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#dfe5ec] px-2.5 text-xs font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] md:hidden"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-[#dfe5ec] px-3 text-xs font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] md:hidden"
                 href="/collector/login"
               >
                 <QrCode aria-hidden="true" size={14} />

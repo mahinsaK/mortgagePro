@@ -71,4 +71,27 @@ test.describe("public authentication surfaces", () => {
     );
     expect(fontSize).toBeGreaterThanOrEqual(16);
   });
+
+  test("@public public entry pages fit supported mobile widths", async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "chromium",
+      "Viewport matrix runs once in Chromium",
+    );
+
+    for (const width of [320, 375, 390, 430, 480, 768]) {
+      await page.setViewportSize({ height: 844, width });
+
+      for (const route of [
+        "/auth/login",
+        "/auth/register",
+        "/auth/password-reset",
+        "/collector/login",
+      ]) {
+        await page.goto(route);
+        await expectNoHorizontalOverflow(page);
+      }
+    }
+  });
 });

@@ -24,15 +24,15 @@ export default async function CollectorScanPage({
   }
 
   return (
-    <main className="min-h-screen bg-[#eef2f6] px-4 py-5 text-[#15191f]">
+    <main className="min-h-[100dvh] bg-[#eef2f6] px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] text-[#15191f] sm:px-4 sm:py-5">
       <SessionKeepAlive kind="collector" />
       <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-        <header className="flex items-center justify-between gap-3">
+        <header className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-[#657386]">Collector</p>
             <h1 className="text-2xl font-semibold">{session.name}</h1>
           </div>
-          <div className="flex flex-col items-end gap-1.5 sm:flex-row">
+          <div className="grid shrink-0 gap-1.5 sm:flex sm:flex-row">
             <form action={collectorLogoutAction}>
               <PendingSubmitButton
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#cfd8e3] bg-white px-3 text-sm font-semibold text-[#2d3745] disabled:cursor-wait disabled:opacity-70"
@@ -43,7 +43,7 @@ export default async function CollectorScanPage({
             </form>
             <form action={collectorLogoutAllDevicesAction}>
               <PendingSubmitButton
-                className="inline-flex items-center justify-center gap-2 text-xs font-semibold text-[#657386] underline-offset-2 hover:underline disabled:cursor-wait disabled:opacity-70 sm:h-10 sm:rounded-md sm:border sm:border-[#cfd8e3] sm:bg-white sm:px-3 sm:text-sm sm:no-underline"
+                className="inline-flex min-h-10 items-center justify-center gap-2 px-1 text-xs font-semibold text-[#657386] underline-offset-2 hover:underline disabled:cursor-wait disabled:opacity-70 sm:h-10 sm:rounded-md sm:border sm:border-[#cfd8e3] sm:bg-white sm:px-3 sm:text-sm sm:no-underline"
                 pendingLabel="Logging out…"
               >
                 Log out all devices

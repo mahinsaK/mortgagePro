@@ -29,14 +29,14 @@ export function LoanDetailsDialog({
       <section
         aria-labelledby="loan-details-title"
         aria-modal="true"
-        className="max-h-[calc(100dvh-0.75rem)] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white shadow-xl sm:max-h-[calc(100vh-48px)] sm:rounded-lg"
+        className="max-h-[calc(100dvh-0.5rem)] w-full max-w-2xl touch-pan-y overflow-y-auto overscroll-contain rounded-t-2xl bg-white shadow-xl sm:max-h-[calc(100vh-48px)] sm:rounded-lg"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
       >
-        <div className="flex items-start justify-between border-b border-[#dfe5ec] px-4 py-4 sm:px-6 sm:py-5">
-          <div>
+        <div className="sticky top-0 z-20 flex items-start justify-between border-b border-[#dfe5ec] bg-white px-4 py-3 sm:px-6 sm:py-5">
+          <div className="min-w-0">
             <p className="text-sm font-medium text-[#657386]">Loan details</p>
-            <h2 className="mt-1 text-2xl font-semibold" id="loan-details-title">
+            <h2 className="mt-1 truncate text-xl font-semibold sm:text-2xl" id="loan-details-title">
               {loan.borrowerName}
             </h2>
           </div>
@@ -83,7 +83,7 @@ export function LoanDetailsDialog({
               ) : null}
             </div>
             <button
-              className="rounded-md border border-[#cfd8e3] px-3 py-2 text-sm font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
+              className="min-h-11 rounded-md border border-[#cfd8e3] px-3 py-2 text-sm font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
               onClick={onClose}
               type="button"
             >

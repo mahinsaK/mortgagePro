@@ -41,7 +41,7 @@ export function PortalSidebar({
 
   return (
     <aside
-      className={`portal-sidebar fixed left-0 top-0 z-40 flex h-[100dvh] w-[min(18rem,calc(100vw-3rem))] flex-col border-r border-[#dfe5ec] bg-white transition duration-200 md:z-30 md:h-screen md:translate-x-0 md:transition-[width] ${
+      className={`portal-sidebar fixed left-0 top-0 z-40 flex h-[100dvh] w-[min(20rem,calc(100vw-2.5rem))] flex-col border-r border-[#dfe5ec] bg-white pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] shadow-2xl transition duration-200 md:z-30 md:h-screen md:translate-x-0 md:pb-0 md:pt-0 md:shadow-none md:transition-[width] ${
         mobileOpen ? "translate-x-0" : "-translate-x-full"
       } ${collapsed ? "md:w-20" : "md:w-64"}`}
     >
@@ -82,7 +82,7 @@ export function PortalSidebar({
           return (
             <Link
               aria-label={item.label}
-              className={`mb-1 flex h-11 items-center rounded-md text-[15px] font-medium transition ${
+              className={`mb-1 flex h-12 items-center rounded-md text-[15px] font-medium transition md:h-11 ${
                 collapsed ? "px-3 md:justify-center md:px-0" : "px-3"
               } ${
                 isActive
@@ -107,7 +107,7 @@ export function PortalSidebar({
         <form action={logoutAction}>
           <PendingSubmitButton
             aria-label="Sign out"
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#15191f] px-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#2d3745] focus:outline-none focus:ring-2 focus:ring-[#cbd5e1] focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#15191f] px-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#2d3745] focus:outline-none focus:ring-2 focus:ring-[#cbd5e1] focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70 md:h-11"
             pendingLabel={collapsed ? null : "Signing out…"}
             title={collapsed ? "Sign out" : undefined}
           >

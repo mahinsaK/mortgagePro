@@ -61,7 +61,7 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
           <div className="flex items-center gap-2">
             <a
               aria-label="Download loan payments as CSV"
-              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#15191f] text-white shadow-sm transition hover:bg-[#2d3745]"
+              className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#15191f] text-white shadow-sm transition hover:bg-[#2d3745] sm:size-10"
               href={`/api/loans/${encodeURIComponent(loanId)}/payments?format=csv`}
               title="Download loan payments as CSV"
             >
@@ -70,7 +70,7 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
             </a>
             <Dialog.Trigger asChild>
               <button
-                className="h-9 rounded-md border border-[#cfd8e3] px-3 text-xs font-semibold text-[#2d3745] transition hover:bg-[#f8fafc]"
+                className="h-11 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] sm:h-10"
                 type="button"
               >
                 View payments
@@ -83,7 +83,7 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[60] bg-black/20" />
         <Dialog.Content className="fixed inset-y-0 right-0 z-[70] flex w-full max-w-2xl flex-col border-l border-[#dfe5ec] bg-white text-[#15191f] shadow-2xl outline-none">
-          <div className="flex items-start justify-between gap-4 border-b border-[#dfe5ec] px-5 py-4 sm:px-6">
+          <div className="flex items-start justify-between gap-3 border-b border-[#dfe5ec] px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:py-4">
             <div>
               <Dialog.Description className="text-sm font-medium text-[#657386]">
                 Loan payments
@@ -120,7 +120,7 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
+          <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6">
             {isLoading && !details ? (
               <p className="text-sm text-[#657386]" role="status">
                 Loading payment details...
@@ -147,7 +147,44 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
                   <Summary label="Remaining" value={details.remaining} />
                 </div>
 
-                <div className="overflow-x-auto rounded-lg border border-[#eef2f6]">
+                <div className="divide-y divide-[#eef2f6] overflow-hidden rounded-lg border border-[#eef2f6] sm:hidden">
+                  {details.payments.map((payment) => (
+                    <article className="p-4" key={payment.id}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold">
+                            {payment.collectorName}
+                          </p>
+                          <p className="mt-1 text-sm text-[#657386]">
+                            <LocalTimestamp value={payment.recordedAt} />
+                          </p>
+                        </div>
+                        <p className="shrink-0 font-semibold">{payment.amount}</p>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between gap-3 rounded-md bg-[#f8fafc] p-3">
+                        <span className="rounded-full bg-[#e0ecff] px-2.5 py-1 text-xs font-semibold text-[#1d4ed8]">
+                          {payment.method}
+                        </span>
+                        <DeletePaymentButton
+                          onDeleted={loadPayments}
+                          paymentId={payment.id}
+                        />
+                      </div>
+                    </article>
+                  ))}
+                  {details.payments.length === 0 ? (
+                    <p className="p-4 text-sm text-[#657386]">
+                      No payments found for this loan.
+                    </p>
+                  ) : null}
+                </div>
+
+                <div
+                  aria-label="Loan payment history table"
+                  className="hidden overflow-x-auto rounded-lg border border-[#eef2f6] sm:block"
+                  role="region"
+                  tabIndex={0}
+                >
                   <table className="w-full min-w-[520px] border-collapse text-left text-sm">
                     <thead className="bg-[#f8fafc] text-[#657386]">
                       <tr>

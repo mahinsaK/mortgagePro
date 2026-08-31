@@ -66,7 +66,7 @@ export function LoanQrTableActions({ loanId }: { loanId: string }) {
         <Dialog.Trigger asChild>
           <button
             aria-label="Preview QR"
-            className="flex size-9 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#1d4ed8] transition hover:bg-[#eef4ff]"
+            className="flex size-11 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#1d4ed8] transition hover:bg-[#eef4ff] md:size-9"
             onClick={(event) => event.stopPropagation()}
             onFocus={() => void prepareQrCode()}
             title="Preview QR"
@@ -77,7 +77,7 @@ export function LoanQrTableActions({ loanId }: { loanId: string }) {
         </Dialog.Trigger>
         <button
           aria-label="Download QR"
-          className="flex size-9 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#1d4ed8] transition hover:bg-[#eef4ff] disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex size-11 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#1d4ed8] transition hover:bg-[#eef4ff] disabled:cursor-not-allowed disabled:opacity-60 md:size-9"
           disabled={isBusy}
           onClick={(event) => {
             event.stopPropagation();
@@ -115,7 +115,7 @@ export function LoanQrTableActions({ loanId }: { loanId: string }) {
             <Dialog.Close asChild>
               <button
                 aria-label="Close QR preview"
-                className="flex size-9 items-center justify-center rounded-md border border-[#dfe5ec] text-[#657386] transition hover:bg-[#f8fafc]"
+                className="flex size-11 items-center justify-center rounded-md border border-[#dfe5ec] text-[#657386] transition hover:bg-[#f8fafc] sm:size-10"
                 type="button"
               >
                 <X aria-hidden="true" size={17} />

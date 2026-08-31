@@ -194,7 +194,7 @@ export function AddCollectorForm() {
               <Dialog.Close asChild>
                 <button
                   aria-label="Close"
-                  className="flex size-9 items-center justify-center rounded-md border border-[#dfe5ec] text-[#657386] transition hover:bg-[#f8fafc]"
+                  className="flex size-11 items-center justify-center rounded-md border border-[#dfe5ec] text-[#657386] transition hover:bg-[#f8fafc] sm:size-10"
                   type="button"
                 >
                   <X aria-hidden="true" size={17} />

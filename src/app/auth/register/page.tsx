@@ -11,7 +11,7 @@ export default async function RegisterPage({
   const { message, status } = await searchParams;
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#eef2f6] px-5 py-10">
+    <main className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-[#eef2f6] px-3 py-[max(1rem,env(safe-area-inset-top))] sm:px-5 sm:py-10">
       <Link
         className="flex h-12 w-full max-w-md items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white shadow-sm md:hidden"
         href="/collector/login"
@@ -19,7 +19,7 @@ export default async function RegisterPage({
         <QrCode aria-hidden="true" size={18} />
         Scan QR code
       </Link>
-      <section className="w-full max-w-3xl rounded-lg border border-[#d9e0e8] bg-white p-6 shadow-sm sm:p-8">
+      <section className="w-full max-w-3xl rounded-lg border border-[#d9e0e8] bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-sm sm:p-8">
         <div className="mb-8">
           <Link
             className="text-sm font-semibold text-[#2563eb] hover:underline"

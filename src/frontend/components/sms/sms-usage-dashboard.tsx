@@ -26,7 +26,7 @@ export function SmsUsageDashboard({ data }: { data: SmsReportingData }) {
           {data.current.remainingUnits.toLocaleString("en-US")} units remaining
         </p>
       </div>
-        <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           <Metric label="Monthly quota" value={data.current.quota} />
           <Metric label="Used units" value={data.current.sentUnits} />
           <Metric label="Reserved units" value={data.current.reservedUnits} />
@@ -52,7 +52,12 @@ export function SmsUsageDashboard({ data }: { data: SmsReportingData }) {
               Successful and failed recipients by Asia/Colombo month.
             </p>
           </div>
-          <div className="overflow-x-auto">
+          <div
+            aria-label="Twelve month SMS usage table"
+            className="overflow-x-auto"
+            role="region"
+            tabIndex={0}
+          >
             <table className="min-w-full text-left text-sm">
               <thead className="bg-[#f8fafc] text-xs uppercase tracking-wide text-[#657386]">
                 <tr>

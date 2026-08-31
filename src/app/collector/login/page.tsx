@@ -20,14 +20,14 @@ export default async function CollectorLoginPage({
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#eef2f6] px-5 py-10">
-      <section className="w-full max-w-md rounded-lg border border-[#d9e0e8] bg-white p-6 shadow-sm sm:p-8">
+    <main className="flex min-h-[100dvh] items-center justify-center bg-[#eef2f6] px-3 py-[max(1rem,env(safe-area-inset-top))] sm:px-5 sm:py-10">
+      <section className="w-full max-w-md rounded-lg border border-[#d9e0e8] bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-sm sm:p-8">
         <div className="flex items-center justify-between gap-4">
           <p className="text-sm font-medium text-[#657386]">
             Collector access
           </p>
           <Link
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#dfe5ec] px-2.5 text-xs font-semibold text-[#2d3745] transition hover:bg-[#f8fafc]"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-[#dfe5ec] px-3 text-xs font-semibold text-[#2d3745] transition hover:bg-[#f8fafc]"
             href="/auth/login"
           >
             <Building2 aria-hidden="true" size={14} />
@@ -50,6 +50,7 @@ export default async function CollectorLoginPage({
               autoCapitalize="none"
               autoComplete="username"
               autoCorrect="off"
+              spellCheck={false}
               name="username"
               placeholder="jordanlee4821"
               required
@@ -60,6 +61,7 @@ export default async function CollectorLoginPage({
             <input
               className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-base text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
               name="password"
+              autoComplete="current-password"
               placeholder="Collector password"
               required
               type="password"

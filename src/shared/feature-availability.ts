@@ -9,11 +9,10 @@ export type FeatureAvailability = {
 
 const FEATURES: Record<ManagedFeature, FeatureAvailability> = {
   sms: {
-    available: false,
-    description:
-      "Messaging is temporarily unavailable while we improve sender approval and delivery reporting.",
+    available: true,
+    description: "Lender messaging is available when sender approval and quota are configured.",
     label: "SMS messaging",
-    title: "SMS is under maintenance",
+    title: "SMS messaging",
   },
 };
 

@@ -12,35 +12,42 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
     <>
       <div className="divide-y divide-[#eef2f6] md:hidden">
         {loans.map((loan) => (
-          <button
-            className="block w-full p-4 text-left transition active:bg-[#f8fafc]"
+          <article
+            className="p-4 transition active:bg-[#f8fafc]"
             key={loan.id}
-            onClick={() => setSelectedLoan(loan)}
-            type="button"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate text-base font-semibold">
-                  {loan.borrowerName}
-                </p>
-                <p className="mt-1 text-sm text-[#657386]">
-                  Ends {loan.endDate}
-                </p>
+            <button
+              className="block w-full text-left"
+              onClick={() => setSelectedLoan(loan)}
+              type="button"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-base font-semibold">
+                    {loan.borrowerName}
+                  </p>
+                  <p className="mt-1 text-sm text-[#657386]">
+                    Ends {loan.endDate}
+                  </p>
+                </div>
+                <span className="rounded-full bg-[#e0ecff] px-2.5 py-1 text-xs font-semibold text-[#1d4ed8]">
+                  {loan.status}
+                </span>
               </div>
-              <span className="rounded-full bg-[#e0ecff] px-2.5 py-1 text-xs font-semibold text-[#1d4ed8]">
-                {loan.status}
+              <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-[#f8fafc] p-3">
+                <MobileDetail label="Amount" value={loan.amount} />
+                <MobileDetail label="Remaining" value={loan.remainingAmount} />
+                <MobileDetail label="Paid" value={loan.totalPaid} />
+                <MobileDetail label="Daily" value={loan.dailyPayment} />
+              </dl>
+              <span className="mt-3 block text-sm font-semibold text-[#1d4ed8]">
+                View loan details
               </span>
+            </button>
+            <div className="mt-3 flex justify-end">
+              <LoanQrTableActions loanId={loan.id} />
             </div>
-            <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-[#f8fafc] p-3">
-              <MobileDetail label="Amount" value={loan.amount} />
-              <MobileDetail label="Remaining" value={loan.remainingAmount} />
-              <MobileDetail label="Paid" value={loan.totalPaid} />
-              <MobileDetail label="Daily" value={loan.dailyPayment} />
-            </dl>
-            <span className="mt-3 block text-sm font-semibold text-[#1d4ed8]">
-              View loan details
-            </span>
-          </button>
+          </article>
         ))}
         {loans.length === 0 ? (
           <p className="p-5 text-sm text-[#657386]">No loans found.</p>
@@ -69,7 +76,10 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
                 key={loan.id}
                 onClick={() => setSelectedLoan(loan)}
               >
-                <td className="px-5 py-4">
+                <td
+                  className="px-5 py-4"
+                  onClick={(event) => event.stopPropagation()}
+                >
                   <LoanQrTableActions loanId={loan.id} />
                 </td>
                 <td className="px-5 py-4">{loan.borrowerName}</td>

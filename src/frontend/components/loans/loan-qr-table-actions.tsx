@@ -11,6 +11,7 @@ import {
 
 export function LoanQrTableActions({ loanId }: { loanId: string }) {
   const [qrDataUrl, setQrDataUrl] = useState("");
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [status, setStatus] = useState<
     "idle" | "preparing" | "downloading" | "error"
   >("idle");
@@ -50,7 +51,9 @@ export function LoanQrTableActions({ loanId }: { loanId: string }) {
 
   return (
     <Dialog.Root
+      open={isPreviewOpen}
       onOpenChange={(open) => {
+        setIsPreviewOpen(open);
         if (open) {
           void prepareQrCode();
         }
@@ -63,7 +66,7 @@ export function LoanQrTableActions({ loanId }: { loanId: string }) {
         <Dialog.Trigger asChild>
           <button
             aria-label="Preview QR"
-            className="flex size-8 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#1d4ed8] transition hover:bg-[#eef4ff]"
+            className="flex size-9 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#1d4ed8] transition hover:bg-[#eef4ff]"
             onClick={(event) => event.stopPropagation()}
             onFocus={() => void prepareQrCode()}
             title="Preview QR"
@@ -74,7 +77,7 @@ export function LoanQrTableActions({ loanId }: { loanId: string }) {
         </Dialog.Trigger>
         <button
           aria-label="Download QR"
-          className="flex size-8 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#1d4ed8] transition hover:bg-[#eef4ff] disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex size-9 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#1d4ed8] transition hover:bg-[#eef4ff] disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isBusy}
           onClick={(event) => {
             event.stopPropagation();
@@ -93,8 +96,15 @@ export function LoanQrTableActions({ loanId }: { loanId: string }) {
       </div>
 
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[60] w-[min(360px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#dfe5ec] bg-white p-4 text-[#15191f] shadow-2xl outline-none">
+        <Dialog.Overlay
+          className="fixed inset-0 z-50 bg-black/45"
+          onClick={(event) => event.stopPropagation()}
+        />
+        <Dialog.Content
+          className="fixed z-[60] w-[min(360px,calc(100vw-32px))] rounded-xl border border-[#dfe5ec] bg-white p-4 text-[#15191f] shadow-2xl outline-none"
+          onClick={(event) => event.stopPropagation()}
+          style={{ left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}
+        >
           <div className="mb-3 flex items-center justify-between gap-3">
             <Dialog.Title className="text-base font-semibold">
               Loan QR code

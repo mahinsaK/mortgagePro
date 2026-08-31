@@ -72,7 +72,18 @@ test.describe("dedicated pilot lender journey", () => {
       page.getByRole("heading", { name: "Loan QR code" }),
     ).toBeVisible();
     await expect(page.getByAltText("QR code for this loan")).toBeVisible();
+    const preview = page.getByRole("dialog");
+    const previewBox = await preview.boundingBox();
+    const viewport = page.viewportSize();
+    expect(previewBox).not.toBeNull();
+    expect(viewport).not.toBeNull();
+    expect(Math.abs(previewBox!.x + previewBox!.width / 2 - viewport!.width / 2)).toBeLessThan(3);
+    expect(Math.abs(previewBox!.y + previewBox!.height / 2 - viewport!.height / 2)).toBeLessThan(3);
     await page.getByRole("button", { name: "Close QR preview" }).click();
+    await expect(preview).toBeHidden();
+    await expect(
+      page.getByRole("heading", { name: "Loan details" }),
+    ).toBeHidden();
     await expect(
       page.getByRole("button", { name: "Download QR" }).first(),
     ).toBeEnabled();

@@ -5,12 +5,12 @@ import {
 } from "../feature-availability";
 
 describe("feature availability", () => {
-  it("keeps SMS unavailable while its workflow is under maintenance", () => {
-    expect(isFeatureAvailable("sms")).toBe(false);
+  it("makes SMS available when its workflow is enabled", () => {
+    expect(isFeatureAvailable("sms")).toBe(true);
     expect(getFeatureAvailability("sms")).toMatchObject({
-      available: false,
+      available: true,
       label: "SMS messaging",
-      title: "SMS is under maintenance",
+      title: "SMS messaging",
     });
   });
 });

@@ -3,6 +3,7 @@
 import Form from "next/form";
 import { useState } from "react";
 import { DatePicker } from "@/frontend/components/forms/date-picker";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 
 export function DailyCollectionsDateFilter({
   selectedDate,
@@ -24,12 +25,12 @@ export function DailyCollectionsDateFilter({
         onChange={setDate}
         value={date}
       />
-      <button
-        className="h-11 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
-        type="submit"
+      <PendingSubmitButton
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-wait disabled:opacity-70"
+        pendingLabel="Loading…"
       >
         View day
-      </button>
+      </PendingSubmitButton>
     </Form>
   );
 }

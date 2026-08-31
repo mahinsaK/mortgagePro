@@ -8,6 +8,8 @@ import {
   updateBorrowerAction,
 } from "@/backend/actions/lending-actions";
 import { PhoneInput } from "@/frontend/components/forms/phone-input";
+import { announceNavigationStart } from "@/frontend/components/ui/navigation-progress";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 
 type BorrowerRow = {
   id: string;
@@ -23,6 +25,7 @@ export function BorrowersTable({ borrowers }: { borrowers: BorrowerRow[] }) {
   const router = useRouter();
 
   function openBorrowerProfile(borrowerId: string) {
+    announceNavigationStart();
     router.push(`/borrowers/${borrowerId}`);
   }
 
@@ -144,13 +147,13 @@ function BorrowerActions({ borrower }: { borrower: BorrowerRow }) {
         }}
       >
         <input name="borrower_id" type="hidden" value={borrower.id} />
-        <button
+        <PendingSubmitButton
           aria-label={`Delete ${borrower.name}`}
           className="flex size-9 items-center justify-center rounded-md border border-[#fecaca] text-[#b91c1c] transition hover:bg-[#fef2f2]"
-          type="submit"
+          pendingLabel={null}
         >
           <Trash2 aria-hidden="true" size={16} />
-        </button>
+        </PendingSubmitButton>
       </form>
     </div>
   );
@@ -238,12 +241,12 @@ function EditBorrowerDialog({ borrower }: { borrower: BorrowerRow }) {
               </select>
             </label>
             <div className="flex items-end sm:col-span-2">
-              <button
-                className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
-                type="submit"
+              <PendingSubmitButton
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-wait disabled:opacity-70"
+                pendingLabel="Updating borrower…"
               >
                 Update borrower
-              </button>
+              </PendingSubmitButton>
             </div>
           </form>
         </Dialog.Content>

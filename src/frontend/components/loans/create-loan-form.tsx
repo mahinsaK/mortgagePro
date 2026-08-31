@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { Calculator, Check, Plus, X } from "lucide-react";
+import { Calculator, Check, LoaderCircle, Plus, X } from "lucide-react";
 import { useActionState, useMemo, useRef, useState } from "react";
 import {
   createLoanForBorrowerFormAction,
@@ -224,11 +224,16 @@ function CreateLoanActionForm({
         ) : null}
         <div className="flex items-end sm:col-span-2">
           <button
-            className="h-11 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isPending}
             type="submit"
           >
-            {isPending ? "Creating loan..." : "Create loan"}
+            {isPending ? (
+              <>
+                <LoaderCircle aria-hidden="true" className="animate-spin" size={16} />
+                Creating loan…
+              </>
+            ) : "Create loan"}
           </button>
         </div>
       </form>

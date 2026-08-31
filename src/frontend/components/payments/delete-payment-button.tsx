@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { LoaderCircle, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { deletePaymentAction } from "@/backend/actions/payment-actions";
@@ -45,7 +45,11 @@ export function DeletePaymentButton({
       title="Delete payment"
       type="button"
     >
-      <Trash2 aria-hidden="true" size={16} />
+      {isPending ? (
+        <LoaderCircle aria-hidden="true" className="animate-spin" size={16} />
+      ) : (
+        <Trash2 aria-hidden="true" size={16} />
+      )}
     </button>
   );
 }

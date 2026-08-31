@@ -2,7 +2,7 @@
 
 import { useRef, useState, type Ref } from "react";
 import { useFormStatus } from "react-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, LoaderCircle } from "lucide-react";
 import { PhoneInput } from "@/frontend/components/forms/phone-input";
 
 type RegisterLenderFormProps = {
@@ -123,8 +123,17 @@ function SubmitButton() {
       disabled={pending}
       type="submit"
     >
-      {pending ? "Creating account" : "Register lender"}
-      <ArrowRight aria-hidden="true" size={17} />
+      {pending ? (
+        <>
+          <LoaderCircle aria-hidden="true" className="animate-spin" size={17} />
+          Creating account…
+        </>
+      ) : (
+        <>
+          Register lender
+          <ArrowRight aria-hidden="true" size={17} />
+        </>
+      )}
     </button>
   );
 }

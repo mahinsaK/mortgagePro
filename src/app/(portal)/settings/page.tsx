@@ -6,6 +6,7 @@ import { currencyOptions } from "@/backend/lib/currency";
 import { getPrimaryLender } from "@/backend/services/lender-service";
 import { PhoneInput } from "@/frontend/components/forms/phone-input";
 import { LenderPasswordForm } from "@/frontend/components/settings/lender-password-form";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -66,12 +67,12 @@ export default async function SettingsPage() {
             </select>
           </label>
           <div className="flex items-end">
-            <button
-              className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
-              type="submit"
+            <PendingSubmitButton
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-wait disabled:opacity-70"
+              pendingLabel="Saving…"
             >
               Save profile
-            </button>
+            </PendingSubmitButton>
           </div>
         </form>
       </section>
@@ -98,12 +99,12 @@ export default async function SettingsPage() {
             </p>
           </div>
           <form action={logoutAllLenderDevicesAction}>
-            <button
-              className="h-10 w-full rounded-md border border-[#dc2626] px-4 text-sm font-semibold text-[#b91c1c] transition hover:bg-[#fef2f2] sm:w-auto"
-              type="submit"
+            <PendingSubmitButton
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#dc2626] px-4 text-sm font-semibold text-[#b91c1c] transition hover:bg-[#fef2f2] disabled:cursor-wait disabled:opacity-70 sm:w-auto"
+              pendingLabel="Signing out…"
             >
               Log out all devices
-            </button>
+            </PendingSubmitButton>
           </form>
         </div>
       </section>

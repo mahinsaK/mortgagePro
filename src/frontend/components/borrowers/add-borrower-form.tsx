@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Plus, X } from "lucide-react";
 import { createBorrowerAction } from "@/backend/actions/lending-actions";
 import { PhoneInput } from "@/frontend/components/forms/phone-input";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 
 export function AddBorrowerForm() {
   return (
@@ -54,12 +55,12 @@ export function AddBorrowerForm() {
               <PhoneField name="phone" />
               <Field label="Address" name="address" placeholder="Main Street" />
               <div className="flex items-end sm:col-span-2">
-                <button
-                  className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
-                  type="submit"
+                <PendingSubmitButton
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-wait disabled:opacity-70"
+                  pendingLabel="Adding borrower…"
                 >
                   Add borrower
-                </button>
+                </PendingSubmitButton>
               </div>
             </form>
           </Dialog.Content>

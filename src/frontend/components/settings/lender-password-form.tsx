@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useRef } from "react";
+import { LoaderCircle } from "lucide-react";
 import {
   updateLenderPasswordFormAction,
   type UpdateLenderPasswordActionState,
@@ -52,11 +53,16 @@ export function LenderPasswordForm() {
 
       <div className="sm:col-span-2 sm:max-w-xs">
         <button
-          className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
           disabled={isPending}
           type="submit"
         >
-          {isPending ? "Updating password..." : "Update password"}
+          {isPending ? (
+            <>
+              <LoaderCircle aria-hidden="true" className="animate-spin" size={16} />
+              Updating password…
+            </>
+          ) : "Update password"}
         </button>
       </div>
     </form>

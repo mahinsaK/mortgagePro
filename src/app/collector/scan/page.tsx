@@ -7,6 +7,7 @@ import {
 import { requireActiveCollectorPrincipal } from "@/backend/services/collector-auth-service";
 import { CollectorScanner } from "@/frontend/components/collector/collector-scanner";
 import { SessionKeepAlive } from "@/frontend/components/auth/session-keep-alive";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -33,20 +34,20 @@ export default async function CollectorScanPage({
           </div>
           <div className="flex flex-col items-end gap-1.5 sm:flex-row">
             <form action={collectorLogoutAction}>
-              <button
-                className="h-10 rounded-md border border-[#cfd8e3] bg-white px-3 text-sm font-semibold text-[#2d3745]"
-                type="submit"
+              <PendingSubmitButton
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#cfd8e3] bg-white px-3 text-sm font-semibold text-[#2d3745] disabled:cursor-wait disabled:opacity-70"
+                pendingLabel="Logging out…"
               >
                 Log out
-              </button>
+              </PendingSubmitButton>
             </form>
             <form action={collectorLogoutAllDevicesAction}>
-              <button
-                className="text-xs font-semibold text-[#657386] underline-offset-2 hover:underline sm:h-10 sm:rounded-md sm:border sm:border-[#cfd8e3] sm:bg-white sm:px-3 sm:text-sm sm:no-underline"
-                type="submit"
+              <PendingSubmitButton
+                className="inline-flex items-center justify-center gap-2 text-xs font-semibold text-[#657386] underline-offset-2 hover:underline disabled:cursor-wait disabled:opacity-70 sm:h-10 sm:rounded-md sm:border sm:border-[#cfd8e3] sm:bg-white sm:px-3 sm:text-sm sm:no-underline"
+                pendingLabel="Logging out…"
               >
                 Log out all devices
-              </button>
+              </PendingSubmitButton>
             </form>
           </div>
         </header>

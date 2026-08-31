@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import QrScanner from "qr-scanner";
 import { useEffect, useRef, useState } from "react";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 
 type LoanPreview = {
   id: string;
@@ -269,13 +270,13 @@ export function CollectorScanner({
                   )}
                 </button>
 
-                <button
-                  className="mt-4 h-11 w-full rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
+                <PendingSubmitButton
+                  className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
                   disabled={!paymentRequestId || loan.remainingAmount <= 0}
-                  type="submit"
+                  pendingLabel="Collecting…"
                 >
                   Collect payment
-                </button>
+                </PendingSubmitButton>
 
                 <button
                   aria-expanded={showLoanDetails}

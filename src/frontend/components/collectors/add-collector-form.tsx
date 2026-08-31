@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { Plus, RefreshCw, X } from "lucide-react";
+import { LoaderCircle, Plus, RefreshCw, X } from "lucide-react";
 import { useActionState, useRef, useState } from "react";
 import {
   createCollectorAction,
@@ -331,11 +331,16 @@ export function AddCollectorForm() {
               </label>
               <div className="flex items-end sm:col-span-2">
                 <button
-                  className="h-10 w-full rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
                   disabled={submitDisabled}
                   type="submit"
                 >
-                  {isPending ? "Adding collector..." : "Add collector"}
+                  {isPending ? (
+                    <>
+                      <LoaderCircle aria-hidden="true" className="animate-spin" size={16} />
+                      Adding collector…
+                    </>
+                  ) : "Add collector"}
                 </button>
               </div>
             </form>

@@ -5,6 +5,7 @@ import { getBorrowersPageData } from "@/backend/services/lending-service";
 import { AddBorrowerForm } from "@/frontend/components/borrowers/add-borrower-form";
 import { BorrowersTable } from "@/frontend/components/borrowers/borrowers-table";
 import { PaginationControls } from "@/frontend/components/ui/pagination-controls";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -87,12 +88,12 @@ export default async function BorrowersPage({
                 type="search"
               />
             </label>
-            <button
-              className="h-11 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745]"
-              type="submit"
+            <PendingSubmitButton
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-wait disabled:opacity-70"
+              pendingLabel="Searching…"
             >
               Search
-            </button>
+            </PendingSubmitButton>
             {query ? (
               <Link
                 aria-label="Clear borrower search"

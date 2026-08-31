@@ -1,5 +1,6 @@
 "use client";
 
+import Form from "next/form";
 import { useState } from "react";
 import { DatePicker } from "@/frontend/components/forms/date-picker";
 
@@ -11,7 +12,11 @@ export function DailyCollectionsDateFilter({
   const [date, setDate] = useState(selectedDate);
 
   return (
-    <form className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-end gap-2 sm:w-auto sm:grid-cols-[minmax(220px,1fr)_auto] sm:gap-3">
+    <Form
+      action="/payments/daily"
+      className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-end gap-2 sm:w-auto sm:grid-cols-[minmax(220px,1fr)_auto] sm:gap-3"
+      scroll={false}
+    >
       <DatePicker
         hideLabel
         label="Collection date"
@@ -25,6 +30,6 @@ export function DailyCollectionsDateFilter({
       >
         View day
       </button>
-    </form>
+    </Form>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Form from "next/form";
 import { Search, X } from "lucide-react";
 import { getBorrowersPageData } from "@/backend/services/lending-service";
 import { AddBorrowerForm } from "@/frontend/components/borrowers/add-borrower-form";
@@ -45,6 +46,7 @@ export default async function BorrowersPage({
           <Link
             className="shrink-0 text-sm font-semibold text-[#9a3412] underline-offset-4 hover:underline"
             href="/borrowers"
+            scroll={false}
           >
             Clear filter
           </Link>
@@ -61,9 +63,10 @@ export default async function BorrowersPage({
               </p>
             ) : null}
           </div>
-          <form
+          <Form
             action="/borrowers"
             className="flex w-full max-w-xl flex-col gap-2 min-[380px]:flex-row"
+            scroll={false}
           >
             {attention ? (
               <input name="attention" type="hidden" value={attention} />
@@ -95,12 +98,13 @@ export default async function BorrowersPage({
                 aria-label="Clear borrower search"
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#cfd8e3] px-3 text-sm font-semibold text-[#526174] transition hover:bg-[#f8fafc]"
                 href={attention ? `/borrowers?attention=${attention}` : "/borrowers"}
+                scroll={false}
               >
                 <X aria-hidden="true" size={16} />
                 Clear
               </Link>
             ) : null}
-          </form>
+          </Form>
         </div>
         <div>
           <BorrowersTable borrowers={borrowers} />

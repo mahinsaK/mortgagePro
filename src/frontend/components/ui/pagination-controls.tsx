@@ -31,6 +31,7 @@ export function PaginationControls({
           <Link
             className="rounded-md border border-[#cfd8e3] px-3 py-2 text-center font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
             href={pageHref(basePath, previousPage, query)}
+            scroll={false}
           >
             Previous
           </Link>
@@ -46,6 +47,7 @@ export function PaginationControls({
           <Link
             className="rounded-md border border-[#cfd8e3] px-3 py-2 text-center font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
             href={pageHref(basePath, nextPage, query)}
+            scroll={false}
           >
             Next
           </Link>

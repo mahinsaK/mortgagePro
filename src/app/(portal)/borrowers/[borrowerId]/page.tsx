@@ -132,6 +132,7 @@ function SummaryCardLink({
           : "border-[#dfe5ec] bg-white hover:border-[#b9c7d8] hover:bg-[#f8fafc]"
       }`}
       href={href}
+      scroll={false}
     >
       <p className="text-xs font-medium text-[#657386] md:text-sm">{label}</p>
       <p className="mt-2 text-xl font-semibold text-[#15191f] md:mt-3 md:text-2xl">{value}</p>

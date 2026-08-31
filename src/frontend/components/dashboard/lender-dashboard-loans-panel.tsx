@@ -1,5 +1,6 @@
 "use client";
 
+import Form from "next/form";
 import { Search } from "lucide-react";
 import { useState } from "react";
 import type { DashboardLoan } from "@/backend/services/dashboard-service";
@@ -27,9 +28,10 @@ export function LenderDashboardLoansPanel({
   return (
     <div className="mt-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <form
+        <Form
           action="/dashboard/lender"
           className="flex w-full max-w-lg flex-col gap-2 min-[380px]:flex-row"
+          scroll={false}
         >
           <span className="sr-only">Search loans</span>
           <div className="flex h-10 min-w-0 flex-1 items-center rounded-md border border-[#cfd8e3] bg-white px-3 transition focus-within:border-[#1d4ed8] focus-within:ring-2 focus-within:ring-[#dbeafe]">
@@ -51,7 +53,7 @@ export function LenderDashboardLoansPanel({
           >
             Search
           </button>
-        </form>
+        </Form>
         <DateRangeCsvExport
           exportOptions={[
             { label: "Export payments", path: "/api/exports/payments" },

@@ -350,10 +350,12 @@ export function SmsWorkbench({
         </section>
 
         {management ? (
-          <SmsTemplateManager
-            onSelect={setMessageText}
-            templates={management.templates}
-          />
+          <div className="min-h-0 xl:relative">
+            <SmsTemplateManager
+              onSelect={setMessageText}
+              templates={management.templates}
+            />
+          </div>
         ) : null}
       </div>
       {management ? <SmsAccountPanel management={management} /> : null}

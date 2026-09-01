@@ -186,7 +186,7 @@ export function SmsWorkbench({
       <div
         className={
           management
-            ? "grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]"
+            ? "grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-stretch"
             : "grid"
         }
       >

@@ -78,6 +78,7 @@ export function PortalShell({
         <button
           aria-label="Close navigation menu"
           className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          data-no-press-feedback
           onClick={() => setMobileMenuOpen(false)}
           type="button"
         />

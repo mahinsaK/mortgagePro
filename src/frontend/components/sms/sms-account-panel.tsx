@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Clock3, ShieldAlert } from "lucide-react";
+import { CheckCircle2, Clock3, LoaderCircle, ShieldAlert } from "lucide-react";
 import {
   type FormEvent,
   useActionState,
@@ -80,7 +80,8 @@ export function SmsAccountPanel({
                 </p>
               ) : null}
               <button
-                className="inline-flex h-10 items-center justify-center rounded-md border border-[#fecaca] bg-white px-4 text-sm font-semibold text-[#b91c1c] transition hover:bg-[#fef2f2] disabled:cursor-not-allowed disabled:text-[#9aa6b2] sm:justify-self-start"
+                aria-busy={isDeleting || undefined}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#fecaca] bg-white px-4 text-sm font-semibold text-[#b91c1c] transition hover:bg-[#fef2f2] disabled:cursor-not-allowed disabled:text-[#9aa6b2] sm:justify-self-start"
                 disabled={isDeleting}
                 onClick={(event) => {
                   if (
@@ -93,7 +94,12 @@ export function SmsAccountPanel({
                 }}
                 type="submit"
               >
-                {isDeleting ? "Deleting…" : "Delete sender ID"}
+                {isDeleting ? (
+                  <>
+                    <LoaderCircle aria-hidden="true" className="animate-spin" size={16} />
+                    Deleting…
+                  </>
+                ) : "Delete sender ID"}
               </button>
             </form>
           ) : (
@@ -129,11 +135,17 @@ export function SmsAccountPanel({
                 </p>
               ) : null}
               <button
-                className="inline-flex h-10 items-center justify-center rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2] sm:justify-self-start"
+                aria-busy={isPending || undefined}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2] sm:justify-self-start"
                 disabled={Boolean(management.pendingRequest) || isPending}
                 type="submit"
               >
-                {isPending ? "Submitting…" : "Request sender ID"}
+                {isPending ? (
+                  <>
+                    <LoaderCircle aria-hidden="true" className="animate-spin" size={16} />
+                    Submitting…
+                  </>
+                ) : "Request sender ID"}
               </button>
             </form>
           )}
@@ -282,7 +294,12 @@ function AutomaticPaymentSettings({
         </p>
       ) : null}
       {isPending ? (
-        <p aria-live="polite" className="text-sm font-medium text-[#526174]">
+        <p
+          aria-live="polite"
+          className="flex items-center gap-2 text-sm font-medium text-[#526174]"
+          role="status"
+        >
+          <LoaderCircle aria-hidden="true" className="animate-spin" size={16} />
           Saving automatic payment settings…
         </p>
       ) : null}

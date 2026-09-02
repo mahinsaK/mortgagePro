@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { LoaderCircle, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useActionState, useState } from "react";
 import {
   createSmsTemplateAction,
@@ -10,6 +10,7 @@ import {
 } from "@/backend/actions/sms-actions";
 import type { SmsTemplate } from "@/backend/services/sms-management-service";
 import { SmsTemplatePlaceholderHelp } from "@/frontend/components/sms/sms-template-placeholder-help";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 
 const INITIAL_STATE: SmsManagementActionState = {
   status: "idle",
@@ -103,11 +104,17 @@ function CreateTemplateForm({ onSaved }: { onSaved: () => void }) {
       <TemplateFields disabled={isPending} />
       <ActionMessage state={state} />
       <button
-        className="h-10 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white disabled:bg-[#9aa6b2] sm:justify-self-start"
+        aria-busy={isPending || undefined}
+        className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white disabled:bg-[#9aa6b2] sm:justify-self-start"
         disabled={isPending}
         type="submit"
       >
-        {isPending ? "Saving…" : "Save template"}
+        {isPending ? (
+          <>
+            <LoaderCircle aria-hidden="true" className="animate-spin" size={16} />
+            Saving…
+          </>
+        ) : "Save template"}
       </button>
     </form>
   );
@@ -143,11 +150,17 @@ function TemplateCard({
         <ActionMessage state={state} />
         <div className="flex gap-2">
           <button
-            className="h-9 rounded-md bg-[#15191f] px-3 text-xs font-semibold text-white disabled:bg-[#9aa6b2]"
+            aria-busy={isPending || undefined}
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-[#15191f] px-3 text-xs font-semibold text-white disabled:bg-[#9aa6b2]"
             disabled={isPending}
             type="submit"
           >
-            {isPending ? "Saving…" : "Save"}
+            {isPending ? (
+              <>
+                <LoaderCircle aria-hidden="true" className="animate-spin" size={15} />
+                Saving…
+              </>
+            ) : "Save"}
           </button>
           <button
             className="h-9 rounded-md border border-[#cfd8e3] bg-white px-3 text-xs font-semibold"
@@ -190,7 +203,7 @@ function TemplateCard({
           </button>
           <form action={deleteSmsTemplateAction}>
             <input name="template_id" type="hidden" value={template.id} />
-            <button
+            <PendingSubmitButton
               aria-label={"Delete " + template.name}
               className="rounded-md p-2 text-[#b91c1c] hover:bg-[#fef2f2]"
               onClick={(event) => {
@@ -198,10 +211,10 @@ function TemplateCard({
                   event.preventDefault();
                 }
               }}
-              type="submit"
+              pendingLabel={null}
             >
               <Trash2 aria-hidden="true" size={15} />
-            </button>
+            </PendingSubmitButton>
           </form>
         </div>
       </div>

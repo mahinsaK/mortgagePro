@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { Download, RefreshCw, X } from "lucide-react";
+import { Download, LoaderCircle, RefreshCw, X } from "lucide-react";
 import { useState } from "react";
 import { LocalTimestamp } from "@/frontend/components/ui/local-timestamp";
 import { DeletePaymentButton } from "@/frontend/components/payments/delete-payment-button";
@@ -122,7 +122,15 @@ export function LoanPaymentsPanel({ loanId }: { loanId: string }) {
 
           <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6">
             {isLoading && !details ? (
-              <p className="text-sm text-[#657386]" role="status">
+              <p
+                className="flex items-center gap-2 text-sm text-[#657386]"
+                role="status"
+              >
+                <LoaderCircle
+                  aria-hidden="true"
+                  className="animate-spin text-[#2563eb]"
+                  size={17}
+                />
                 Loading payment details...
               </p>
             ) : null}

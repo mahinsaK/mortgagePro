@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Send, Users, X } from "lucide-react";
+import { LoaderCircle, Search, Send, Users, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   sendAllBorrowersSmsAction,
@@ -9,6 +9,7 @@ import {
 import { analyzeSmsMessage } from "@/backend/modules/sms/policy";
 import type { SmsManagementData } from "@/backend/services/sms-management-service";
 import { PhoneInput } from "@/frontend/components/forms/phone-input";
+import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
 import { sanitizePhoneNumberDraft } from "@/shared/phone-number";
 import { SmsAccountPanel } from "./sms-account-panel";
 import { SmsTemplateManager } from "./sms-template-manager";
@@ -222,12 +223,22 @@ export function SmsWorkbench({
                     />
                   </div>
                   <button
+                    aria-busy={isSearching || undefined}
                     className="h-10 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
                     disabled={isSearching}
                     onClick={() => void searchBorrowers()}
                     type="button"
                   >
-                    {isSearching ? "Searching" : "Search"}
+                    {isSearching ? (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <LoaderCircle
+                          aria-hidden="true"
+                          className="animate-spin"
+                          size={16}
+                        />
+                        Searching…
+                      </span>
+                    ) : "Search"}
                   </button>
                 </div>
               </label>
@@ -318,7 +329,7 @@ export function SmsWorkbench({
                 the selected list
               </p>
               <div className="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
-                <button
+                <PendingSubmitButton
                   className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#cfd8e3] px-4 text-sm font-semibold text-[#2d3745] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:text-[#9aa6b2]"
                   disabled={!messageText.trim() || !sendingEnabled}
                   formAction={sendAllBorrowersSmsAction}
@@ -327,23 +338,23 @@ export function SmsWorkbench({
                       event.preventDefault();
                     }
                   }}
+                  pendingLabel="Sending to all…"
                   title="Sends this message to every borrower under this lender account."
-                  type="submit"
                 >
                   <Users aria-hidden="true" size={17} />
                   Send all borrowers
-                </button>
-                <button
+                </PendingSubmitButton>
+                <PendingSubmitButton
                   className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#15191f] px-5 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-not-allowed disabled:bg-[#9aa6b2]"
                   disabled={
                     selectedRecipients.length === 0 || !messageText.trim()
                     || !sendingEnabled
                   }
-                  type="submit"
+                  pendingLabel="Sending selected…"
                 >
                   <Send aria-hidden="true" size={17} />
                   Send selected
-                </button>
+                </PendingSubmitButton>
               </div>
             </form>
           </div>

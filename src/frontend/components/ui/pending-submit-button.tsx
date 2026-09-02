@@ -7,17 +7,26 @@ import { useFormStatus } from "react-dom";
 export function PendingSubmitButton({
   children,
   disabled,
+  formAction,
   pendingLabel = "Working…",
   ...props
 }: Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> & {
   children: ReactNode;
   pendingLabel?: ReactNode;
 }) {
-  const { pending } = useFormStatus();
+  const status = useFormStatus();
+  const showsPendingState =
+    status.pending && (!formAction || status.action === formAction);
 
   return (
-    <button {...props} disabled={disabled || pending} type="submit">
-      {pending ? (
+    <button
+      {...props}
+      aria-busy={showsPendingState || undefined}
+      disabled={disabled || status.pending}
+      formAction={formAction}
+      type="submit"
+    >
+      {showsPendingState ? (
         <>
           <LoaderCircle aria-hidden="true" className="animate-spin" size={16} />
           {pendingLabel}

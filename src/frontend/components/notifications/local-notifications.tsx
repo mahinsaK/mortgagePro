@@ -366,7 +366,16 @@ function NotificationStatus({
 }) {
   if ((!hasLoaded || isLoading) && !hasCachedData) {
     return (
-      <p aria-live="polite" className="mb-3 text-sm text-[#657386]">
+      <p
+        aria-live="polite"
+        className="mb-3 flex items-center gap-2 text-sm text-[#657386]"
+        role="status"
+      >
+        <RefreshCw
+          aria-hidden="true"
+          className="animate-spin text-[#2563eb]"
+          size={16}
+        />
         Checking your records…
       </p>
     );

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import type { DashboardLoan } from "@/backend/services/dashboard-service";
 import { DashboardLoanDetailsDialog } from "@/frontend/components/dashboard/dashboard-loan-details-dialog";
@@ -140,7 +141,17 @@ export function LenderDashboardStats({
             </div>
             <div className={overdueLoans.length > 0 ? "divide-y divide-[#eef2f6]" : undefined}>
               {isLoading ? (
-                <p className="p-6 text-sm text-[#657386]">Loading overdue loans…</p>
+                <p
+                  className="flex items-center gap-2 p-6 text-sm text-[#657386]"
+                  role="status"
+                >
+                  <LoaderCircle
+                    aria-hidden="true"
+                    className="animate-spin text-[#2563eb]"
+                    size={17}
+                  />
+                  Loading overdue loans…
+                </p>
               ) : null}
               {!isLoading && loadError ? (
                 <div className="p-6">

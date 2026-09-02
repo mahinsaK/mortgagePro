@@ -62,12 +62,46 @@ table tbody {
   }
 }
 
+@keyframes control-press {
+  0% {
+    filter: brightness(1);
+    scale: 1;
+  }
+  55% {
+    filter: brightness(0.94);
+    scale: 0.965;
+  }
+  100% {
+    filter: brightness(0.97);
+    scale: 0.985;
+  }
+}
+
+:where(
+  button:not(:disabled):not([data-no-press-feedback]),
+  a[href]:not([aria-disabled="true"]),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="link"]:not([aria-disabled="true"])
+):active {
+  animation: control-press 130ms ease-out both;
+}
+
 .navigation-progress-bar {
   animation: navigation-progress 1.15s ease-in-out infinite;
   width: 38%;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  :where(
+    button:not(:disabled),
+    a[href]:not([aria-disabled="true"]),
+    [role="button"]:not([aria-disabled="true"]),
+    [role="link"]:not([aria-disabled="true"])
+  ):active {
+    animation: none;
+    filter: brightness(0.94);
+  }
+
   .navigation-progress-bar {
     animation: none;
     opacity: 0.75;

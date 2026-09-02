@@ -111,7 +111,7 @@ export async function getLenderDashboardData(
       ]),
       listTenantDocuments("loans", lender.id, [
         Query.equal("status", ["active", "overdue"]),
-        Query.lessThan("end_date", todayRange.end),
+        Query.lessThan("end_date", todayRange.start),
         Query.limit(1),
         Query.select(["$id"]),
       ]),
@@ -196,7 +196,7 @@ export async function getDashboardOverdueLoans(asOf: string) {
   const dateRange = getDateRange(asOf);
   const overdueLoans = await listTenantDocuments("loans", lender.id, [
     Query.equal("status", ["active", "overdue"]),
-    Query.lessThan("end_date", dateRange.end),
+    Query.lessThan("end_date", dateRange.start),
     Query.orderAsc("end_date"),
     Query.limit(OVERDUE_LOAN_PREVIEW_LIMIT),
     Query.select([

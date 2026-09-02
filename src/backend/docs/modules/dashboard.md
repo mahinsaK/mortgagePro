@@ -127,14 +127,15 @@ Collection: `loans`
 ```txt
 Query.equal("lender_id", lender.id)
 Query.equal("status", ["active", "overdue"])
-Query.lessThan("end_date", tomorrowStartIso)
+Query.lessThan("end_date", todayStartIso)
 Query.limit(1)
 Query.select(["$id"])
 ```
 
-The dashboard counts an unfinished loan as overdue once its end date is reached. Completed and
-cancelled loans are excluded. The card reads `overdueLoans.total`, so the service does not load all
-overdue loans into memory.
+The dashboard counts an unfinished loan as overdue only after its end date has passed. A loan that
+ends today remains in the ending-today category until the next calendar day. Completed and cancelled
+loans are excluded. The card reads `overdueLoans.total`, so the service does not load all overdue
+loans into memory.
 
 ## Search behavior
 

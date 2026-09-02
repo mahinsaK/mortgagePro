@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getPrimaryLender: vi.fn(),
@@ -51,6 +51,8 @@ import {
 
 describe("dashboard-service", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-04T06:00:00.000Z"));
     mocks.getPrimaryLender.mockResolvedValue({
       id: "lender_1",
       currency: "USD",
@@ -144,6 +146,10 @@ describe("dashboard-service", () => {
     });
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("falls back to borrower name, address, and contact search when loan search has no matches", async () => {
     const dashboard = await getLenderDashboardData({ query: "avery" });
     const borrowerFallbackCall = mocks.listDocuments.mock.calls.find(
@@ -179,6 +185,7 @@ describe("dashboard-service", () => {
     expect(overdueQueries).toContain('"attribute":"lender_id"');
     expect(overdueQueries).toContain('"values":["active","overdue"]');
     expect(overdueQueries).toContain('"attribute":"end_date"');
+    expect(overdueQueries).toContain('"values":["2026-08-03T18:30:00.000Z"]');
     expect(overdueQueries).not.toContain('"method":"orderAsc"');
   });
 
@@ -203,6 +210,7 @@ describe("dashboard-service", () => {
     const overdueQueries = overdueCall?.[0].queries.join(" ") ?? "";
 
     expect(overdueQueries).toContain('"attribute":"lender_id"');
+    expect(overdueQueries).toContain('"values":["2026-08-03T18:30:00.000Z"]');
     expect(overdueQueries).toContain('"method":"orderAsc"');
     expect(overdueQueries).toContain('"method":"limit","values":[20]');
   });

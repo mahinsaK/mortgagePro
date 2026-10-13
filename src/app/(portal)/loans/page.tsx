@@ -2,23 +2,24 @@ import Link from "next/link";
 import { isValidDateOnly } from "@/backend/modules/notifications/dto";
 import { getLoansPageData } from "@/backend/services/lending-service";
 import type { LoanAttentionFilter } from "@/backend/services/lending-service";
-import { LoansTable } from "@/frontend/components/loans/loans-table";
-import { PaginationControls } from "@/frontend/components/ui/pagination-controls";
+import { LoansInfiniteList } from "@/frontend/components/loans/loans-infinite-list";
 
 export const dynamic = "force-dynamic";
 
+/** Renders the first filtered loan page and delegates later pages to the client. */
 export default async function LoansPage({
   searchParams,
 }: {
   searchParams: Promise<{ asOf?: string; attention?: string; page?: string }>;
 }) {
-  const { asOf, attention: requestedAttention, page } = await searchParams;
+  const { asOf, attention: requestedAttention } = await searchParams;
   const attention = normalizeAttention(requestedAttention);
   const normalizedAsOf = asOf && isValidDateOnly(asOf) ? asOf : undefined;
   const { loans, pageInfo } = await getLoansPageData({
     asOf: normalizedAsOf,
     attention,
-    page: Number(page) || 1,
+    page: 1,
+    pageSize: 20,
   });
 
   return (
@@ -52,20 +53,17 @@ export default async function LoansPage({
         <div className="border-b border-[#dfe5ec] px-5 py-4">
           <h2 className="text-lg font-semibold">Loans list</h2>
         </div>
-        <LoansTable loans={loans} />
-        <PaginationControls
-          basePath="/loans"
-          pageInfo={pageInfo}
-          query={{
-            asOf: attention ? normalizedAsOf : undefined,
-            attention: normalizedAsOf ? attention : undefined,
-          }}
+        <LoansInfiniteList
+          asOf={attention ? normalizedAsOf : undefined}
+          attention={normalizedAsOf ? attention : undefined}
+          initialPage={{ items: loans, pageInfo }}
         />
       </section>
     </div>
   );
 }
 
+/** Accepts only supported loan attention filters from the URL. */
 function normalizeAttention(value: string | undefined): LoanAttentionFilter | undefined {
   return value === "overdue" ||
     value === "ending-today" ||
@@ -74,6 +72,7 @@ function normalizeAttention(value: string | undefined): LoanAttentionFilter | un
     : undefined;
 }
 
+/** Returns the human-readable heading for a loan attention filter. */
 function attentionLabel(attention: LoanAttentionFilter) {
   if (attention === "overdue") {
     return "Overdue loans";

@@ -14,4 +14,16 @@ describe("infinite query keys", () => {
         infiniteQueryKeys.dailyCollections("2026-10-13", "collector_b"),
       );
   });
+
+  it("separates every list by its active filters and owner record", () => {
+    expect(infiniteQueryKeys.loans("overdue", "2026-10-13")).not.toEqual(
+      infiniteQueryKeys.loans("ending-soon", "2026-10-13"),
+    );
+    expect(infiniteQueryKeys.dashboardLoans("alice")).not.toEqual(
+      infiniteQueryKeys.dashboardLoans("bob"),
+    );
+    expect(infiniteQueryKeys.borrowerLoans("borrower_a", "")).not.toEqual(
+      infiniteQueryKeys.borrowerLoans("borrower_b", ""),
+    );
+  });
 });

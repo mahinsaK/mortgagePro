@@ -1,13 +1,13 @@
 "use client";
 
-import Form from "next/form";
-import { Search } from "lucide-react";
-import { useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { Search, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DashboardLoan } from "@/backend/services/dashboard-service";
 import { DashboardLoanDetailsDialog } from "@/frontend/components/dashboard/dashboard-loan-details-dialog";
 import { DateRangeCsvExport } from "@/frontend/components/export/csv-export-button";
-import { PaginationControls } from "@/frontend/components/ui/pagination-controls";
-import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
+import { InfiniteScrollStatus } from "@/frontend/components/ui/infinite-scroll-status";
+import { infiniteQueryKeys } from "@/frontend/lib/infinite-query-keys";
 type PageInfo = {
   page: number;
   pageSize: number;
@@ -15,25 +15,54 @@ type PageInfo = {
   totalPages: number;
 };
 
+/** Provides searchable infinite loan loading for the lender dashboard. */
 export function LenderDashboardLoansPanel({
-  loans,
-  pageInfo,
-  query,
+  initialPage,
+  initialQuery,
 }: {
-  loans: DashboardLoan[];
-  pageInfo: PageInfo;
-  query: string;
+  initialPage: { items: DashboardLoan[]; pageInfo: PageInfo };
+  initialQuery: string;
 }) {
   const [selectedLoan, setSelectedLoan] = useState<DashboardLoan | null>(null);
+  const [searchInput, setSearchInput] = useState(initialQuery);
+  const [query, setQuery] = useState(initialQuery);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(
+      () => setQuery(searchInput.trim().slice(0, 100)),
+      300,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [searchInput]);
+
+  const result = useInfiniteQuery({
+    queryKey: infiniteQueryKeys.dashboardLoans(query),
+    queryFn: ({ pageParam, signal }) => fetchDashboardLoans(query, pageParam, signal),
+    initialData: query === initialQuery
+      ? { pages: [initialPage], pageParams: [1] }
+      : undefined,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.pageInfo.page < lastPage.pageInfo.totalPages
+        ? lastPage.pageInfo.page + 1
+        : undefined,
+  });
+  const loans = useMemo(
+    () => Array.from(new Map(
+      (result.data?.pages.flatMap((page) => page.items) ?? []).map((loan) => [loan.id, loan]),
+    ).values()),
+    [result.data],
+  );
+  const total = result.data?.pages[0]?.pageInfo.total ?? 0;
+  const { fetchNextPage, hasNextPage, isFetchingNextPage } = result;
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
     <div className="mt-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <Form
-          action="/dashboard/lender"
-          className="flex w-full max-w-lg flex-col gap-2 min-[380px]:flex-row"
-          scroll={false}
-        >
+        <div className="flex w-full max-w-lg gap-2">
           <span className="sr-only">Search loans</span>
           <div className="flex h-10 min-w-0 flex-1 items-center rounded-md border border-[#cfd8e3] bg-white px-3 transition focus-within:border-[#1d4ed8] focus-within:ring-2 focus-within:ring-[#dbeafe]">
             <Search
@@ -43,18 +72,17 @@ export function LenderDashboardLoansPanel({
             />
             <input
               className="h-full min-w-0 flex-1 border-0 bg-transparent text-sm outline-none"
-              defaultValue={query}
-              name="q"
+              maxLength={100}
+              onChange={(event) => setSearchInput(event.target.value)}
               placeholder="Borrower name or contact number"
+              type="search"
+              value={searchInput}
             />
           </div>
-          <PendingSubmitButton
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white transition hover:bg-[#2d3745] disabled:cursor-wait disabled:opacity-70"
-            pendingLabel="Searching…"
-          >
-            Search
-          </PendingSubmitButton>
-        </Form>
+          {searchInput ? (
+            <button aria-label="Clear loan search" className="flex size-10 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3]" onClick={() => { setSearchInput(""); setQuery(""); }} type="button"><X aria-hidden="true" size={16} /></button>
+          ) : null}
+        </div>
         <DateRangeCsvExport
           exportOptions={[
             { label: "Export payments", path: "/api/exports/payments" },
@@ -69,7 +97,7 @@ export function LenderDashboardLoansPanel({
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#dfe5ec] px-5 py-4">
           <h2 className="text-lg font-semibold">Loans list</h2>
           <p className="text-sm text-[#657386]">
-            {loans.length} of {pageInfo.total} shown
+            {result.isPending ? "Searching…" : `${loans.length} of ${total} shown`}
           </p>
         </div>
         <div className="divide-y divide-[#eef2f6] md:hidden">
@@ -154,11 +182,12 @@ export function LenderDashboardLoansPanel({
             </tbody>
           </table>
         </div>
-        <PaginationControls
-          basePath="/dashboard/lender"
-          pageInfo={pageInfo}
-          query={query ? { q: query } : undefined}
-        />
+        {result.isError ? (
+          <div className="border-t border-[#eef2f6] p-4 text-sm text-[#b91c1c]" role="alert">
+            More loans could not be loaded. <button className="font-semibold underline" onClick={() => void result.refetch()} type="button">Try again</button>
+          </div>
+        ) : null}
+        <InfiniteScrollStatus hasMore={Boolean(result.hasNextPage)} isLoading={result.isFetchingNextPage} itemCount={loans.length} loadMore={loadMore} noMoreLabel="No more loans" />
       </section>
 
       {selectedLoan ? (
@@ -169,6 +198,15 @@ export function LenderDashboardLoansPanel({
       ) : null}
     </div>
   );
+}
+
+/** Fetches an abortable dashboard loan page for the active search. */
+async function fetchDashboardLoans(query: string, page: number, signal: AbortSignal) {
+  const params = new URLSearchParams({ page: String(page) });
+  if (query) params.set("q", query);
+  const response = await fetch(`/api/dashboard/loans?${params}`, { signal });
+  if (!response.ok) throw new Error("Dashboard loans request failed.");
+  return response.json() as Promise<{ items: DashboardLoan[]; pageInfo: PageInfo }>;
 }
 
 function MobileDetail({ label, value }: { label: string; value: string }) {

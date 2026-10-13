@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBorrowerProfileData } from "@/backend/services/lending-service";
-import { BorrowerLoansGrid } from "@/frontend/components/borrowers/borrower-loans-grid";
+import { BorrowerLoansInfiniteGrid } from "@/frontend/components/borrowers/borrower-loans-infinite-grid";
 import { CreateLoanForm } from "@/frontend/components/loans/create-loan-form";
-import { PaginationControls } from "@/frontend/components/ui/pagination-controls";
 
 export const dynamic = "force-dynamic";
 
+/** Renders a tenant-validated borrower profile and its first loan page. */
 export default async function BorrowerProfilePage({
   params,
   searchParams,
@@ -15,12 +15,12 @@ export default async function BorrowerProfilePage({
   searchParams: Promise<{ page?: string; status?: string }>;
 }) {
   const { borrowerId } = await params;
-  const { page, status } = await searchParams;
+  const { status } = await searchParams;
   const loanStatus = status === "completed" ? "completed" : undefined;
   const { borrower, currency, loans, pageInfo } = await getBorrowerProfileData(
     borrowerId,
     {
-      page: Number(page) || 1,
+      page: 1,
       pageSize: 5,
       loanStatus,
     },
@@ -80,11 +80,10 @@ export default async function BorrowerProfilePage({
         <div className="mb-4">
           <h2 className="text-xl font-semibold">Loans</h2>
         </div>
-        <BorrowerLoansGrid loans={loans} />
-        <PaginationControls
-          basePath={`/borrowers/${borrower.id}`}
-          pageInfo={pageInfo}
-          query={{ status: loanStatus }}
+        <BorrowerLoansInfiniteGrid
+          borrowerId={borrower.id}
+          initialPage={{ items: loans, pageInfo }}
+          status={loanStatus}
         />
       </section>
     </div>

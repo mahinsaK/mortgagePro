@@ -5,14 +5,15 @@ import { LenderDashboardStats } from "@/frontend/components/dashboard/lender-das
 
 export const dynamic = "force-dynamic";
 
+/** Renders dashboard totals and the first searchable loan page. */
 export default async function LenderDashboardPage({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string; q?: string }>;
 }) {
-  const { page, q } = await searchParams;
+  const { q } = await searchParams;
   const dashboard = await getLenderDashboardData({
-    page: Number(page) || 1,
+    page: 1,
     query: q,
   });
   const now = new Date();
@@ -36,9 +37,8 @@ export default async function LenderDashboardPage({
       />
 
       <LenderDashboardLoansPanel
-        loans={dashboard.loans}
-        pageInfo={dashboard.pageInfo}
-        query={q ?? ""}
+        initialPage={{ items: dashboard.loans, pageInfo: dashboard.pageInfo }}
+        initialQuery={q ?? ""}
       />
     </div>
   );

@@ -21,6 +21,7 @@ type BorrowerRow = {
   createdAt: string;
 };
 
+/** Renders compact mobile borrower rows and the full desktop table. */
 export function BorrowersTable({ borrowers }: { borrowers: BorrowerRow[] }) {
   const router = useRouter();
 
@@ -33,41 +34,21 @@ export function BorrowersTable({ borrowers }: { borrowers: BorrowerRow[] }) {
     <>
       <div className="divide-y divide-[#eef2f6] md:hidden">
         {borrowers.map((borrower) => (
-          <article className="p-4" key={borrower.id}>
-            <div className="flex items-start justify-between gap-3">
+          <article className="px-3 py-3" key={borrower.id}>
+            <div className="flex items-center justify-between gap-2">
               <button
-                className="min-w-0 flex-1 text-left"
+                className="min-w-0 flex-1 rounded-md px-1 py-1 text-left active:bg-[#f8fafc]"
                 onClick={() => openBorrowerProfile(borrower.id)}
                 type="button"
               >
-                <p className="truncate text-base font-semibold text-[#15191f]">
-                  {borrower.name}
-                </p>
-                <p className="mt-1 truncate text-sm text-[#657386]">
-                  {borrower.businessName || "No business name"}
-                </p>
+                <div className="flex min-w-0 items-center gap-2">
+                  <p className="truncate text-[15px] font-semibold text-[#15191f]">{borrower.name}</p>
+                  <span className="shrink-0 rounded-full bg-[#e0ecff] px-2 py-0.5 text-[11px] font-semibold text-[#1d4ed8]">{borrower.status}</span>
+                </div>
+                {borrower.businessName ? <p className="mt-0.5 truncate text-sm text-[#657386]">{borrower.businessName}</p> : null}
               </button>
               <BorrowerActions borrower={borrower} />
             </div>
-            <button
-              className="mt-4 grid w-full grid-cols-2 gap-3 rounded-lg bg-[#f8fafc] p-3 text-left"
-              onClick={() => openBorrowerProfile(borrower.id)}
-              type="button"
-            >
-              <MobileDetail
-                label="Contact"
-                value={borrower.contactInfo || "Not set"}
-              />
-              <MobileDetail label="Created" value={borrower.createdAt} />
-              <span className="col-span-2 flex items-center justify-between border-t border-[#e5eaf0] pt-3">
-                <span className="text-xs font-semibold uppercase tracking-wide text-[#657386]">
-                  Status
-                </span>
-                <span className="rounded-full bg-[#e0ecff] px-2.5 py-1 text-xs font-semibold text-[#1d4ed8]">
-                  {borrower.status}
-                </span>
-              </span>
-            </button>
           </article>
         ))}
         {borrowers.length === 0 ? (
@@ -156,19 +137,6 @@ function BorrowerActions({ borrower }: { borrower: BorrowerRow }) {
         </PendingSubmitButton>
       </form>
     </div>
-  );
-}
-
-function MobileDetail({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="min-w-0">
-      <span className="block text-xs font-semibold uppercase tracking-wide text-[#657386]">
-        {label}
-      </span>
-      <span className="mt-1 block truncate text-sm font-medium text-[#15191f]">
-        {value}
-      </span>
-    </span>
   );
 }
 

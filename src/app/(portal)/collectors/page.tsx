@@ -1,18 +1,14 @@
 import { getCollectorsPageData } from "@/backend/services/lending-service";
 import { AddCollectorForm } from "@/frontend/components/collectors/add-collector-form";
-import { CollectorsTable } from "@/frontend/components/collectors/collectors-table";
-import { PaginationControls } from "@/frontend/components/ui/pagination-controls";
+import { CollectorsInfiniteList } from "@/frontend/components/collectors/collectors-infinite-list";
 
 export const dynamic = "force-dynamic";
 
-export default async function CollectorsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string }>;
-}) {
-  const { page } = await searchParams;
+/** Renders collector totals and the first infinite-directory page. */
+export default async function CollectorsPage() {
   const { collectors, pageInfo, summary } = await getCollectorsPageData({
-    page: Number(page) || 1,
+    page: 1,
+    pageSize: 20,
   });
 
   return (
@@ -38,15 +34,13 @@ export default async function CollectorsPage({
         <div className="border-b border-[#dfe5ec] px-5 py-4">
           <h2 className="text-lg font-semibold">Collectors list</h2>
         </div>
-        <div>
-          <CollectorsTable collectors={collectors} />
-        </div>
-        <PaginationControls basePath="/collectors" pageInfo={pageInfo} />
+        <CollectorsInfiniteList initialPage={{ items: collectors, pageInfo }} />
       </section>
     </div>
   );
 }
 
+/** Displays one collector summary metric. */
 function SummaryCard({
   label,
   value,

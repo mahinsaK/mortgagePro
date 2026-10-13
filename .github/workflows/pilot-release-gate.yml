@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v7.1.0
         with:
-          node-version: 20
+          node-version: 22.19
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium firefox webkit
@@ -55,7 +55,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v7.1.0
         with:
-          node-version: 20
+          node-version: 22.19
           cache: npm
       - run: npm ci
       - run: npm run test:security
@@ -67,7 +67,7 @@ jobs:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.1.0
         with:
-          node-version: 20
+          node-version: 22.19
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
@@ -107,7 +107,7 @@ jobs:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.1.0
         with:
-          node-version: 20
+          node-version: 22.19
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium firefox webkit

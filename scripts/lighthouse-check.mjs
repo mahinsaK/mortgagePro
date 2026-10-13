@@ -1,4 +1,6 @@
 import { spawn } from "node:child_process";
+import { once } from "node:events";
+import { fileURLToPath } from "node:url";
 import process from "node:process";
 import { launch } from "chrome-launcher";
 import lighthouse from "lighthouse";
@@ -42,7 +44,7 @@ try {
   }
 } finally {
   if (server) {
-    server.kill("SIGTERM");
+    await stopServer(server);
   }
 }
 
@@ -86,10 +88,31 @@ async function auditPage(url) {
 }
 
 function startServer(serverPort) {
-  return spawn("npm", ["run", "start", "--", "-p", String(serverPort)], {
+  const nextCli = fileURLToPath(
+    new URL("../node_modules/next/dist/bin/next", import.meta.url),
+  );
+
+  return spawn(process.execPath, [nextCli, "start", "-p", String(serverPort)], {
     env: { ...process.env, PORT: String(serverPort) },
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: "ignore",
   });
+}
+
+async function stopServer(serverProcess) {
+  if (serverProcess.exitCode !== null || serverProcess.signalCode) {
+    return;
+  }
+
+  serverProcess.kill("SIGTERM");
+  const exited = once(serverProcess, "exit").then(() => true);
+  const timedOut = new Promise((resolve) => {
+    setTimeout(() => resolve(false), 5_000).unref();
+  });
+
+  if (!(await Promise.race([exited, timedOut]))) {
+    serverProcess.kill("SIGKILL");
+    await once(serverProcess, "exit");
+  }
 }
 
 async function waitForServer(url) {

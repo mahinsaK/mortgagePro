@@ -14,17 +14,21 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: pilot-release-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality-and-public-browser:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7.1.0
         with:
-          node-version: 20
+          node-version: 22.19
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium firefox webkit
@@ -33,11 +37,10 @@ jobs:
       - run: npm run test:unit
       - run: npm run test:coverage
       - run: npm run build
-      - run: npm run test:security
       - run: npm run test:e2e:public
       - name: Upload browser evidence
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: public-browser-evidence
           path: |
@@ -47,19 +50,35 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 22.19
+          cache: npm
+      - run: npm ci
+      - run: npm run test:security
+
   lighthouse:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
         with:
-          node-version: 20
+          node-version: 22.19
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
       - run: npm run test:lighthouse
+        env:
+          LIGHTHOUSE_RUNS: 1
 
   dedicated-preview-e2e:
     if: github.event_name == 'workflow_dispatch' && inputs.preview_url != ''
@@ -89,10 +108,10 @@ jobs:
       E2E_COLLECTOR_USERNAME: e2ealpha4821
       E2E_COLLECTOR_PASSWORD: ${{ secrets.E2E_COLLECTOR_PASSWORD }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
         with:
-          node-version: 20
+          node-version: 22.19
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium firefox webkit
@@ -104,7 +123,7 @@ jobs:
         run: npm run e2e:cleanup
       - name: Upload dedicated E2E evidence
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: dedicated-preview-e2e-evidence
           path: |

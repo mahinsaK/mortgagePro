@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { getDailyCollectionsData } from "@/backend/services/lending-service";
+import {
+  getDailyCollectionCollectors,
+  getDailyCollectionsData,
+} from "@/backend/services/lending-service";
 import { DailyCollectionsTable } from "@/frontend/components/payments/daily-collections-table";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +14,10 @@ export default async function DailyCollectionsPage({
 }) {
   const { date } = await searchParams;
   const selectedDate = date || toDateInputValue(new Date());
-  const { payments } = await getDailyCollectionsData(selectedDate);
+  const [{ payments, pageInfo }, collectors] = await Promise.all([
+    getDailyCollectionsData(selectedDate, { page: 1, pageSize: 20 }),
+    getDailyCollectionCollectors(),
+  ]);
 
   return (
     <div>
@@ -30,7 +36,12 @@ export default async function DailyCollectionsPage({
         </Link>
       </div>
 
-      <DailyCollectionsTable payments={payments} selectedDate={selectedDate} />
+      <DailyCollectionsTable
+        collectors={collectors}
+        initialPage={{ items: payments, pageInfo }}
+        key={selectedDate}
+        selectedDate={selectedDate}
+      />
     </div>
   );
 }

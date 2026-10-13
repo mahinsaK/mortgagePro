@@ -109,6 +109,11 @@ export function createAppwriteSchema(collections) {
         keyIndex("idx_payment_date", ["date"]),
         keyIndex("idx_payment_lender_date", ["lender_id", "date"]),
         keyIndex("idx_payment_lender_collector", ["lender_id", "collector_id"]),
+        keyIndex("idx_payment_lender_collector_date", [
+          "lender_id",
+          "collector_id",
+          "date",
+        ]),
       ],
     },
     {

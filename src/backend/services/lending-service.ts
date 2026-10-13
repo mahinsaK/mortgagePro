@@ -119,6 +119,15 @@ type BorrowerProfileOptions = PaginationOptions & {
   loanStatus?: "completed";
 };
 
+type DailyCollectionsOptions = PaginationOptions & {
+  collectorId?: string;
+};
+
+export type DailyCollectionCollector = {
+  id: string;
+  name: string;
+};
+
 const DEFAULT_PAGE_SIZE = 10;
 const BORROWER_PROFILE_LOAN_PAGE_SIZE = 5;
 const MAX_LOOKUP_LIMIT = 5000;
@@ -389,6 +398,7 @@ export async function getPaymentsPageData(options: PaginationOptions = {}) {
 }
 
 export async function getPaymentsExportData(options: {
+  collectorId?: string;
   startDate?: string;
   endDate?: string;
 } = {}) {
@@ -419,6 +429,10 @@ export async function getPaymentsExportData(options: {
 
   if (options.endDate) {
     queries.push(Query.lessThan("date", getDateRange(options.endDate).end));
+  }
+
+  if (options.collectorId) {
+    queries.push(Query.equal("collector_id", options.collectorId));
   }
 
   const payments = await listTenantDocuments("payments", lender.id, queries);
@@ -525,21 +539,36 @@ export async function getCollectorsPageData(options: PaginationOptions = {}) {
   };
 }
 
-export async function getDailyCollectionsData(date: string) {
+export async function getDailyCollectionsData(
+  date: string,
+  options: DailyCollectionsOptions = {},
+) {
   const selectedDate = normalizeDateOnly(date);
   const lender = await getPrimaryLender();
+  const pagination = normalizePagination(options);
 
   if (!lender) {
-    return { lender: null, selectedDate, payments: [] as PaymentRow[] };
+    return {
+      lender: null,
+      selectedDate,
+      payments: [] as PaymentRow[],
+      pageInfo: emptyPageInfo(pagination),
+    };
   }
 
   const range = getDateRange(selectedDate);
-  const payments = await listTenantDocuments("payments", lender.id, [
-    Query.greaterThanEqual("date", range.start),
-    Query.lessThan("date", range.end),
-    Query.orderDesc("$createdAt"),
-    Query.limit(MAX_LOOKUP_LIMIT),
-    Query.select([
+  const payments = await listForLender("payments", lender.id, {
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    orderBy: "$createdAt",
+    extraQueries: [
+      Query.greaterThanEqual("date", range.start),
+      Query.lessThan("date", range.end),
+      ...(options.collectorId
+        ? [Query.equal("collector_id", options.collectorId)]
+        : []),
+    ],
+    select: [
       "$id",
       "$createdAt",
       "loan_id",
@@ -548,14 +577,37 @@ export async function getDailyCollectionsData(date: string) {
       "method",
       "date",
       "created_at",
-    ]),
-  ]);
+    ],
+  });
 
   return {
     lender,
     selectedDate,
+    pageInfo: toPageInfo(payments.total, pagination),
     payments: await mapPaymentDocuments(lender.id, payments.documents, lender.currency),
   };
+}
+
+export async function getDailyCollectionCollectors(): Promise<
+  DailyCollectionCollector[]
+> {
+  const lender = await getPrimaryLender();
+
+  if (!lender) {
+    return [];
+  }
+
+  const collectors = await listForLender("collectors", lender.id, {
+    limit: MAX_LOOKUP_LIMIT,
+    select: ["$id", "name"],
+  });
+
+  return collectors.documents
+    .map((collector) => ({
+      id: collector.$id,
+      name: String(collector.name ?? "Unknown collector"),
+    }))
+    .sort((left, right) => left.name.localeCompare(right.name));
 }
 
 export async function getLoanPaymentDetails(

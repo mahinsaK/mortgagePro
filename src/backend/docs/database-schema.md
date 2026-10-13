@@ -134,6 +134,8 @@ Indexes:
 - `idx_payment_date`: helps date filtering.
 - `idx_payment_lender_date`: helps daily collections and exports for one lender.
 - `idx_payment_lender_collector`: helps collector-based payment queries later.
+- `idx_payment_lender_collector_date`: helps paginate and export one collector's
+  payments within a lender-owned date range.
 
 ## Authentication Rate Limits
 

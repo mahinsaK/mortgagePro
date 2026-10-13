@@ -42,6 +42,7 @@ vi.mock("@/backend/lib/currency", () => ({
 import {
   getBorrowerProfileData,
   getBorrowersPageData,
+  getDailyCollectionsData,
   getLoansPageData,
   getPaymentsPageData,
 } from "../lending-service";
@@ -162,6 +163,31 @@ describe("lending-service", () => {
     expect(joinedQueries).toContain('"values":["avery 94 77"]');
     expect(joinedQueries).toContain('"method":"offset"');
     expect(joinedQueries).toContain('"values":[10]');
+  });
+
+  it("paginates daily collections and scopes the collector filter", async () => {
+    mocks.listDocuments.mockResolvedValueOnce({ documents: [], total: 45 });
+
+    const result = await getDailyCollectionsData("2026-10-13", {
+      collectorId: "collector_1",
+      page: 2,
+      pageSize: 20,
+    });
+
+    const queries = mocks.listDocuments.mock.calls[0][0].queries as string[];
+    const joinedQueries = queries.join(" ");
+    expect(joinedQueries).toContain('"attribute":"lender_id"');
+    expect(joinedQueries).toContain('"attribute":"collector_id"');
+    expect(joinedQueries).toContain('"values":["collector_1"]');
+    expect(joinedQueries).toContain('"method":"limit"');
+    expect(joinedQueries).toContain('"values":[20]');
+    expect(joinedQueries).toContain('"method":"offset"');
+    expect(result.pageInfo).toMatchObject({
+      page: 2,
+      pageSize: 20,
+      total: 45,
+      totalPages: 3,
+    });
   });
 
   it("combines borrower search with the missing-phone attention filter", async () => {

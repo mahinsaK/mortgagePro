@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+/** Protects lender portal routes and provides their client-side query cache. */
 export default async function PortalLayout({
   children,
 }: Readonly<{

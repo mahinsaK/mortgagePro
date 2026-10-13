@@ -1,3 +1,9 @@
+/**
+ * Builds the complete Appwrite collection, attribute, and index definition.
+ *
+ * @param {Record<string, string>} collections configured collection identifiers
+ * @returns {Array<object>} declarative schema entries consumed by setup scripts
+ */
 export function createAppwriteSchema(collections) {
   return [
     {
@@ -276,34 +282,42 @@ export function createAppwriteSchema(collections) {
   ];
 }
 
+/** Creates a string attribute definition. */
 function stringAttr(key, size, required, xdefault) {
   return { type: "string", key, size, required, xdefault };
 }
 
+/** Creates a floating-point attribute definition. */
 function floatAttr(key, required, min, max, xdefault) {
   return { type: "float", key, required, min, max, xdefault };
 }
 
+/** Creates an integer attribute definition. */
 function integerAttr(key, required, min, max, xdefault) {
   return { type: "integer", key, required, min, max, xdefault };
 }
 
+/** Creates a boolean attribute definition. */
 function booleanAttr(key, required, xdefault) {
   return { type: "boolean", key, required, xdefault };
 }
 
+/** Creates an enum attribute definition. */
 function enumAttr(key, elements, required, xdefault) {
   return { type: "enum", key, elements, required, xdefault };
 }
 
+/** Creates a datetime attribute definition. */
 function datetimeAttr(key, required, xdefault) {
   return { type: "datetime", key, required, xdefault };
 }
 
+/** Creates a standard key index definition. */
 function keyIndex(key, attributes) {
   return { key, type: "key", attributes };
 }
 
+/** Creates a full-text index definition. */
 function fulltextIndex(key, attributes) {
   return { key, type: "fulltext", attributes };
 }

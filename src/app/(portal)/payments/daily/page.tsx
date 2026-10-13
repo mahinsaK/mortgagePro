@@ -7,6 +7,7 @@ import { DailyCollectionsTable } from "@/frontend/components/payments/daily-coll
 
 export const dynamic = "force-dynamic";
 
+/** Renders the selected day's first tenant-scoped collection page. */
 export default async function DailyCollectionsPage({
   searchParams,
 }: {
@@ -46,6 +47,7 @@ export default async function DailyCollectionsPage({
   );
 }
 
+/** Formats a local date for an HTML date input without a timezone shift. */
 function toDateInputValue(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");

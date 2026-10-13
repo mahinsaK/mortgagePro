@@ -19,6 +19,7 @@ type DailyPaymentsPage = {
   pageInfo: PageInfo;
 };
 
+/** Displays filterable daily payments and incrementally loads further pages. */
 export function DailyCollectionsTable({
   collectors,
   initialPage,
@@ -137,6 +138,7 @@ export function DailyCollectionsTable({
   );
 }
 
+/** Renders the responsive desktop and mobile payment rows. */
 function PaymentsRows({
   onDeleted,
   payments,
@@ -226,6 +228,7 @@ function PaymentsRows({
   );
 }
 
+/** Builds a server export link for the selected date and collector filter. */
 function DailyCollectionsExportLink({
   collectorId,
   collectorName,
@@ -270,6 +273,7 @@ function DailyCollectionsExportLink({
   );
 }
 
+/** Fetches an abortable page of daily payments from the protected API. */
 async function fetchDailyPayments({
   collectorId,
   date,
@@ -292,6 +296,7 @@ async function fetchDailyPayments({
   return response.json() as Promise<DailyPaymentsPage>;
 }
 
+/** Removes duplicate payments while preserving their first loaded position. */
 function uniquePayments(payments: PaymentRow[]) {
   return Array.from(
     new Map(payments.map((payment) => [payment.id, payment])).values(),

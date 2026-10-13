@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 const PAGE_SIZE = 20;
 const DOCUMENT_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/;
 
+/** Returns one authenticated, lender-scoped daily-payment result page. */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const date = String(url.searchParams.get("date") ?? "");
@@ -39,11 +40,13 @@ export async function GET(request: Request) {
   }
 }
 
+/** Normalizes an untrusted page parameter to a positive integer. */
 function positivePage(value: string | null) {
   const page = Number(value);
   return Number.isInteger(page) && page > 0 ? page : 1;
 }
 
+/** Creates a private JSON response that must not be stored by shared caches. */
 function json(body: unknown, status = 200) {
   return Response.json(body, {
     headers: { "Cache-Control": "private, no-store" },

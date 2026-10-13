@@ -7,6 +7,7 @@ type CsvRow = Record<string, CsvValue>;
 
 export const dynamic = "force-dynamic";
 
+/** Exports the authenticated lender's filtered payments as a CSV download. */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const startDate = normalizeDateParam(url.searchParams.get("start"));
@@ -69,6 +70,7 @@ export async function GET(request: Request) {
   });
 }
 
+/** Accepts only date-only values suitable for server-side range filtering. */
 function normalizeDateParam(value: string | null) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return undefined;
@@ -77,6 +79,7 @@ function normalizeDateParam(value: string | null) {
   return value;
 }
 
+/** Validates an optional Appwrite document identifier from a query string. */
 function normalizeDocumentId(value: string | null) {
   if (!value) return undefined;
   return /^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/.test(value)
@@ -84,6 +87,7 @@ function normalizeDocumentId(value: string | null) {
     : undefined;
 }
 
+/** Serializes payment rows using the application's CSV escaping rules. */
 function toCsv(rows: CsvRow[]) {
   const headers = [
     "payment_id",

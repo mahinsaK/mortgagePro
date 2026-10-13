@@ -26,11 +26,13 @@ export default async function PortalLayout({
     redirect("/auth/login");
   }
 
+  const ownerKey = createNotificationOwnerKey(auth.lender.id);
+
   return (
-    <QueryProvider>
+    <QueryProvider key={ownerKey}>
       <PortalShell
         lender={auth.lender}
-        notificationOwnerKey={createNotificationOwnerKey(auth.lender.id)}
+        notificationOwnerKey={ownerKey}
       >
         {children}
       </PortalShell>

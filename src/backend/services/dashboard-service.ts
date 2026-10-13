@@ -42,6 +42,11 @@ type DashboardOptions = {
   query?: string;
 };
 
+export type DashboardLoansPageData = Pick<
+  LenderDashboardData,
+  "lender" | "loans" | "pageInfo"
+>;
+
 const DEFAULT_PAGE_SIZE = 15;
 const MAX_DAILY_PAYMENT_LIMIT = 5000;
 const BORROWER_SEARCH_FALLBACK_LIMIT = 500;
@@ -62,38 +67,18 @@ export async function getLenderDashboardData(
     };
   }
 
-  const searchQuery = normalizeSearchQuery(options.query);
   const today = toColomboDateInputValue(new Date());
   const todayRange = getDateRange(today);
-  const loanQueries = [
-    Query.orderDesc("created_at"),
-    Query.limit(pagination.pageSize),
-    Query.offset((pagination.page - 1) * pagination.pageSize),
-    Query.select([
-      "$id",
-      "borrower_id",
-      "amount",
-      "total_paid",
-      "remaining_amount",
-      "daily_payment",
-      "status",
-      "end_date",
-    ]),
-  ];
-
-  if (searchQuery) {
-    loanQueries.unshift(Query.search("search_text", searchQuery));
-  }
 
   const [
-    initialLoans,
+    loanPage,
     totalBorrowers,
     activeLoans,
     todaysPayments,
     overdueLoanCount,
   ] =
     await Promise.all([
-      listTenantDocuments("loans", lender.id, loanQueries),
+      loadDashboardLoans(lender, options, pagination),
       listTenantDocuments("borrowers", lender.id, [
         Query.limit(1),
         Query.select(["$id"]),
@@ -116,37 +101,6 @@ export async function getLenderDashboardData(
         Query.select(["$id"]),
       ]),
     ]);
-  const loans =
-    searchQuery && initialLoans.total === 0
-      ? await findLoansByBorrowerSearch(lender.id, searchQuery, pagination)
-      : initialLoans;
-  const borrowerIds = uniqueStrings(
-    loans.documents.map((loan) => String(loan.borrower_id ?? "")),
-  );
-  const borrowers =
-    borrowerIds.length > 0
-      ? await listTenantDocuments("borrowers", lender.id, [
-            Query.equal("$id", borrowerIds),
-            Query.limit(borrowerIds.length),
-            Query.select(["$id", "name", "contact", "address"]),
-          ])
-      : { documents: [] };
-
-  const borrowerNames = new Map(
-    borrowers.documents.map((borrower) => [
-      borrower.$id,
-      String(borrower.name ?? "Unknown borrower"),
-    ]),
-  );
-  const borrowerContacts = new Map(
-    borrowers.documents.map((borrower) => [
-      borrower.$id,
-      {
-        display: String(borrower.contact ?? ""),
-        phone: String(borrower.contact ?? ""),
-      },
-    ]),
-  );
   const todaysCollection = todaysPayments.documents.reduce(
     (total, payment) => total + Number(payment.amount ?? 0),
     0,
@@ -154,7 +108,7 @@ export async function getLenderDashboardData(
 
   return {
     lender,
-    pageInfo: toPageInfo(loans.total, pagination),
+    pageInfo: loanPage.pageInfo,
     stats: [
       {
         label: "Total borrowers",
@@ -177,6 +131,88 @@ export async function getLenderDashboardData(
         change: "Past the end date",
       },
     ],
+    loans: loanPage.loans,
+  };
+}
+
+/** Loads only the dashboard loan list without recalculating dashboard totals. */
+export async function getLenderDashboardLoansData(
+  options: DashboardOptions = {},
+): Promise<DashboardLoansPageData> {
+  const lender = await getPrimaryLender();
+  const pagination = normalizePagination(options);
+
+  if (!lender) {
+    return {
+      lender: null,
+      loans: [],
+      pageInfo: emptyPageInfo(pagination),
+    };
+  }
+
+  return loadDashboardLoans(lender, options, pagination);
+}
+
+/** Resolves a single searchable dashboard loan page for an authenticated lender. */
+async function loadDashboardLoans(
+  lender: NonNullable<Awaited<ReturnType<typeof getPrimaryLender>>>,
+  options: DashboardOptions,
+  pagination: { page: number; pageSize: number },
+): Promise<DashboardLoansPageData> {
+  const searchQuery = normalizeSearchQuery(options.query);
+  const loanQueries = [
+    Query.orderDesc("created_at"),
+    Query.limit(pagination.pageSize),
+    Query.offset((pagination.page - 1) * pagination.pageSize),
+    Query.select([
+      "$id",
+      "borrower_id",
+      "amount",
+      "total_paid",
+      "remaining_amount",
+      "daily_payment",
+      "status",
+      "end_date",
+    ]),
+  ];
+
+  if (searchQuery) {
+    loanQueries.unshift(Query.search("search_text", searchQuery));
+  }
+
+  const initialLoans = await listTenantDocuments("loans", lender.id, loanQueries);
+  const loans = searchQuery && initialLoans.total === 0
+    ? await findLoansByBorrowerSearch(lender.id, searchQuery, pagination)
+    : initialLoans;
+  const borrowerIds = uniqueStrings(
+    loans.documents.map((loan) => String(loan.borrower_id ?? "")),
+  );
+  const borrowers = borrowerIds.length > 0
+    ? await listTenantDocuments("borrowers", lender.id, [
+        Query.equal("$id", borrowerIds),
+        Query.limit(borrowerIds.length),
+        Query.select(["$id", "name", "contact", "address"]),
+      ])
+    : { documents: [] };
+  const borrowerNames = new Map(
+    borrowers.documents.map((borrower) => [
+      borrower.$id,
+      String(borrower.name ?? "Unknown borrower"),
+    ]),
+  );
+  const borrowerContacts = new Map(
+    borrowers.documents.map((borrower) => [
+      borrower.$id,
+      {
+        display: String(borrower.contact ?? ""),
+        phone: String(borrower.contact ?? ""),
+      },
+    ]),
+  );
+
+  return {
+    lender,
+    pageInfo: toPageInfo(loans.total, pagination),
     loans: loans.documents.map((loan) =>
       toDashboardLoan(loan, lender.currency, borrowerNames, borrowerContacts),
     ),

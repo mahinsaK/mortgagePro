@@ -296,6 +296,80 @@ export async function getBorrowerProfileData(
   };
 }
 
+/** Loads one tenant-validated page of loans for a borrower profile. */
+export async function getBorrowerLoansPageData(
+  borrowerId: string,
+  options: BorrowerProfileOptions = {},
+) {
+  const lender = await getPrimaryLender();
+  const pagination = normalizePagination({
+    page: options.page,
+    pageSize: options.pageSize ?? BORROWER_PROFILE_LOAN_PAGE_SIZE,
+  });
+
+  if (!lender) {
+    return {
+      lender: null,
+      borrowerFound: false,
+      loans: [] as LoanRow[],
+      pageInfo: emptyPageInfo(pagination),
+    };
+  }
+
+  const borrowers = await listTenantDocuments("borrowers", lender.id, [
+    Query.equal("$id", borrowerId),
+    Query.limit(1),
+    Query.select(["$id", "name"]),
+  ]);
+  const borrower = borrowers.documents[0];
+
+  if (!borrower) {
+    return {
+      lender,
+      borrowerFound: false,
+      loans: [] as LoanRow[],
+      pageInfo: emptyPageInfo(pagination),
+    };
+  }
+
+  const loans = await listForLender("loans", lender.id, {
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    orderBy: "created_at",
+    extraQueries: [
+      Query.equal("borrower_id", borrowerId),
+      ...(options.loanStatus
+        ? [Query.equal("status", options.loanStatus)]
+        : []),
+    ],
+    select: [
+      "$id",
+      "borrower_id",
+      "amount",
+      "interest_rate",
+      "daily_payment",
+      "total_paid",
+      "remaining_amount",
+      "start_date",
+      "end_date",
+      "status",
+    ],
+  });
+
+  return {
+    lender,
+    borrowerFound: true,
+    loans: loans.documents.map((loan) =>
+      mapLoanDocument(
+        loan,
+        String(borrower.name ?? "Unknown borrower"),
+        lender.currency,
+      ),
+    ),
+    pageInfo: toPageInfo(loans.total, pagination),
+  };
+}
+
 export async function getLoansPageData(options: LoansPageOptions = {}) {
   const lender = await getPrimaryLender();
   const pagination = normalizePagination(options);

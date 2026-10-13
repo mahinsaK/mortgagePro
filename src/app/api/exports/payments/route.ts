@@ -11,6 +11,8 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const startDate = normalizeDateParam(url.searchParams.get("start"));
   const endDate = normalizeDateParam(url.searchParams.get("end"));
+  const requestedCollectorId = url.searchParams.get("collector");
+  const collectorId = normalizeDocumentId(requestedCollectorId);
 
   if (!startDate || !endDate) {
     return new Response("Start date and end date are required.", {
@@ -18,7 +20,15 @@ export async function GET(request: Request) {
     });
   }
 
-  const { lender, payments } = await getPaymentsExportData({ startDate, endDate });
+  if (requestedCollectorId && !collectorId) {
+    return new Response("Collector filter is invalid.", { status: 400 });
+  }
+
+  const { lender, payments } = await getPaymentsExportData({
+    collectorId,
+    startDate,
+    endDate,
+  });
   const rows = payments.map((payment) => ({
     payment_id: payment.id,
     date: payment.rawDate,
@@ -65,6 +75,13 @@ function normalizeDateParam(value: string | null) {
   }
 
   return value;
+}
+
+function normalizeDocumentId(value: string | null) {
+  if (!value) return undefined;
+  return /^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/.test(value)
+    ? value
+    : undefined;
 }
 
 function toCsv(rows: CsvRow[]) {

@@ -1,4 +1,5 @@
 import { PortalShell } from "@/frontend/components/layout/portal-shell";
+import { QueryProvider } from "@/frontend/components/providers/query-provider";
 import { resolvePrimaryLender } from "@/backend/services/lender-service";
 import { createNotificationOwnerKey } from "@/backend/services/local-notification-service";
 import { redirect } from "next/navigation";
@@ -25,11 +26,13 @@ export default async function PortalLayout({
   }
 
   return (
-    <PortalShell
-      lender={auth.lender}
-      notificationOwnerKey={createNotificationOwnerKey(auth.lender.id)}
-    >
-      {children}
-    </PortalShell>
+    <QueryProvider>
+      <PortalShell
+        lender={auth.lender}
+        notificationOwnerKey={createNotificationOwnerKey(auth.lender.id)}
+      >
+        {children}
+      </PortalShell>
+    </QueryProvider>
   );
 }

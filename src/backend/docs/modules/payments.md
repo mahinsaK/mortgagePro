@@ -156,7 +156,7 @@ How it works:
 
 Path: `src/backend/services/lending-service.ts`
 
-Function: `getDailyCollectionsData(date)`
+Function: `getDailyCollectionsData(date, options)`
 
 Query:
 
@@ -164,18 +164,24 @@ Query:
 Query.equal("lender_id", lender.id)
 Query.greaterThanEqual("date", dayStartIso)
 Query.lessThan("date", nextDayStartIso)
+Query.equal("collector_id", selectedCollectorId) // when selected
 Query.orderDesc("$createdAt")
-Query.limit(5000)
+Query.limit(20)
+Query.offset((page - 1) * 20)
 Query.select(["$id", "$createdAt", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
 ```
 
 How it works:
 
 - Retrieves payments only for one selected day.
-- No pagination is used because this is a daily detail page.
-- Collector filtering on this page is local/client-side after the selected day's payments are loaded.
-- The CSV export downloads the currently filtered rows with a `collected_at`
-  timestamp.
+- Loads 20 payments at a time through `/api/payments/daily` as the lender
+  scrolls, retaining the already loaded pages.
+- Date and collector filters are part of the client cache key; changing either
+  starts again at page 1 without mixing results.
+- Collector filtering is performed by the tenant-scoped server query rather
+  than against an incomplete client page.
+- The CSV export uses the server export route so it includes every matching
+  payment, not only the pages already loaded in the browser.
 
 ## Dashboard today's collection query
 
@@ -202,7 +208,7 @@ How it works:
 
 Path: `src/backend/services/lending-service.ts`
 
-Function: `getPaymentsExportData({ startDate, endDate })`
+Function: `getPaymentsExportData({ startDate, endDate, collectorId })`
 
 Query:
 
@@ -213,6 +219,7 @@ Query.limit(5000)
 Query.select(["$id", "$createdAt", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
 Query.greaterThanEqual("date", startDateStartIso)
 Query.lessThan("date", endDateNextDayIso)
+Query.equal("collector_id", collectorId) // when selected
 ```
 
 Route:
@@ -221,7 +228,7 @@ Route:
 
 How it works:
 
-- Route validates `start` and `end` query params.
+- Route validates `start`, `end`, and the optional `collector` query param.
 - Service retrieves lender-scoped payments in the range.
 - Route converts rows to CSV.
 - Route adds a `TOTAL` row using raw payment amount values.

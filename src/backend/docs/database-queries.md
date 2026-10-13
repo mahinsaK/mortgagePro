@@ -594,7 +594,7 @@ How it works:
 
 Path: `src/backend/services/lending-service.ts`
 
-Function: `getDailyCollectionsData(date)`
+Function: `getDailyCollectionsData(date, options)`
 
 Collection: `payments`
 
@@ -604,19 +604,22 @@ Query:
 Query.equal("lender_id", lender.id)
 Query.greaterThanEqual("date", dayStartIso)
 Query.lessThan("date", nextDayStartIso)
+Query.equal("collector_id", selectedCollectorId) // when selected
 Query.orderDesc("$createdAt")
-Query.limit(5000)
+Query.limit(20)
+Query.offset((page - 1) * 20)
 Query.select(["$id", "$createdAt", "loan_id", "collector_id", "amount", "method", "date", "created_at"])
 ```
 
 How it works:
 
 - Retrieves only payments for the selected day and active lender.
-- Does not use pagination because this screen is a single-day collection view.
+- Loads 20 payments per page and returns Appwrite's total for infinite scroll.
 - Maps names using `mapPaymentDocuments()`.
-- The collector dropdown on the page is a local/client filter over the already-loaded day payments.
-- The daily CSV export uses the currently filtered rows and does not run a second database query.
-- Filtered CSV filenames include the collector name, for example `daily_collections_2026-07-07_Jordan_Lee.csv`.
+- The collector dropdown adds a tenant-scoped `collector_id` query and resets
+  the infinite list to page 1.
+- The daily CSV export reruns the complete server-side date/collector query so
+  unloaded pages are included.
 
 ## Create borrower
 

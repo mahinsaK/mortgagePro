@@ -91,7 +91,11 @@ Query.offset((page - 1) * pageSize)
 How it works:
 
 - Retrieves only the active lender's borrowers.
-- Uses pagination.
+- Loads 20 records at a time through the tenant-scoped `/api/borrowers`
+  endpoint as the lender scrolls.
+- A debounced search starts again at page 1 and uses a distinct client cache
+  key, so results from different searches are never combined.
+- Previously loaded pages remain visible while the next page is requested.
 - Does not fetch loan data for the list.
 
 ## Borrower profile query

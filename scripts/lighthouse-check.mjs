@@ -48,6 +48,7 @@ try {
   }
 }
 
+/** Runs a mobile Lighthouse audit and returns the release-gate metrics. */
 async function auditPage(url) {
   const chrome = await launch({
     chromePath: chromium.executablePath(),
@@ -87,6 +88,7 @@ async function auditPage(url) {
   }
 }
 
+/** Starts the built Next.js application on the requested local port. */
 function startServer(serverPort) {
   const nextCli = fileURLToPath(
     new URL("../node_modules/next/dist/bin/next", import.meta.url),
@@ -98,6 +100,7 @@ function startServer(serverPort) {
   });
 }
 
+/** Stops the local Next.js process, escalating to SIGKILL after a timeout. */
 async function stopServer(serverProcess) {
   if (serverProcess.exitCode !== null || serverProcess.signalCode) {
     return;
@@ -115,6 +118,7 @@ async function stopServer(serverProcess) {
   }
 }
 
+/** Waits until the target page responds successfully or startup times out. */
 async function waitForServer(url) {
   for (let attempt = 0; attempt < 60; attempt += 1) {
     try {
@@ -130,6 +134,7 @@ async function waitForServer(url) {
   throw new Error(`Timed out waiting for ${url}. Run npm run build first.`);
 }
 
+/** Returns the median value from a non-empty numeric sample. */
 function medianValue(values) {
   const sorted = [...values].sort((left, right) => left - right);
   return sorted[Math.floor(sorted.length / 2)];

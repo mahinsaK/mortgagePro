@@ -17,6 +17,7 @@ type BorrowersPage = {
   pageInfo: PageInfo;
 };
 
+/** Displays searchable borrower results and appends pages near the list end. */
 export function BorrowersInfiniteList({
   attention,
   initialPage,
@@ -146,6 +147,7 @@ export function BorrowersInfiniteList({
   );
 }
 
+/** Fetches an abortable borrower page from the authenticated route. */
 async function fetchBorrowersPage({
   attention,
   page,
@@ -169,6 +171,7 @@ async function fetchBorrowersPage({
   return response.json() as Promise<BorrowersPage>;
 }
 
+/** Removes duplicate borrower records while preserving their first position. */
 function uniqueBorrowers(borrowers: BorrowerRow[]) {
   return Array.from(
     new Map(borrowers.map((borrower) => [borrower.id, borrower])).values(),

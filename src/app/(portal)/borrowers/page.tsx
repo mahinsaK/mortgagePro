@@ -5,6 +5,7 @@ import { BorrowersInfiniteList } from "@/frontend/components/borrowers/borrowers
 
 export const dynamic = "force-dynamic";
 
+/** Renders the lender-scoped borrower directory with its initial result page. */
 export default async function BorrowersPage({
   searchParams,
 }: {

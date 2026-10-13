@@ -3,6 +3,7 @@
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useRef } from "react";
 
+/** Loads the next page near the viewport and reports pagination progress. */
 export function InfiniteScrollStatus({
   hasMore,
   isLoading,

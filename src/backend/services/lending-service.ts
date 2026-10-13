@@ -397,6 +397,9 @@ export async function getPaymentsPageData(options: PaginationOptions = {}) {
   };
 }
 
+/**
+ * Loads a bounded payment export for the current lender and optional filters.
+ */
 export async function getPaymentsExportData(options: {
   collectorId?: string;
   startDate?: string;
@@ -539,6 +542,9 @@ export async function getCollectorsPageData(options: PaginationOptions = {}) {
   };
 }
 
+/**
+ * Loads a paginated day of payments scoped to the authenticated lender.
+ */
 export async function getDailyCollectionsData(
   date: string,
   options: DailyCollectionsOptions = {},
@@ -588,6 +594,7 @@ export async function getDailyCollectionsData(
   };
 }
 
+/** Lists the current lender's collectors for the daily-payment filter. */
 export async function getDailyCollectionCollectors(): Promise<
   DailyCollectionCollector[]
 > {

@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 20;
 
+/** Returns one authenticated, lender-scoped borrower page for infinite scroll. */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const page = positivePage(url.searchParams.get("page"));
@@ -33,11 +34,13 @@ export async function GET(request: Request) {
   }
 }
 
+/** Normalizes an untrusted page parameter to a positive integer. */
 function positivePage(value: string | null) {
   const page = Number(value);
   return Number.isInteger(page) && page > 0 ? page : 1;
 }
 
+/** Creates a private JSON response that must not be stored by shared caches. */
 function json(body: unknown, status = 200) {
   return Response.json(body, {
     headers: { "Cache-Control": "private, no-store" },

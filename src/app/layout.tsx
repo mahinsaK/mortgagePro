@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { NavigationProgress } from "@/frontend/components/ui/navigation-progress";
-import "@/frontend/styles/globals.css";
-import "@/frontend/styles/theme.css";
+import { NavigationProgress } from "@/components/ui/navigation-progress";
+import "@/styles/globals.css";
+import "@/styles/theme.css";
 
 export const metadata: Metadata = {
   title: "MortgagePro",

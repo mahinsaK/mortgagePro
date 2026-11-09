@@ -201,7 +201,7 @@ After a lender submits a request:
    optionally add `rejection_reason`.
 3. In `sms_accounts`, assign `monthly_quota` and keep `status` as `active`.
 
-See `src/backend/docs/modules/sms.md` for the quota and replacement rules.
+See `docs/backend/modules/sms.md` for the quota and replacement rules.
 
 ## 7. Create Appwrite tables and attributes
 

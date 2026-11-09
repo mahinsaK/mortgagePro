@@ -1,6 +1,6 @@
-import { requireActiveCollectorPrincipal } from "@/backend/services/collector-auth-service";
-import { getTenantDocument } from "@/backend/services/tenant-data-service";
-import { recordSecurityEvent } from "@/backend/services/security-event-service";
+import { requireActiveCollectorPrincipal } from "@/server/services/collector-auth-service";
+import { getTenantDocument } from "@/server/services/tenant-data-service";
+import { recordSecurityEvent } from "@/server/services/security-event-service";
 
 export const dynamic = "force-dynamic";
 

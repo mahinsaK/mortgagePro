@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { getBorrowersPageData } from "@/backend/services/lending-service";
-import { AddBorrowerForm } from "@/frontend/components/borrowers/add-borrower-form";
-import { BorrowersInfiniteList } from "@/frontend/components/borrowers/borrowers-infinite-list";
+import { getBorrowersPageData } from "@/server/services/lending-service";
+import { AddBorrowerForm } from "@/features/borrowers/components/add-borrower-form";
+import { BorrowersInfiniteList } from "@/features/borrowers/components/borrowers-infinite-list";
 
 export const dynamic = "force-dynamic";
 

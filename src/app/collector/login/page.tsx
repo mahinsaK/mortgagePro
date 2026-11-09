@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Building2 } from "lucide-react";
-import { collectorLoginAction } from "@/backend/actions/collector-actions";
-import { requireActiveCollectorPrincipal } from "@/backend/services/collector-auth-service";
-import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
+import { collectorLoginAction } from "@/features/collectors/server/collector-actions";
+import { requireActiveCollectorPrincipal } from "@/server/services/collector-auth-service";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 
 export const dynamic = "force-dynamic";
 

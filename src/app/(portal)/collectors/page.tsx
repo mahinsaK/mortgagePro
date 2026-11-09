@@ -1,6 +1,6 @@
-import { getCollectorsPageData } from "@/backend/services/lending-service";
-import { AddCollectorForm } from "@/frontend/components/collectors/add-collector-form";
-import { CollectorsInfiniteList } from "@/frontend/components/collectors/collectors-infinite-list";
+import { getCollectorsPageData } from "@/server/services/lending-service";
+import { AddCollectorForm } from "@/features/collectors/components/add-collector-form";
+import { CollectorsInfiniteList } from "@/features/collectors/components/collectors-infinite-list";
 
 export const dynamic = "force-dynamic";
 

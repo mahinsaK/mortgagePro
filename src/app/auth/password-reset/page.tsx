@@ -3,8 +3,8 @@ import { MailCheck } from "lucide-react";
 import {
   completePasswordResetAction,
   requestPasswordResetAction,
-} from "@/backend/actions/auth-actions";
-import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
+} from "@/features/auth/server/auth-actions";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 
 export default async function PasswordResetPage({
   searchParams,

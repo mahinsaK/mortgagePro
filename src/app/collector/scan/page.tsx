@@ -3,11 +3,11 @@ import {
   collectScannedPaymentAction,
   collectorLogoutAllDevicesAction,
   collectorLogoutAction,
-} from "@/backend/actions/collector-actions";
-import { requireActiveCollectorPrincipal } from "@/backend/services/collector-auth-service";
-import { CollectorScanner } from "@/frontend/components/collector/collector-scanner";
-import { SessionKeepAlive } from "@/frontend/components/auth/session-keep-alive";
-import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
+} from "@/features/collectors/server/collector-actions";
+import { requireActiveCollectorPrincipal } from "@/server/services/collector-auth-service";
+import { CollectorScanner } from "@/features/collectors/components/collector-scanner";
+import { SessionKeepAlive } from "@/features/auth/components/session-keep-alive";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 
 export const dynamic = "force-dynamic";
 

@@ -1,4 +1,4 @@
-import { getBorrowerLoansPageData } from "@/backend/services/lending-service";
+import { getBorrowerLoansPageData } from "@/server/services/lending-service";
 import { positivePage, privateJson } from "@/app/api/_shared/infinite-pagination";
 
 export const dynamic = "force-dynamic";

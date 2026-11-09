@@ -1,12 +1,12 @@
 import {
   updateLenderProfileAction,
-} from "@/backend/actions/lending-actions";
-import { logoutAllLenderDevicesAction } from "@/backend/actions/auth-actions";
-import { currencyOptions } from "@/backend/lib/currency";
-import { getPrimaryLender } from "@/backend/services/lender-service";
-import { PhoneInput } from "@/frontend/components/forms/phone-input";
-import { LenderPasswordForm } from "@/frontend/components/settings/lender-password-form";
-import { PendingSubmitButton } from "@/frontend/components/ui/pending-submit-button";
+} from "@/features/settings/server/lender-settings-actions";
+import { logoutAllLenderDevicesAction } from "@/features/auth/server/auth-actions";
+import { currencyOptions } from "@/server/lib/currency";
+import { getPrimaryLender } from "@/server/services/lender-service";
+import { PhoneInput } from "@/components/forms/phone-input";
+import { LenderPasswordForm } from "@/features/settings/components/lender-password-form";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 
 export const dynamic = "force-dynamic";
 

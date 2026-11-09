@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
   getLocalLenderNotifications: vi.fn(),
 }));
 
-vi.mock("@/backend/services/local-notification-service", () => ({
+vi.mock("@/features/notifications/server/local-notification-service", () => ({
   getLocalLenderNotifications: mocks.getLocalLenderNotifications,
 }));
 

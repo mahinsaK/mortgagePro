@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ getBorrowersPageData: vi.fn() }));
 
-vi.mock("@/backend/services/lending-service", () => ({
+vi.mock("@/server/services/lending-service", () => ({
   getBorrowersPageData: mocks.getBorrowersPageData,
 }));
 

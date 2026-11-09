@@ -8,13 +8,13 @@ const mocks = vi.hoisted(() => ({
   getPaymentsPageData: vi.fn(),
 }));
 
-vi.mock("@/backend/services/lending-service", () => ({
+vi.mock("@/server/services/lending-service", () => ({
   getBorrowerLoansPageData: mocks.getBorrowerLoansPageData,
   getCollectorsPageData: mocks.getCollectorsPageData,
   getLoansPageData: mocks.getLoansPageData,
   getPaymentsPageData: mocks.getPaymentsPageData,
 }));
-vi.mock("@/backend/services/dashboard-service", () => ({
+vi.mock("@/features/dashboard/server/dashboard-service", () => ({
   getLenderDashboardLoansData: mocks.getLenderDashboardLoansData,
 }));
 

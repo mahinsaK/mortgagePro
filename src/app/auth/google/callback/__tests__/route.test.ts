@@ -9,17 +9,17 @@ const mocks = vi.hoisted(() => ({
   recordSecurityEvent: vi.fn(),
 }));
 
-vi.mock("@/backend/appwrite/server-client", () => ({
+vi.mock("@/server/appwrite/server-client", () => ({
   createAdminAccountClient: vi.fn(() => ({
     createSession: mocks.createSession,
   })),
 }));
 
-vi.mock("@/backend/services/lender-login-service", () => ({
+vi.mock("@/server/services/lender-login-service", () => ({
   findActiveLenderByAppwriteUserId: mocks.findActiveLender,
   revokeAppwriteSessionBestEffort: mocks.revokeSession,
 }));
-vi.mock("@/backend/services/security-event-service", () => ({
+vi.mock("@/server/services/security-event-service", () => ({
   recordSecurityEvent: mocks.recordSecurityEvent,
 }));
 

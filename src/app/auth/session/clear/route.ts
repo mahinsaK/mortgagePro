@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import {
   AUTH_SESSION_COOKIE,
   AUTH_SESSION_COOKIE_OPTIONS,
-} from "@/backend/services/auth-session-service";
-import { recordSecurityEvent } from "@/backend/services/security-event-service";
+} from "@/server/services/auth-session-service";
+import { recordSecurityEvent } from "@/server/services/security-event-service";
 
 const SESSION_EXPIRED_MESSAGE = "Your session expired. Please sign in again.";
 

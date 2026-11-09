@@ -26,12 +26,12 @@ visitors. Do not enter real personal, borrower, or financial information.
 ## Project Structure
 
 - `src/app` - App Router pages, layouts, and route handlers.
-- `src/backend` - Appwrite clients, server-side services, business logic, and auth helpers.
-- `src/frontend/components` - reusable UI, layouts, forms, charts, and feature components.
-- `src/frontend/context` - global React context providers.
-- `src/frontend/hooks` - shared frontend hooks.
-- `src/frontend/lib` - client-side API helpers and utilities.
-- `src/frontend/styles` - global styles and theme tokens.
+- `src/features` - feature-specific UI, domain logic, and server actions/services.
+- `src/components` - shared UI, layouts, forms, and providers.
+- `src/server` - shared Appwrite clients, session handling, tenant enforcement, and server utilities.
+- `src/shared` - cross-feature validation and types.
+- `src/lib` and `src/styles` - shared client utilities and global styles.
+- `docs/backend` - architecture and Appwrite documentation.
 - `scripts` - Appwrite setup and demo data seeding scripts.
 
 ## Key Routes
@@ -122,7 +122,7 @@ The app expects these core variables in `.env.local`:
 
 Google lender login also requires the Google provider to be enabled in the
 Appwrite console. The Google client secret is stored in Appwrite, not in this
-project's environment variables. See `src/backend/docs/modules/auth.md` for the
+project's environment variables. See `docs/backend/modules/auth.md` for the
 complete setup procedure.
 
 ## Appwrite Setup

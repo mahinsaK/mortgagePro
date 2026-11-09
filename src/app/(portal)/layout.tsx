@@ -1,7 +1,7 @@
-import { PortalShell } from "@/frontend/components/layout/portal-shell";
-import { QueryProvider } from "@/frontend/components/providers/query-provider";
-import { resolvePrimaryLender } from "@/backend/services/lender-service";
-import { createNotificationOwnerKey } from "@/backend/services/local-notification-service";
+import { PortalShell } from "@/components/layout/portal-shell";
+import { QueryProvider } from "@/components/providers/query-provider";
+import { resolvePrimaryLender } from "@/server/services/lender-service";
+import { createNotificationOwnerKey } from "@/features/notifications/server/local-notification-service";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";

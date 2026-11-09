@@ -1,6 +1,6 @@
-import { getPaymentsExportData } from "@/backend/services/lending-service";
-import { formatMoney } from "@/backend/lib/currency";
-import { escapeCsvCell } from "@/backend/lib/csv";
+import { getPaymentsExportData } from "@/server/services/lending-service";
+import { formatMoney } from "@/server/lib/currency";
+import { escapeCsvCell } from "@/server/lib/csv";
 
 type CsvValue = string | number | boolean | null | undefined;
 type CsvRow = Record<string, CsvValue>;

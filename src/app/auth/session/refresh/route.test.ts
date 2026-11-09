@@ -9,15 +9,15 @@ const mocks = vi.hoisted(() => ({
   resolvePrimaryLender: vi.fn(),
 }));
 
-vi.mock("@/backend/appwrite/server-client", () => ({
+vi.mock("@/server/appwrite/server-client", () => ({
   createAccountClient: vi.fn(() => ({ updateSession: mocks.updateSession })),
 }));
-vi.mock("@/backend/services/auth-session-service", () => ({
+vi.mock("@/server/services/auth-session-service", () => ({
   clearAuthSession: mocks.clearAuthSession,
   getAuthSessionSecret: mocks.getAuthSessionSecret,
   setAuthSessionSecret: mocks.setAuthSessionSecret,
 }));
-vi.mock("@/backend/services/lender-service", () => ({
+vi.mock("@/server/services/lender-service", () => ({
   resolvePrimaryLender: mocks.resolvePrimaryLender,
 }));
 

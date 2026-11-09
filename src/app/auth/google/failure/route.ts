@@ -4,8 +4,8 @@ import {
   getFixedAuthUrl,
   LENDER_OAUTH_STATE_COOKIE,
   LENDER_OAUTH_STATE_COOKIE_OPTIONS,
-} from "@/backend/services/lender-google-oauth-service";
-import { recordSecurityEvent } from "@/backend/services/security-event-service";
+} from "@/server/services/lender-google-oauth-service";
+import { recordSecurityEvent } from "@/server/services/security-event-service";
 
 const GOOGLE_LOGIN_FAILED = "Google sign-in was cancelled or failed.";
 

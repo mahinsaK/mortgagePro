@@ -1,5 +1,5 @@
-import { loanBelongsToActiveLender } from "@/backend/services/lending-service";
-import { generateLoanQrPng } from "@/backend/services/qr-code-service";
+import { loanBelongsToActiveLender } from "@/server/services/lending-service";
+import { generateLoanQrPng } from "@/features/loans/server/qr-code-service";
 
 export const dynamic = "force-dynamic";
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Building2, QrCode } from "lucide-react";
-import { registerLenderAction } from "@/backend/actions/auth-actions";
-import { RegisterLenderForm } from "@/frontend/components/auth/register-lender-form";
+import { registerLenderAction } from "@/features/auth/server/auth-actions";
+import { RegisterLenderForm } from "@/features/auth/components/register-lender-form";
 
 export default async function RegisterPage({
   searchParams,

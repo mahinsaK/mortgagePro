@@ -8,16 +8,16 @@ const mocks = vi.hoisted(() => ({
   recordSecurityEvent: vi.fn(),
 }));
 
-vi.mock("@/backend/appwrite/server-client", () => ({
+vi.mock("@/server/appwrite/server-client", () => ({
   createAccountClient: vi.fn(() => ({
     createOAuth2Token: mocks.createOAuth2Token,
   })),
 }));
-vi.mock("@/backend/services/authentication-rate-limit-service", () => ({
+vi.mock("@/server/services/authentication-rate-limit-service", () => ({
   consumeAuthenticationAttempt: mocks.consumeAuthAttempt,
   RATE_LIMITED_MESSAGE: "Too many sign-in attempts. Please wait and try again.",
 }));
-vi.mock("@/backend/services/security-event-service", () => ({
+vi.mock("@/server/services/security-event-service", () => ({
   recordSecurityEvent: mocks.recordSecurityEvent,
 }));
 

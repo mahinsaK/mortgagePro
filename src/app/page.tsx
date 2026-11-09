@@ -1,8 +1,8 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { userAgentFromString } from "next/server";
-import { requireActiveCollectorPrincipal } from "@/backend/services/collector-auth-service";
-import { resolvePrimaryLender } from "@/backend/services/lender-service";
+import { requireActiveCollectorPrincipal } from "@/server/services/collector-auth-service";
+import { resolvePrimaryLender } from "@/server/services/lender-service";
 
 export const dynamic = "force-dynamic";
 

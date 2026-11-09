@@ -1,5 +1,5 @@
-import { AuthenticationServiceUnavailableError } from "@/backend/services/auth-session-service";
-import { getLocalLenderNotifications } from "@/backend/services/local-notification-service";
+import { AuthenticationServiceUnavailableError } from "@/server/services/auth-session-service";
+import { getLocalLenderNotifications } from "@/features/notifications/server/local-notification-service";
 
 export const dynamic = "force-dynamic";
 

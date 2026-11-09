@@ -5,19 +5,19 @@ const mocks = vi.hoisted(() => ({
   listDocuments: vi.fn(),
 }));
 
-vi.mock("@/backend/appwrite/config", () => ({
+vi.mock("@/server/appwrite/config", () => ({
   appwriteServerConfig: {
     databaseId: "database",
     collections: { collectors: "collectors" },
   },
 }));
 
-vi.mock("@/backend/appwrite/server-client", async () => {
+vi.mock("@/server/appwrite/server-client", async () => {
   const { Query } = await import("node-appwrite");
   return { databases: { listDocuments: mocks.listDocuments }, Query };
 });
 
-vi.mock("@/backend/services/lender-service", () => ({
+vi.mock("@/server/services/lender-service", () => ({
   getPrimaryLender: mocks.getPrimaryLender,
 }));
 

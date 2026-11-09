@@ -1,7 +1,7 @@
-import { appwriteServerConfig } from "@/backend/appwrite/config";
-import { databases, Query } from "@/backend/appwrite/server-client";
-import { validateNewCollectorUsername } from "@/backend/modules/collectors/username";
-import { getPrimaryLender } from "@/backend/services/lender-service";
+import { appwriteServerConfig } from "@/server/appwrite/config";
+import { databases, Query } from "@/server/appwrite/server-client";
+import { validateNewCollectorUsername } from "@/features/collectors/domain/username";
+import { getPrimaryLender } from "@/server/services/lender-service";
 
 export const dynamic = "force-dynamic";
 

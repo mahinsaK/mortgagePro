@@ -1,5 +1,5 @@
-import { getLoanPaymentDetails } from "@/backend/services/lending-service";
-import { escapeCsvCell } from "@/backend/lib/csv";
+import { getLoanPaymentDetails } from "@/server/services/lending-service";
+import { escapeCsvCell } from "@/server/lib/csv";
 
 export const dynamic = "force-dynamic";
 

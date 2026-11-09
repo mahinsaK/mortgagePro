@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
   refreshActiveCollectorSession: vi.fn(),
 }));
 
-vi.mock("@/backend/services/collector-auth-service", () => ({
+vi.mock("@/server/services/collector-auth-service", () => ({
   refreshActiveCollectorSession: mocks.refreshActiveCollectorSession,
 }));
 

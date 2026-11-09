@@ -1,4 +1,4 @@
-import { NotificationsPageContent } from "@/frontend/components/notifications/local-notifications";
+import { NotificationsPageContent } from "@/features/notifications/components/local-notifications";
 
 export const dynamic = "force-dynamic";
 

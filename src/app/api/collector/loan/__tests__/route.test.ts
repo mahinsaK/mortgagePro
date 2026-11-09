@@ -6,13 +6,13 @@ const mocks = vi.hoisted(() => ({
   recordSecurityEvent: vi.fn(),
 }));
 
-vi.mock("@/backend/services/collector-auth-service", () => ({
+vi.mock("@/server/services/collector-auth-service", () => ({
   requireActiveCollectorPrincipal: mocks.requireActiveCollectorPrincipal,
 }));
-vi.mock("@/backend/services/tenant-data-service", () => ({
+vi.mock("@/server/services/tenant-data-service", () => ({
   getTenantDocument: mocks.getTenantDocument,
 }));
-vi.mock("@/backend/services/security-event-service", () => ({
+vi.mock("@/server/services/security-event-service", () => ({
   recordSecurityEvent: mocks.recordSecurityEvent,
 }));
 

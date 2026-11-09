@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { isValidDateOnly } from "@/backend/modules/notifications/dto";
-import { getLoansPageData } from "@/backend/services/lending-service";
-import type { LoanAttentionFilter } from "@/backend/services/lending-service";
-import { LoansInfiniteList } from "@/frontend/components/loans/loans-infinite-list";
+import { isValidDateOnly } from "@/features/notifications/domain/dto";
+import { getLoansPageData } from "@/server/services/lending-service";
+import type { LoanAttentionFilter } from "@/server/services/lending-service";
+import { LoansInfiniteList } from "@/features/loans/components/loans-infinite-list";
 
 export const dynamic = "force-dynamic";
 

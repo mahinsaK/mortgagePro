@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { KeyRound, QrCode, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
-import { loginAction } from "@/backend/actions/auth-actions";
-import { resolvePrimaryLender } from "@/backend/services/lender-service";
-import { LoginForm } from "@/frontend/components/auth/login-form";
+import { loginAction } from "@/features/auth/server/auth-actions";
+import { resolvePrimaryLender } from "@/server/services/lender-service";
+import { LoginForm } from "@/features/auth/components/login-form";
 
 export const dynamic = "force-dynamic";
 

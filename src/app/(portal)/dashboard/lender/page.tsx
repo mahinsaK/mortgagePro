@@ -1,7 +1,7 @@
-import { getLenderDashboardData } from "@/backend/services/dashboard-service";
-import { DashboardDateTime } from "@/frontend/components/dashboard/dashboard-date-time";
-import { LenderDashboardLoansPanel } from "@/frontend/components/dashboard/lender-dashboard-loans-panel";
-import { LenderDashboardStats } from "@/frontend/components/dashboard/lender-dashboard-stats";
+import { getLenderDashboardData } from "@/features/dashboard/server/dashboard-service";
+import { DashboardDateTime } from "@/features/dashboard/components/dashboard-date-time";
+import { LenderDashboardLoansPanel } from "@/features/dashboard/components/lender-dashboard-loans-panel";
+import { LenderDashboardStats } from "@/features/dashboard/components/lender-dashboard-stats";
 
 export const dynamic = "force-dynamic";
 

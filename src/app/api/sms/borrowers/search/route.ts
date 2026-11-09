@@ -1,4 +1,4 @@
-import { searchBorrowerSmsRecipients } from "@/backend/services/sms-recipient-service";
+import { searchBorrowerSmsRecipients } from "@/features/sms/server/sms-recipient-service";
 import { isFeatureAvailable } from "@/shared/feature-availability";
 
 export const dynamic = "force-dynamic";

@@ -16,10 +16,10 @@ vi.mock("next/server", () => ({
     device: { type: mocks.deviceType },
   })),
 }));
-vi.mock("@/backend/services/collector-auth-service", () => ({
+vi.mock("@/server/services/collector-auth-service", () => ({
   requireActiveCollectorPrincipal: mocks.requireActiveCollectorPrincipal,
 }));
-vi.mock("@/backend/services/lender-service", () => ({
+vi.mock("@/server/services/lender-service", () => ({
   resolvePrimaryLender: mocks.resolvePrimaryLender,
 }));
 

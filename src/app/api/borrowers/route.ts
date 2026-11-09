@@ -1,4 +1,4 @@
-import { getBorrowersPageData } from "@/backend/services/lending-service";
+import { getBorrowersPageData } from "@/server/services/lending-service";
 
 export const dynamic = "force-dynamic";
 

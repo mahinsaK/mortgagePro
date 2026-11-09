@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
   getLoanPaymentDetails: vi.fn(),
 }));
 
-vi.mock("@/backend/services/lending-service", () => ({
+vi.mock("@/server/services/lending-service", () => ({
   getLoanPaymentDetails: mocks.getLoanPaymentDetails,
 }));
 

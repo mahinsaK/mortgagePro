@@ -1,8 +1,8 @@
-import { isValidDateOnly } from "@/backend/modules/notifications/dto";
+import { isValidDateOnly } from "@/features/notifications/domain/dto";
 import {
   getLoansPageData,
   type LoanAttentionFilter,
-} from "@/backend/services/lending-service";
+} from "@/server/services/lending-service";
 import { positivePage, privateJson } from "@/app/api/_shared/infinite-pagination";
 
 export const dynamic = "force-dynamic";

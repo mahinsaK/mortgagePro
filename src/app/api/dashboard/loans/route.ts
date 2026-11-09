@@ -1,4 +1,4 @@
-import { getLenderDashboardLoansData } from "@/backend/services/dashboard-service";
+import { getLenderDashboardLoansData } from "@/features/dashboard/server/dashboard-service";
 import { positivePage, privateJson } from "@/app/api/_shared/infinite-pagination";
 
 export const dynamic = "force-dynamic";

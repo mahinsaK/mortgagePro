@@ -1,5 +1,5 @@
-import { getPaymentsPageData } from "@/backend/services/lending-service";
-import { PaymentsInfiniteList } from "@/frontend/components/payments/payments-infinite-list";
+import { getPaymentsPageData } from "@/server/services/lending-service";
+import { PaymentsInfiniteList } from "@/features/payments/components/payments-infinite-list";
 
 export const dynamic = "force-dynamic";
 

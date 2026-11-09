@@ -1,12 +1,12 @@
 import { AppwriteException } from "node-appwrite";
 import { NextResponse } from "next/server";
-import { createAccountClient } from "@/backend/appwrite/server-client";
+import { createAccountClient } from "@/server/appwrite/server-client";
 import {
   clearAuthSession,
   getAuthSessionSecret,
   setAuthSessionSecret,
-} from "@/backend/services/auth-session-service";
-import { resolvePrimaryLender } from "@/backend/services/lender-service";
+} from "@/server/services/auth-session-service";
+import { resolvePrimaryLender } from "@/server/services/lender-service";
 
 export async function POST() {
   const lenderAuth = await resolvePrimaryLender();

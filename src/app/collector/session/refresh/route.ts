@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { refreshActiveCollectorSession } from "@/backend/services/collector-auth-service";
+import { refreshActiveCollectorSession } from "@/server/services/collector-auth-service";
 
 export async function POST() {
   try {

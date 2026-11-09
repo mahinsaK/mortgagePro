@@ -1,5 +1,5 @@
-import { AuthenticationServiceUnavailableError } from "@/backend/services/auth-session-service";
-import { getDashboardOverdueLoans } from "@/backend/services/dashboard-service";
+import { AuthenticationServiceUnavailableError } from "@/server/services/auth-session-service";
+import { getDashboardOverdueLoans } from "@/features/dashboard/server/dashboard-service";
 
 export const dynamic = "force-dynamic";
 

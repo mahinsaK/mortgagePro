@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
   recordSecurityEvent: vi.fn(),
 }));
 
-vi.mock("@/backend/services/security-event-service", () => ({
+vi.mock("@/server/services/security-event-service", () => ({
   recordSecurityEvent: mocks.recordSecurityEvent,
 }));
 

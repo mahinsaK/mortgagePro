@@ -9,11 +9,11 @@ export default defineConfig({
       reporter: ["text", "json-summary", "html"],
       reportsDirectory: "coverage",
       include: [
-        "src/backend/modules/**/*.ts",
-        "src/backend/services/auth-session-service.ts",
-        "src/backend/services/collector-session-codec.ts",
-        "src/backend/services/tenant-data-service.ts",
-        "src/backend/services/payment-recording-service.ts",
+        "src/features/*/domain/**/*.ts",
+        "src/server/services/auth-session-service.ts",
+        "src/server/services/collector-session-codec.ts",
+        "src/server/services/tenant-data-service.ts",
+        "src/features/payments/server/payment-recording-service.ts",
       ],
       exclude: ["**/__tests__/**", "**/*.test.ts", "**/*.d.ts"],
       thresholds: {
@@ -21,7 +21,13 @@ export default defineConfig({
         functions: 80,
         statements: 80,
         branches: 75,
-        "src/backend/services/{auth-session-service,collector-session-codec,tenant-data-service,payment-recording-service}.ts": {
+        "src/server/services/{auth-session-service,collector-session-codec,tenant-data-service}.ts": {
+          lines: 90,
+          functions: 90,
+          statements: 90,
+          branches: 85,
+        },
+        "src/features/payments/server/payment-recording-service.ts": {
           lines: 90,
           functions: 90,
           statements: 90,

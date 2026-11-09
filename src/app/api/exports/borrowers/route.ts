@@ -1,5 +1,5 @@
-import { getBorrowersExportData } from "@/backend/services/lending-service";
-import { escapeCsvCell } from "@/backend/lib/csv";
+import { getBorrowersExportData } from "@/server/services/lending-service";
+import { escapeCsvCell } from "@/server/lib/csv";
 
 type CsvValue = string | number | boolean | null | undefined;
 type CsvRow = Record<string, CsvValue>;

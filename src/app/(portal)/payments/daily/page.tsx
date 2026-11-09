@@ -2,8 +2,8 @@ import Link from "next/link";
 import {
   getDailyCollectionCollectors,
   getDailyCollectionsData,
-} from "@/backend/services/lending-service";
-import { DailyCollectionsTable } from "@/frontend/components/payments/daily-collections-table";
+} from "@/server/services/lending-service";
+import { DailyCollectionsTable } from "@/features/payments/components/daily-collections-table";
 
 export const dynamic = "force-dynamic";
 

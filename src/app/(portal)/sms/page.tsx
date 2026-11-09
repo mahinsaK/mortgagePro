@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { getPrimaryLender } from "@/backend/services/lender-service";
-import { getSmsManagementData } from "@/backend/services/sms-management-service";
-import { getSmsUsageAndHistory } from "@/backend/services/sms-sending-service";
-import { SmsWorkbench } from "@/frontend/components/sms/sms-workbench";
-import { FeatureMaintenanceCover } from "@/frontend/components/maintenance/feature-maintenance-cover";
+import { getPrimaryLender } from "@/server/services/lender-service";
+import { getSmsManagementData } from "@/features/sms/server/sms-management-service";
+import { getSmsUsageAndHistory } from "@/features/sms/server/sms-sending-service";
+import { SmsWorkbench } from "@/features/sms/components/sms-workbench";
+import { FeatureMaintenanceCover } from "@/components/maintenance/feature-maintenance-cover";
 import { getFeatureAvailability } from "@/shared/feature-availability";
 
 export const dynamic = "force-dynamic";

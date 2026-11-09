@@ -1,23 +1,23 @@
 import { AppwriteException, type Models } from "node-appwrite";
 import type { NextRequest, NextResponse as NextResponseType } from "next/server";
 import { NextResponse } from "next/server";
-import { getSafeAppwriteDiagnostic } from "@/backend/appwrite/safe-appwrite-diagnostic";
-import { createAdminAccountClient } from "@/backend/appwrite/server-client";
+import { getSafeAppwriteDiagnostic } from "@/server/appwrite/safe-appwrite-diagnostic";
+import { createAdminAccountClient } from "@/server/appwrite/server-client";
 import {
   AUTH_SESSION_COOKIE,
   AUTH_SESSION_COOKIE_OPTIONS,
-} from "@/backend/services/auth-session-service";
+} from "@/server/services/auth-session-service";
 import {
   getFixedAuthUrl,
   LENDER_OAUTH_STATE_COOKIE,
   LENDER_OAUTH_STATE_COOKIE_OPTIONS,
   matchesLenderOAuthState,
-} from "@/backend/services/lender-google-oauth-service";
+} from "@/server/services/lender-google-oauth-service";
 import {
   findActiveLenderByAppwriteUserId,
   revokeAppwriteSessionBestEffort,
-} from "@/backend/services/lender-login-service";
-import { recordSecurityEvent } from "@/backend/services/security-event-service";
+} from "@/server/services/lender-login-service";
+import { recordSecurityEvent } from "@/server/services/security-event-service";
 
 const GOOGLE_LOGIN_FAILED = "Google sign-in could not be completed. Please try again.";
 const NO_LENDER_PROFILE =

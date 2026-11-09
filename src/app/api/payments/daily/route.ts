@@ -1,5 +1,5 @@
-import { getDailyCollectionsData } from "@/backend/services/lending-service";
-import { isValidDateOnly } from "@/backend/modules/notifications/dto";
+import { getDailyCollectionsData } from "@/server/services/lending-service";
+import { isValidDateOnly } from "@/features/notifications/domain/dto";
 
 export const dynamic = "force-dynamic";
 

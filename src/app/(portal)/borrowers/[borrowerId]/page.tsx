@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getBorrowerProfileData } from "@/backend/services/lending-service";
-import { BorrowerLoansInfiniteGrid } from "@/frontend/components/borrowers/borrower-loans-infinite-grid";
-import { CreateLoanForm } from "@/frontend/components/loans/create-loan-form";
+import { getBorrowerProfileData } from "@/server/services/lending-service";
+import { BorrowerLoansInfiniteGrid } from "@/features/borrowers/components/borrower-loans-infinite-grid";
+import { CreateLoanForm } from "@/features/loans/components/create-loan-form";
 
 export const dynamic = "force-dynamic";
 

@@ -1,20 +1,20 @@
 import { AppwriteException, OAuthProvider } from "node-appwrite";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getSafeAppwriteDiagnostic } from "@/backend/appwrite/safe-appwrite-diagnostic";
-import { createAccountClient } from "@/backend/appwrite/server-client";
+import { getSafeAppwriteDiagnostic } from "@/server/appwrite/safe-appwrite-diagnostic";
+import { createAccountClient } from "@/server/appwrite/server-client";
 import {
   createLenderOAuthState,
   getFixedAuthUrl,
   getLenderGoogleOAuthUrls,
   LENDER_OAUTH_STATE_COOKIE,
   LENDER_OAUTH_STATE_COOKIE_OPTIONS,
-} from "@/backend/services/lender-google-oauth-service";
+} from "@/server/services/lender-google-oauth-service";
 import {
   consumeAuthenticationAttempt,
   RATE_LIMITED_MESSAGE,
-} from "@/backend/services/authentication-rate-limit-service";
-import { recordSecurityEvent } from "@/backend/services/security-event-service";
+} from "@/server/services/authentication-rate-limit-service";
+import { recordSecurityEvent } from "@/server/services/security-event-service";
 
 export const dynamic = "force-dynamic";
 

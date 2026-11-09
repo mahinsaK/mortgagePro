@@ -36,7 +36,7 @@ workflow to scan a loan QR code and record a payment.
 
 The most important business rule is ownership isolation: a lender or collector
 must only access records belonging to the correct lender. That rule is visible
-in `src/backend/services/tenant-data-service.ts`, where tenant-aware queries
+in `src/server/services/tenant-data-service.ts`, where tenant-aware queries
 always include `Query.equal("lender_id", lenderId)`.
 
 This is not a public borrower self-service application. Borrowers are business
@@ -60,9 +60,9 @@ The lender is the primary portal user. A lender can:
 Relevant entry points include:
 
 - `src/app/auth/login/page.tsx` — lender login page;
-- `src/backend/actions/auth-actions.ts` — lender authentication server actions;
+- `src/features/auth/server/auth-actions.ts` — lender authentication server actions;
 - `src/app/(portal)/layout.tsx` — protects all lender portal pages; and
-- `src/frontend/components/layout/portal-shell.tsx` — lender portal shell.
+- `src/components/layout/portal-shell.tsx` — lender portal shell.
 
 ### Collector
 
@@ -76,9 +76,9 @@ The collector is a separate, mobile-focused user. A collector can:
 Relevant entry points include:
 
 - `src/app/collector/login/page.tsx`;
-- `src/backend/actions/collector-actions.ts`;
+- `src/features/collectors/server/collector-actions.ts`;
 - `src/app/collector/scan/page.tsx`; and
-- `src/frontend/components/collector/collector-scanner.tsx`.
+- `src/features/collectors/components/collector-scanner.tsx`.
 
 ### Administrator
 
@@ -91,16 +91,16 @@ feature of the deployed `main` application.
 
 | Feature | Main files |
 | --- | --- |
-| Lender authentication and registration | `src/backend/actions/auth-actions.ts`, `src/backend/services/auth-session-service.ts`, `src/backend/services/lender-service.ts` |
-| Google lender sign-in | `src/app/auth/google/route.ts`, `src/app/auth/google/callback/route.ts`, `src/backend/services/lender-google-oauth-service.ts` |
-| Collector authentication | `src/backend/actions/collector-actions.ts`, `src/backend/services/collector-auth-service.ts`, `src/backend/services/collector-session-codec.ts` |
-| Borrower, collector, and loan management | `src/backend/actions/lending-actions.ts`, `src/backend/services/lending-service.ts` |
-| Tenant isolation | `src/backend/services/tenant-data-service.ts`, `src/app/(portal)/layout.tsx` |
-| Safe payment recording | `src/backend/services/payment-recording-service.ts`, `src/backend/modules/payments/controller.ts`, `src/backend/modules/payments/service.ts` |
-| QR generation and scanning | `src/backend/services/qr-code-service.ts`, `src/frontend/lib/loan-qr-file.ts`, `src/frontend/components/collector/collector-scanner.tsx` |
-| Local lender notifications | `src/backend/services/local-notification-service.ts`, `src/app/api/notifications/route.ts`, `src/frontend/components/notifications/local-notifications.tsx` |
-| SMS management and Text.lk delivery | `src/backend/services/sms-management-service.ts`, `src/backend/services/sms-sending-service.ts`, `src/backend/services/textlk-sms-provider.ts` |
-| CSV exports | `src/app/api/exports/borrowers/route.ts`, `src/app/api/exports/payments/route.ts`, `src/backend/lib/csv.ts` |
+| Lender authentication and registration | `src/features/auth/server/auth-actions.ts`, `src/server/services/auth-session-service.ts`, `src/server/services/lender-service.ts` |
+| Google lender sign-in | `src/app/auth/google/route.ts`, `src/app/auth/google/callback/route.ts`, `src/server/services/lender-google-oauth-service.ts` |
+| Collector authentication | `src/features/collectors/server/collector-actions.ts`, `src/server/services/collector-auth-service.ts`, `src/server/services/collector-session-codec.ts` |
+| Borrower, collector, and loan management | `src/features/borrowers/server/borrower-actions.ts`, `src/features/collectors/server/collector-management-actions.ts`, `src/features/loans/server/loan-actions.ts` |
+| Tenant isolation | `src/server/services/tenant-data-service.ts`, `src/app/(portal)/layout.tsx` |
+| Safe payment recording | `src/features/payments/server/payment-recording-service.ts`, `src/features/payments/domain/controller.ts`, `src/features/payments/domain/service.ts` |
+| QR generation and scanning | `src/features/loans/server/qr-code-service.ts`, `src/features/loans/lib/loan-qr-file.ts`, `src/features/collectors/components/collector-scanner.tsx` |
+| Local lender notifications | `src/features/notifications/server/local-notification-service.ts`, `src/app/api/notifications/route.ts`, `src/features/notifications/components/local-notifications.tsx` |
+| SMS management and Text.lk delivery | `src/features/sms/server/sms-management-service.ts`, `src/features/sms/server/sms-sending-service.ts`, `src/features/sms/server/textlk-sms-provider.ts` |
+| CSV exports | `src/app/api/exports/borrowers/route.ts`, `src/app/api/exports/payments/route.ts`, `src/server/lib/csv.ts` |
 
 ## 4. Technology stack
 
@@ -143,19 +143,20 @@ This is the Next.js App Router boundary.
 The folder structure here is a **Next.js framework convention**, not proof that
 the application implements classical MVC.
 
-### `src/frontend/components`
+### `src/components`
 
-This contains reusable React UI grouped by feature: authentication, borrowers,
-collectors, loans, payments, SMS, notifications, layout, and general UI.
+This contains React UI shared across features: layouts, providers, forms, and
+general UI. Feature-specific components live in `src/features/<name>/components`.
 
 Some components are Server Components by default. Files containing
 `"use client"` are Client Components and may use state, effects, browser APIs,
 and event handlers. For example, `collector-scanner.tsx` needs camera access and
 therefore runs in the browser.
 
-### `src/backend/actions`
+### `src/features/<name>/server`
 
-These are Next.js Server Actions. Forms can call them without the project
+These folders contain feature-specific Server Actions and query/application
+services. Forms can call actions without the project
 manually creating a REST endpoint for every mutation. They are an application
 boundary: they read form data, resolve the authenticated user, invoke business
 logic/services, revalidate pages, and redirect or return form state.
@@ -163,16 +164,16 @@ logic/services, revalidate pages, and redirect or return form state.
 Important examples:
 
 - `loginAction()` in `auth-actions.ts`;
-- `createBorrowerAction()` and `createLoanForBorrowerAction()` in
-  `lending-actions.ts`;
+- `createBorrowerAction()` in `borrower-actions.ts` and
+  `createLoanForBorrowerAction()` in `loan-actions.ts`;
 - `collectScannedPaymentAction()` in `collector-actions.ts`; and
 - `sendSelectedSmsAction()` in `sms-actions.ts`.
 
-### `src/backend/services`
+### `src/server/services`
 
-This is the main application/service layer. These files coordinate business
-workflows, Appwrite queries, authentication state, transactions, provider
-calls, and mapping database documents into UI-facing objects.
+This layer holds shared infrastructure such as session handling, tenant-aware
+queries, and Appwrite helpers. Feature-specific workflows and display queries
+now live in their feature's `server` folder.
 
 Examples:
 
@@ -184,25 +185,25 @@ Examples:
 - `sendTenantSmsBatch()` coordinates sender approval, quota, provider calls,
   and batch status.
 
-### `src/backend/modules`
+### `src/features`
 
-This folder contains DTO conversion, validation, small controllers, and domain
-logic grouped by feature. It looks like a controller/service/DTO architecture,
-but it is **not applied uniformly to every request**.
+Each feature groups its own `components`, `domain`, and `server` code as needed.
+The `domain` folders contain DTO conversion, validation, and small controllers,
+but that controller/service/DTO architecture is **not applied uniformly to every request**.
 
 Real usages include:
 
-- `AuthController` from `modules/auth/controller.ts`, used by
-  `actions/auth-actions.ts`;
+- `AuthController` from `features/auth/domain/controller.ts`, used by
+  `features/auth/server/auth-actions.ts`;
 - `PaymentController` and `PaymentService`, used by
-  `services/payment-recording-service.ts`; and
+  `features/payments/server/payment-recording-service.ts`; and
 - `NotificationController`, used by
-  `services/local-notification-service.ts`.
+  `features/notifications/server/local-notification-service.ts`.
 
 By contrast, many application services query Appwrite directly. Do not claim
 that all requests follow Controller → Service → Repository.
 
-### `src/backend/appwrite`
+### `src/server/appwrite`
 
 - `config.ts` maps environment configuration and collection IDs.
 - `server-client.ts` creates server-only Appwrite clients for database, user,
@@ -241,7 +242,7 @@ There are several useful meanings of “start”:
 4. `src/app/(portal)/layout.tsx` is the authenticated lender boundary. It calls
    `resolvePrimaryLender()` before rendering any protected lender page.
 5. A user mutation normally enters through a Server Action in
-   `src/backend/actions`; an explicit HTTP request enters through a `route.ts`
+   `src/features/<name>/server`; an explicit HTTP request enters through a `route.ts`
    file under `src/app/api` or `src/app/auth`.
 
 Next.js performs the framework bootstrapping, so this project does not have a
@@ -258,11 +259,11 @@ Next.js pages + React components      Collector scan/login components
       +----------- Server Actions ----------+
       |              or API Route Handlers   |
       v                                     v
-Application services in src/backend/services
+Feature services in src/features/<name>/server
       |
-      +--> selected DTO/controller/domain logic in src/backend/modules
+      +--> selected DTO/controller/domain logic in src/features/<name>/domain
       |
-      +--> tenant-aware helpers in tenant-data-service.ts
+      +--> shared tenant-aware helpers in src/server/services/tenant-data-service.ts
       |
       v
 node-appwrite server client
@@ -313,7 +314,7 @@ The core Appwrite collections are:
 
 The SMS subsystem adds accounts, sender requests, templates, monthly usage,
 and send-log collections. The complete attributes and indexes are documented
-in `src/backend/docs/database-schema.md` and defined by
+in `docs/backend/database-schema.md` and defined by
 `scripts/appwrite-schema-definition.mjs`.
 
 Appwrite document `$id` is the primary document identifier. Relationships such
@@ -391,13 +392,13 @@ Why:
 Open these files in order:
 
 1. `src/app/auth/login/page.tsx`
-2. `src/frontend/components/auth/login-form.tsx`
-3. `src/backend/actions/auth-actions.ts` — focus on `loginAction()`
-4. `src/backend/services/auth-session-service.ts`
-5. `src/backend/services/lender-login-service.ts`
-6. `src/backend/services/lender-service.ts`
+2. `src/features/auth/components/login-form.tsx`
+3. `src/features/auth/server/auth-actions.ts` — focus on `loginAction()`
+4. `src/server/services/auth-session-service.ts`
+5. `src/server/services/lender-login-service.ts`
+6. `src/server/services/lender-service.ts`
 7. `src/app/(portal)/layout.tsx`
-8. `src/backend/services/tenant-data-service.ts`
+8. `src/server/services/tenant-data-service.ts`
 
 Stop after understanding that flow before moving to collector authentication or
 payment transactions.

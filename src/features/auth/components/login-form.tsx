@@ -14,12 +14,12 @@ type LoginFormProps = {
 
 export function LoginForm({ action, message, status }: LoginFormProps) {
   return (
-    <div className="mt-8">
+    <div className="mt-6 xl:mt-8">
       <AuthStatus message={message} status={status} />
 
-      <div className="mt-7">
+      <div className="mt-5 xl:mt-7">
         <a
-          className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-[#bfcbd9] bg-white px-4 text-base font-semibold text-[#10203b] shadow-sm transition hover:border-[#94a3b8] hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2563eb]/10 sm:h-14"
+          className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-[#bfcbd9] bg-white px-4 text-base font-semibold text-[#10203b] shadow-sm transition hover:border-[#94a3b8] hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2563eb]/10 xl:h-14"
           href="/auth/google"
         >
           <GoogleIcon />
@@ -27,7 +27,7 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
         </a>
       </div>
 
-      <div className="my-6 flex items-center gap-4" aria-hidden="true">
+      <div className="my-5 flex items-center gap-4 xl:my-6" aria-hidden="true">
         <span className="h-px flex-1 bg-[#d9e0e8]" />
         <span className="text-xs font-bold uppercase tracking-[0.17em] text-[#5f6b7d]">
           or use email
@@ -35,16 +35,16 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
         <span className="h-px flex-1 bg-[#d9e0e8]" />
       </div>
 
-      <form action={action} className="space-y-5">
+      <form action={action} className="space-y-4 xl:space-y-5">
         <label className="block">
-          <span className="text-sm font-semibold text-[#10203b] sm:text-base">
+          <span className="text-sm font-semibold text-[#10203b] xl:text-base">
             Email address
           </span>
           <input
             autoCapitalize="none"
             autoComplete="email"
             autoCorrect="off"
-            className="mt-2 h-12 w-full rounded-xl border border-[#bfcbd9] px-4 text-base text-[#172033] outline-none transition placeholder:text-[#7b8799] focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10 sm:h-14 sm:px-5 sm:text-lg"
+            className="mt-2 h-12 w-full rounded-xl border border-[#bfcbd9] px-4 text-base text-[#172033] outline-none transition placeholder:text-[#7b8799] focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10 xl:h-14 xl:px-5 xl:text-lg"
             name="email"
             placeholder="you@company.com"
             required
@@ -61,7 +61,7 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
 
         <div className="flex justify-end">
           <Link
-            className="text-sm font-bold text-[#075ee8] underline-offset-4 hover:underline sm:text-base"
+            className="text-sm font-bold text-[#075ee8] underline-offset-4 hover:underline xl:text-base"
             href="/auth/password-reset"
           >
             Forgot password?
@@ -101,7 +101,7 @@ function SubmitButton() {
 
   return (
     <button
-      className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#0b6cff] to-[#0755df] px-4 text-base font-bold text-white shadow-[0_10px_24px_rgba(37,99,235,0.22)] transition hover:from-[#075fe8] hover:to-[#064ac5] active:scale-[0.99] disabled:cursor-not-allowed disabled:from-[#93c5fd] disabled:to-[#93c5fd] sm:h-16 sm:text-lg"
+      className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#0b6cff] to-[#0755df] px-4 text-base font-bold text-white shadow-[0_10px_24px_rgba(37,99,235,0.22)] transition hover:from-[#075fe8] hover:to-[#064ac5] active:scale-[0.99] disabled:cursor-not-allowed disabled:from-[#93c5fd] disabled:to-[#93c5fd] xl:h-14 xl:text-lg"
       disabled={pending}
       type="submit"
     >

@@ -21,7 +21,7 @@ export function PublicAuthShell({
   const width = wide || aside ? "max-w-[1310px]" : "max-w-[500px]";
 
   return (
-    <main className="relative min-h-[100dvh] overflow-hidden bg-[#f8f6f3] px-4 py-[max(1.25rem,env(safe-area-inset-top))] text-[#10203b] sm:px-6 sm:py-8 lg:px-10 lg:py-10">
+    <main className="relative min-h-[100dvh] overflow-hidden bg-[#f8f6f3] px-4 py-[max(1.25rem,env(safe-area-inset-top))] text-[#10203b] sm:px-6 sm:py-6 lg:px-10 lg:py-8">
       <div
         aria-hidden="true"
         className="absolute -left-32 -top-32 size-80 rounded-full bg-[#dbeafe]/60 blur-3xl"
@@ -32,7 +32,7 @@ export function PublicAuthShell({
       />
 
       <div className={`relative mx-auto w-full ${width}`}>
-        <header className="mb-5 flex min-h-12 items-center justify-between gap-3 lg:mb-7">
+        <header className="mb-5 flex min-h-12 items-center justify-between gap-3 min-[840px]:mb-6">
           <AuthBrand />
           {secondaryAction}
         </header>
@@ -40,14 +40,14 @@ export function PublicAuthShell({
         <section
           className={`overflow-hidden rounded-[1.25rem] border border-[#cbd5e1] bg-white shadow-[0_24px_60px_rgba(20,34,55,0.15)] ${
             aside
-              ? "lg:grid lg:min-h-[clamp(620px,80dvh,820px)] lg:grid-cols-[1.1fr_0.98fr]"
+              ? "min-[840px]:grid min-[840px]:min-h-[clamp(540px,calc(100dvh-8.5rem),720px)] min-[840px]:grid-cols-[1.02fr_0.98fr] xl:grid-cols-[1.1fr_0.98fr]"
               : ""
           }`}
         >
           {aside}
           <div
-            className={`p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:p-8 ${
-              aside ? "lg:flex lg:items-center lg:p-11" : ""
+            className={`p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:p-7 ${
+              aside ? "min-[840px]:flex min-[840px]:items-center min-[840px]:p-7 lg:p-9 xl:p-11" : ""
             }`}
           >
             <div className="mx-auto w-full max-w-[540px]">{children}</div>
@@ -65,10 +65,10 @@ export function AuthBrand() {
       className="inline-flex items-center gap-2.5 text-[#172033]"
       href="/"
     >
-      <span className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#1672ff] to-[#0648c9] text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)] lg:size-14 lg:rounded-2xl">
-        <Building2 aria-hidden="true" className="lg:size-7" size={21} />
+      <span className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#1672ff] to-[#0648c9] text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)] min-[840px]:size-12 min-[840px]:rounded-[0.9rem] xl:size-14 xl:rounded-2xl">
+        <Building2 aria-hidden="true" className="xl:size-7" size={21} />
       </span>
-      <span className="text-xl font-bold tracking-[-0.035em] lg:text-[1.8rem]">
+      <span className="text-xl font-bold tracking-[-0.035em] min-[840px]:text-2xl xl:text-[1.8rem]">
         MortgagePro
       </span>
     </Link>
@@ -93,14 +93,14 @@ export function AuthPageHeader({
       </p>
       <h1
         className={`mt-3 font-bold leading-tight tracking-[-0.04em] text-[#10203b] ${
-          prominent ? "text-4xl sm:text-[2.8rem]" : "text-[1.75rem] sm:text-3xl"
+          prominent ? "text-3xl sm:text-4xl xl:text-[2.8rem]" : "text-[1.75rem] sm:text-3xl"
         }`}
       >
         {title}
       </h1>
       <p
         className={`mt-3 text-[#56647b] ${
-          prominent ? "text-base leading-7 sm:text-lg" : "text-sm leading-6"
+          prominent ? "text-base leading-7 xl:text-lg" : "text-sm leading-6"
         }`}
       >
         {description}
@@ -136,21 +136,21 @@ export function AuthStatus({
 
 export function LoginOverviewPanel() {
   return (
-    <aside className="relative hidden overflow-hidden bg-[#0b2848] p-12 text-white lg:flex lg:flex-col">
+    <aside className="relative hidden overflow-hidden bg-[#0b2848] p-7 text-white min-[840px]:flex min-[840px]:flex-col lg:p-9 xl:p-12">
       <div className="relative z-10">
         <span className="inline-flex items-center gap-2 rounded-full border border-[#8eb8df]/35 bg-white/[0.07] px-5 py-2.5 text-sm font-semibold text-[#d7eaff] shadow-inner">
           <UsersRound aria-hidden="true" size={17} />
           Lender workspace
         </span>
-        <h2 className="mt-8 max-w-[560px] text-[2.8rem] font-bold leading-[1.12] tracking-[-0.045em] xl:text-[3.15rem]">
+        <h2 className="mt-6 max-w-[560px] text-[2rem] font-bold leading-[1.12] tracking-[-0.045em] lg:text-[2.4rem] xl:mt-8 xl:text-[3.15rem]">
           Keep your lending operation in view.
         </h2>
-        <p className="mt-4 max-w-[550px] text-lg leading-7 text-[#d5dfeb] xl:text-xl">
+        <p className="mt-3 max-w-[550px] text-base leading-6 text-[#d5dfeb] lg:text-lg lg:leading-7 xl:mt-4 xl:text-xl">
           Manage borrowers, review loans, and follow collections from one
           organized workspace.
         </p>
 
-        <div className="mt-8 grid gap-4">
+        <div className="mt-6 grid gap-3 xl:mt-8 xl:gap-4">
           <OverviewItem
             icon={<UsersRound size={17} />}
             text="Borrower and collector management"
@@ -168,7 +168,7 @@ export function LoginOverviewPanel() {
 
       <ArchitectureArtwork />
 
-      <p className="relative z-10 mt-auto pt-8 text-sm leading-5 text-[#d5dfeb]">
+      <p className="relative z-10 mt-auto pt-5 text-xs leading-5 text-[#d5dfeb] xl:pt-8 xl:text-sm">
         Your account must be approved before lender access is enabled.
       </p>
     </aside>
@@ -201,8 +201,8 @@ export function LenderAccessLink() {
 
 function OverviewItem({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
-    <div className="flex items-center gap-4 text-base font-medium text-[#f1f6fb] xl:text-lg">
-      <span className="flex size-12 items-center justify-center rounded-xl border border-[#8eb8df]/25 bg-white/[0.07] text-[#9ed2ff] shadow-inner">
+    <div className="flex items-center gap-3 text-sm font-medium text-[#f1f6fb] lg:text-base xl:gap-4 xl:text-lg">
+      <span className="flex size-10 items-center justify-center rounded-xl border border-[#8eb8df]/25 bg-white/[0.07] text-[#9ed2ff] shadow-inner xl:size-12">
         {icon}
       </span>
       <span>{text}</span>

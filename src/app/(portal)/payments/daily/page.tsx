@@ -22,15 +22,15 @@ export default async function DailyCollectionsPage({
 
   return (
     <div>
-      <div className="mb-6 flex items-start justify-between gap-4 md:mb-8">
+      <div className="mb-6 flex items-start justify-between gap-4 sm:mb-8">
         <div>
           <p className="text-sm font-medium text-[#657386]">
             Daily collections
           </p>
-          <h1 className="mt-1 text-2xl font-semibold md:mt-2 md:text-3xl">Payments by day</h1>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:mt-2 sm:text-3xl">Payments by day</h1>
         </div>
         <Link
-          className="shrink-0 rounded-md border border-[#cfd8e3] px-3 py-2 text-sm font-medium text-[#2d3745] transition hover:bg-[#f8fafc] md:px-4"
+          className="inline-flex min-h-11 shrink-0 items-center rounded-lg border border-[#cfd8e3] px-3 py-2 text-sm font-medium text-[#2d3745] transition hover:bg-[#f8fafc] sm:px-4"
           href="/dashboard/lender"
         >
           Back

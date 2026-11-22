@@ -10,7 +10,7 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
 
   return (
     <>
-      <div className="divide-y divide-[#eef2f6] md:hidden">
+      <div className="divide-y divide-[#eef2f6] lg:hidden">
         {loans.map((loan) => (
           <article
             className="p-4 transition active:bg-[#f8fafc]"
@@ -55,7 +55,7 @@ export function LoansTable({ loans }: { loans: LoanRow[] }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="hidden w-full min-w-[1020px] border-collapse text-left text-sm md:table">
+        <table className="hidden w-full min-w-[1020px] border-collapse text-left text-sm lg:table">
           <thead className="bg-[#f8fafc] text-[#657386]">
             <tr>
               <th className="px-5 py-3 font-semibold">QR</th>

@@ -11,7 +11,7 @@ export function PaymentsTable({ payments, onDeleted }: {
 }) {
   return (
     <>
-      <div className="divide-y divide-[#eef2f6] md:hidden">
+      <div className="divide-y divide-[#eef2f6] lg:hidden">
         {payments.map((payment) => (
           <article className="p-4" key={payment.id}>
             <div className="flex items-start justify-between gap-3">
@@ -32,7 +32,7 @@ export function PaymentsTable({ payments, onDeleted }: {
         {payments.length === 0 ? <p className="p-5 text-sm text-[#657386]">No payments found.</p> : null}
       </div>
       <div className="overflow-x-auto">
-        <table className="hidden w-full min-w-[760px] border-collapse text-left text-sm md:table">
+        <table className="hidden w-full min-w-[760px] border-collapse text-left text-sm lg:table">
           <thead className="bg-[#f8fafc] text-[#657386]"><tr><th className="px-5 py-3">Borrower</th><th className="px-5 py-3">Collector</th><th className="px-5 py-3">Amount</th><th className="px-5 py-3">Method</th><th className="px-5 py-3">Collected at</th><th className="px-5 py-3 text-right">Actions</th></tr></thead>
           <tbody>
             {payments.map((payment) => (

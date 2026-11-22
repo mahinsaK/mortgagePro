@@ -67,7 +67,7 @@ export function LenderDashboardStats({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {stats.map((stat, index) => {
           if (stat.label === "Today's collection") {
             return (
@@ -84,7 +84,7 @@ export function LenderDashboardStats({
           if (stat.label === "Overdue loans") {
             return (
               <button
-                className="block min-h-28 rounded-lg border border-[#dfe5ec] bg-white p-4 text-left shadow-sm transition hover:border-[#f59e0b] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d4ed8] focus-visible:ring-offset-2 disabled:cursor-default disabled:hover:border-[#dfe5ec] disabled:hover:shadow-sm md:min-h-36 md:p-5"
+                className="block min-h-28 rounded-xl border border-[#dfe5ec] bg-white p-4 text-left shadow-[var(--mp-shadow-sm)] transition hover:border-[#f59e0b] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d4ed8] focus-visible:ring-offset-2 disabled:cursor-default disabled:hover:border-[#dfe5ec] disabled:hover:shadow-sm sm:min-h-36 sm:p-5"
                 disabled={overdueTotal === 0}
                 key={`${stat.label}-${index}`}
                 onClick={openOverdueLoans}
@@ -93,7 +93,7 @@ export function LenderDashboardStats({
                 <span className="block text-sm font-medium text-[#657386]">
                   {stat.label}
                 </span>
-                <span className="mt-2 block text-2xl font-semibold md:mt-3 md:text-3xl">
+                <span className="mt-2 block text-2xl font-semibold tracking-tight sm:mt-3 sm:text-3xl">
                   {stat.value}
                 </span>
                 <span className="mt-2 hidden text-sm text-[#166534] sm:block">
@@ -220,9 +220,9 @@ export function LenderDashboardStats({
 
 function StatCard({ stat }: { stat: DashboardStat }) {
   return (
-    <article className="h-full min-h-28 rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm transition hover:border-[#c7d2fe] md:min-h-36 md:p-5">
+    <article className="h-full min-h-28 rounded-xl border border-[#dfe5ec] bg-white p-4 shadow-[var(--mp-shadow-sm)] transition hover:border-[#c7d2fe] sm:min-h-36 sm:p-5">
       <p className="text-sm font-medium text-[#657386]">{stat.label}</p>
-      <p className="mt-2 text-2xl font-semibold md:mt-3 md:text-3xl">
+      <p className="mt-2 text-2xl font-semibold tracking-tight sm:mt-3 sm:text-3xl">
         {stat.value}
       </p>
       <p className="mt-2 hidden text-sm text-[#166534] sm:block">

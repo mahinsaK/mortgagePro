@@ -41,12 +41,12 @@ export function PortalSidebar({
 
   return (
     <aside
-      className={`portal-sidebar fixed left-0 top-0 z-40 flex h-[100dvh] w-[min(20rem,calc(100vw-2.5rem))] flex-col border-r border-[#dfe5ec] bg-white pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] shadow-2xl transition duration-200 md:z-30 md:h-screen md:translate-x-0 md:pb-0 md:pt-0 md:shadow-none md:transition-[width] ${
+      className={`portal-sidebar fixed left-0 top-0 z-40 flex h-[100dvh] w-[min(20rem,calc(100vw-2.5rem))] flex-col border-r border-[#dfe5ec] bg-white pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] shadow-2xl transition duration-200 lg:z-30 lg:h-screen lg:translate-x-0 lg:pb-0 lg:pt-0 lg:shadow-none lg:transition-[width] ${
         mobileOpen ? "translate-x-0" : "-translate-x-full"
-      } ${collapsed ? "md:w-20" : "md:w-64"}`}
+      } ${collapsed ? "lg:w-20" : "lg:w-64"}`}
     >
       <div className="flex h-20 items-center justify-between gap-3 border-b border-[#dfe5ec] px-4">
-        <div className={collapsed ? "md:sr-only" : ""}>
+        <div className={collapsed ? "lg:sr-only" : ""}>
           <p className="text-base font-semibold text-[#2563eb]">MortgagePro</p>
           <p className="mt-1 text-[13px] font-medium uppercase tracking-[0.14em] text-[#657386]">
             Lender portal
@@ -54,7 +54,7 @@ export function PortalSidebar({
         </div>
         <button
           aria-label="Close navigation menu"
-          className="flex size-10 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#2d3745] md:hidden"
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#cfd8e3] text-[#2d3745] lg:hidden"
           onClick={onMobileClose}
           type="button"
         >
@@ -62,7 +62,7 @@ export function PortalSidebar({
         </button>
         <button
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#2d3745] transition hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#dbeafe] md:flex"
+          className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#cfd8e3] text-[#2d3745] transition hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#dbeafe] lg:flex"
           onClick={onToggle}
           type="button"
         >
@@ -82,8 +82,8 @@ export function PortalSidebar({
           return (
             <Link
               aria-label={item.label}
-              className={`mb-1 flex h-12 items-center rounded-md text-[15px] font-medium transition md:h-11 ${
-                collapsed ? "px-3 md:justify-center md:px-0" : "px-3"
+              className={`mb-1 flex h-12 items-center rounded-xl text-[15px] font-medium transition lg:h-11 ${
+                collapsed ? "px-3 lg:justify-center lg:px-0" : "px-3"
               } ${
                 isActive
                   ? "bg-[#e0ecff] text-[#1d4ed8]"
@@ -95,7 +95,7 @@ export function PortalSidebar({
               title={collapsed ? item.label : undefined}
             >
               <Icon aria-hidden="true" className="shrink-0" size={19} />
-              <span className={collapsed ? "ml-3 md:sr-only" : "ml-3"}>
+              <span className={collapsed ? "ml-3 lg:sr-only" : "ml-3"}>
                 {item.label}
               </span>
             </Link>
@@ -107,12 +107,12 @@ export function PortalSidebar({
         <form action={logoutAction}>
           <PendingSubmitButton
             aria-label="Sign out"
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#15191f] px-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#2d3745] focus:outline-none focus:ring-2 focus:ring-[#cbd5e1] focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70 md:h-11"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#15191f] px-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#2d3745] focus:outline-none focus:ring-2 focus:ring-[#cbd5e1] focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70 lg:h-11"
             pendingLabel={collapsed ? null : "Signing out…"}
             title={collapsed ? "Sign out" : undefined}
           >
             <LogOut aria-hidden="true" className="shrink-0" size={18} />
-            <span className={collapsed ? "ml-2 md:sr-only" : "ml-2"}>
+            <span className={collapsed ? "ml-2 lg:sr-only" : "ml-2"}>
               Sign out
             </span>
           </PendingSubmitButton>

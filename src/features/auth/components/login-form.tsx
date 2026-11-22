@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { ArrowRight, LoaderCircle } from "lucide-react";
 import { useFormStatus } from "react-dom";
+import { PasswordField } from "@/features/auth/components/password-field";
+import { AuthStatus } from "@/features/auth/components/public-auth-shell";
 
 type LoginFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -15,9 +17,9 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
     <div className="mt-8">
       <AuthStatus message={message} status={status} />
 
-      <div className="mt-5 mb-8">
+      <div className="mt-7">
         <a
-          className="flex h-12 w-full items-center justify-center gap-3 rounded-md border border-[#cfd8e3] bg-white px-4 text-sm font-semibold text-[#2d3745] transition hover:border-[#aebac8] hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2563eb]/10"
+          className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-[#bfcbd9] bg-white px-4 text-base font-semibold text-[#10203b] shadow-sm transition hover:border-[#94a3b8] hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2563eb]/10 sm:h-14"
           href="/auth/google"
         >
           <GoogleIcon />
@@ -25,44 +27,41 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
         </a>
       </div>
 
-      <div className="mb-8 flex items-center gap-3" aria-hidden="true">
+      <div className="my-6 flex items-center gap-4" aria-hidden="true">
         <span className="h-px flex-1 bg-[#d9e0e8]" />
-        <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#657386]">
-          or continue with email
+        <span className="text-xs font-bold uppercase tracking-[0.17em] text-[#5f6b7d]">
+          or use email
         </span>
         <span className="h-px flex-1 bg-[#d9e0e8]" />
       </div>
 
       <form action={action} className="space-y-5">
         <label className="block">
-          <span className="text-sm font-medium text-[#2d3745]">Email</span>
+          <span className="text-sm font-semibold text-[#10203b] sm:text-base">
+            Email address
+          </span>
           <input
             autoCapitalize="none"
             autoComplete="email"
             autoCorrect="off"
-            className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
+            className="mt-2 h-12 w-full rounded-xl border border-[#bfcbd9] px-4 text-base text-[#172033] outline-none transition placeholder:text-[#7b8799] focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10 sm:h-14 sm:px-5 sm:text-lg"
             name="email"
-            placeholder="owner@company.com"
+            placeholder="you@company.com"
             required
             type="email"
           />
         </label>
 
-        <label className="block">
-          <span className="text-sm font-medium text-[#2d3745]">Password</span>
-          <input
-            autoComplete="current-password"
-            className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
-            name="password"
-            placeholder="Enter password"
-            required
-            type="password"
-          />
-        </label>
+        <PasswordField
+          autoComplete="current-password"
+          label="Password"
+          name="password"
+          placeholder="Enter your password"
+        />
 
         <div className="flex justify-end">
           <Link
-            className="inline-flex min-h-11 items-center text-sm font-semibold text-[#2563eb] hover:underline"
+            className="text-sm font-bold text-[#075ee8] underline-offset-4 hover:underline sm:text-base"
             href="/auth/password-reset"
           >
             Forgot password?
@@ -74,7 +73,6 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
     </div>
   );
 }
-
 function GoogleIcon() {
   return (
     <svg aria-hidden="true" height="18" viewBox="0 0 18 18" width="18">
@@ -103,7 +101,7 @@ function SubmitButton() {
 
   return (
     <button
-      className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-[#93c5fd]"
+      className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#0b6cff] to-[#0755df] px-4 text-base font-bold text-white shadow-[0_10px_24px_rgba(37,99,235,0.22)] transition hover:from-[#075fe8] hover:to-[#064ac5] active:scale-[0.99] disabled:cursor-not-allowed disabled:from-[#93c5fd] disabled:to-[#93c5fd] sm:h-16 sm:text-lg"
       disabled={pending}
       type="submit"
     >
@@ -119,33 +117,5 @@ function SubmitButton() {
         </>
       )}
     </button>
-  );
-}
-
-function AuthStatus({
-  message,
-  status,
-}: {
-  message?: string;
-  status?: string;
-}) {
-  if (!message) {
-    return null;
-  }
-
-  const isError = status === "error";
-
-  return (
-    <p
-      aria-live="polite"
-      className={`rounded-md border px-3 py-2 text-sm font-medium ${
-        isError
-          ? "border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]"
-          : "border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]"
-      }`}
-      role={isError ? "alert" : "status"}
-    >
-      {message}
-    </p>
   );
 }

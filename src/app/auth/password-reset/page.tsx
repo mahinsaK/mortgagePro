@@ -1,10 +1,21 @@
 import Link from "next/link";
-import { MailCheck } from "lucide-react";
+import type { Metadata } from "next";
 import {
   completePasswordResetAction,
   requestPasswordResetAction,
 } from "@/features/auth/server/auth-actions";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
+import { PasswordField } from "@/features/auth/components/password-field";
+import {
+  AuthPageHeader,
+  AuthStatus,
+  PublicAuthShell,
+} from "@/features/auth/components/public-auth-shell";
+
+export const metadata: Metadata = {
+  title: "Reset password | MortgagePro",
+  description: "Recover access to your MortgagePro lender account.",
+};
 
 export default async function PasswordResetPage({
   searchParams,
@@ -20,29 +31,16 @@ export default async function PasswordResetPage({
   const isCompletingReset = Boolean(userId && secret);
 
   return (
-    <main className="flex min-h-[100dvh] items-center justify-center bg-[#eef2f6] px-3 py-[max(1rem,env(safe-area-inset-top))] sm:px-5 sm:py-10">
-      <section className="w-full max-w-md rounded-lg border border-[#d9e0e8] bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-sm sm:p-8">
-        <Link
-          className="text-sm font-semibold text-[#2563eb] hover:underline"
-          href="/auth/login"
-        >
-          Back to login
-        </Link>
-
-        <div className="mt-6 flex h-12 w-12 items-center justify-center rounded-md bg-[#e0ecff] text-[#2563eb]">
-          <MailCheck aria-hidden="true" size={24} />
-        </div>
-        <p className="mt-5 text-sm font-medium text-[#657386]">
-          Password recovery
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold text-[#15191f]">
-          Reset your password
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-[#657386]">
-          {isCompletingReset
+    <PublicAuthShell>
+      <AuthPageHeader
+        description={
+          isCompletingReset
             ? "Choose a new password for your lender account."
-            : "Enter the email used for your lender account. We will send a reset link if the account exists."}
-        </p>
+            : "Enter your account email and we will send a reset link if an account is available."
+        }
+        eyebrow="Account recovery"
+        title={isCompletingReset ? "Choose a new password" : "Reset your password"}
+      />
 
         <form
           action={
@@ -50,26 +48,26 @@ export default async function PasswordResetPage({
               ? completePasswordResetAction
               : requestPasswordResetAction
           }
-          className="mt-8 space-y-5"
+          className="mt-7 space-y-4"
         >
           <AuthStatus message={message} status={status} />
           {isCompletingReset ? (
             <>
               <input name="userId" type="hidden" value={userId} />
               <input name="secret" type="hidden" value={secret} />
-              <Field
+              <PasswordField
+                autoComplete="new-password"
                 label="New password"
                 minLength={8}
                 name="password"
                 placeholder="Create password"
-                type="password"
               />
-              <Field
+              <PasswordField
+                autoComplete="new-password"
                 label="Confirm password"
                 minLength={8}
                 name="confirmPassword"
                 placeholder="Confirm password"
-                type="password"
               />
             </>
           ) : (
@@ -82,24 +80,23 @@ export default async function PasswordResetPage({
           )}
 
           <PendingSubmitButton
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#2563eb] px-4 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-wait disabled:opacity-70"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2563eb] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1d4ed8] active:scale-[0.99] disabled:cursor-wait disabled:opacity-70"
             pendingLabel={isCompletingReset ? "Updating…" : "Sending…"}
           >
             {isCompletingReset ? "Update password" : "Send reset link"}
           </PendingSubmitButton>
         </form>
 
-        <p className="mt-6 text-center text-sm text-[#657386]">
+        <p className="mt-5 text-center text-sm text-[#68758a]">
           Remembered your password?{" "}
           <Link
-            className="font-semibold text-[#2563eb] hover:underline"
+            className="font-semibold text-[#2563eb] underline-offset-4 hover:underline"
             href="/auth/login"
           >
             Sign in
           </Link>
         </p>
-      </section>
-    </main>
+    </PublicAuthShell>
   );
 }
 
@@ -114,14 +111,14 @@ function Field({
   minLength?: number;
   name: string;
   placeholder: string;
-  type: "email" | "password";
+  type: "email";
 }) {
   return (
     <label className="block">
       <span className="text-sm font-medium text-[#2d3745]">{label}</span>
       <input
-        autoComplete={type === "email" ? "email" : "new-password"}
-        className="mt-2 h-12 w-full rounded-md border border-[#cfd8e3] px-4 text-[#15191f] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
+        autoComplete="email"
+        className="mt-2 h-12 w-full rounded-xl border border-[#ccd7e4] px-4 text-base text-[#172033] outline-none transition placeholder:text-[#9aa6b6] focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
         minLength={minLength}
         name={name}
         placeholder={placeholder}
@@ -129,33 +126,5 @@ function Field({
         type={type}
       />
     </label>
-  );
-}
-
-function AuthStatus({
-  message,
-  status,
-}: {
-  message?: string;
-  status?: string;
-}) {
-  if (!message) {
-    return null;
-  }
-
-  const isError = status === "error";
-
-  return (
-    <p
-      aria-live="polite"
-      className={`rounded-md border px-3 py-2 text-sm font-medium ${
-        isError
-          ? "border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]"
-          : "border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]"
-      }`}
-      role={isError ? "alert" : "status"}
-    >
-      {message}
-    </p>
   );
 }

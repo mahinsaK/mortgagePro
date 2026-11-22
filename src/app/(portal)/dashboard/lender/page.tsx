@@ -21,10 +21,10 @@ export default async function LenderDashboardPage({
 
   return (
     <div>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between md:mb-8">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:mb-8">
         <div>
           <p className="text-sm font-medium text-[#657386]">Dashboard</p>
-          <h1 className="mt-1 text-2xl font-semibold md:mt-2 md:text-3xl">
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:mt-2 sm:text-3xl">
             Business overview
           </h1>
         </div>

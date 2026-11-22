@@ -1,7 +1,17 @@
 import Link from "next/link";
-import { Building2, QrCode } from "lucide-react";
+import type { Metadata } from "next";
 import { registerLenderAction } from "@/features/auth/server/auth-actions";
 import { RegisterLenderForm } from "@/features/auth/components/register-lender-form";
+import {
+  AuthPageHeader,
+  CollectorAccessLink,
+  PublicAuthShell,
+} from "@/features/auth/components/public-auth-shell";
+
+export const metadata: Metadata = {
+  title: "Request lender access | MortgagePro",
+  description: "Request a MortgagePro lender account for your business.",
+};
 
 export default async function RegisterPage({
   searchParams,
@@ -11,36 +21,13 @@ export default async function RegisterPage({
   const { message, status } = await searchParams;
 
   return (
-    <main className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-[#eef2f6] px-3 py-[max(1rem,env(safe-area-inset-top))] sm:px-5 sm:py-10">
-      <Link
-        className="flex h-12 w-full max-w-md items-center justify-center gap-2 rounded-md bg-[#15191f] px-4 text-sm font-semibold text-white shadow-sm md:hidden"
-        href="/collector/login"
-      >
-        <QrCode aria-hidden="true" size={18} />
-        Scan QR code
-      </Link>
-      <section className="w-full max-w-3xl rounded-lg border border-[#d9e0e8] bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-sm sm:p-8">
-        <div className="mb-8">
-          <Link
-            className="text-sm font-semibold text-[#2563eb] hover:underline"
-            href="/auth/login"
-          >
-            Back to login
-          </Link>
-          <div className="mt-6 flex h-12 w-12 items-center justify-center rounded-md bg-[#e0ecff] text-[#2563eb]">
-            <Building2 aria-hidden="true" size={24} />
-          </div>
-          <p className="mt-5 text-sm font-medium text-[#657386]">
-            Lender registration
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold text-[#15191f]">
-            Create your lender account
-          </h1>
-          <p className="mt-3 text-sm leading-6 text-[#657386]">
-            Submit your business for approval. You can sign in after the
-            account is reviewed and activated.
-          </p>
-        </div>
+    <PublicAuthShell secondaryAction={<CollectorAccessLink />} wide>
+      <div className="mx-auto max-w-2xl">
+        <AuthPageHeader
+          description="Tell us about your business. Your account will be available after it is reviewed and approved."
+          eyebrow="Lender registration"
+          title="Request lender access"
+        />
 
         <RegisterLenderForm
           action={registerLenderAction}
@@ -48,16 +35,16 @@ export default async function RegisterPage({
           status={status}
         />
 
-        <p className="mt-6 text-center text-sm text-[#657386]">
-          Already registered?{" "}
+        <p className="mt-5 text-center text-sm text-[#68758a]">
+          Already have an account?{" "}
           <Link
-            className="font-semibold text-[#2563eb] hover:underline"
+            className="font-semibold text-[#2563eb] underline-offset-4 hover:underline"
             href="/auth/login"
           >
             Sign in
           </Link>
         </p>
-      </section>
-    </main>
+      </div>
+    </PublicAuthShell>
   );
 }

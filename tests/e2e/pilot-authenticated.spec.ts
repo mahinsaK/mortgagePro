@@ -62,6 +62,36 @@ test.describe("dedicated pilot lender journey", () => {
     await expectNoSeriousAccessibilityViolations(page);
   });
 
+  test("portal shell adapts across supported responsive widths", async ({
+    page,
+  }) => {
+    await loginLender(page);
+
+    for (const width of [375, 430, 768, 1280, 1440]) {
+      await page.setViewportSize({
+        height: width >= 1280 ? 960 : 844,
+        width,
+      });
+      await page.goto("/dashboard/lender");
+      await expectNoHorizontalOverflow(page);
+
+      const mobileNavigation = page.getByRole("navigation", {
+        name: "Primary mobile navigation",
+      });
+      if (width < 1024) {
+        await expect(mobileNavigation).toBeVisible();
+        await expect(
+          page.getByRole("button", { name: "Open navigation menu" }),
+        ).toBeVisible();
+      } else {
+        await expect(mobileNavigation).toBeHidden();
+        await expect(
+          page.getByRole("button", { name: "Collapse sidebar" }),
+        ).toBeVisible();
+      }
+    }
+  });
+
   test("loan QR details provide download, share, and print actions", async ({
     page,
   }) => {

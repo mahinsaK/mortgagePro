@@ -24,9 +24,9 @@ export default async function LoansPage({
 
   return (
     <div>
-      <div className="mb-6 md:mb-8">
+      <div className="mb-6 sm:mb-8">
         <p className="text-sm font-medium text-[#657386]">Loans</p>
-        <h1 className="mt-1 text-2xl font-semibold md:mt-2 md:text-3xl">Loan records</h1>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:mt-2 sm:text-3xl">Loan records</h1>
       </div>
 
       {attention && normalizedAsOf ? (
@@ -49,7 +49,7 @@ export default async function LoansPage({
         </div>
       ) : null}
 
-      <section className="rounded-lg border border-[#dfe5ec] bg-white shadow-sm">
+      <section className="overflow-hidden rounded-xl border border-[#dfe5ec] bg-white shadow-[var(--mp-shadow-sm)]">
         <div className="border-b border-[#dfe5ec] px-5 py-4">
           <h2 className="text-lg font-semibold">Loans list</h2>
         </div>

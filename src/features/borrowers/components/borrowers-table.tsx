@@ -32,7 +32,7 @@ export function BorrowersTable({ borrowers }: { borrowers: BorrowerRow[] }) {
 
   return (
     <>
-      <div className="divide-y divide-[#eef2f6] md:hidden">
+      <div className="divide-y divide-[#eef2f6] lg:hidden">
         {borrowers.map((borrower) => (
           <article className="px-3 py-3" key={borrower.id}>
             <div className="flex items-center justify-between gap-2">
@@ -56,7 +56,8 @@ export function BorrowersTable({ borrowers }: { borrowers: BorrowerRow[] }) {
         ) : null}
       </div>
 
-      <table className="hidden w-full min-w-[860px] border-collapse text-left text-sm md:table">
+      <div className="hidden overflow-x-auto lg:block">
+      <table className="w-full min-w-[860px] border-collapse text-left text-sm">
       <thead className="bg-[#f8fafc] text-[#657386]">
         <tr>
           <th className="px-5 py-3 font-semibold">Name</th>
@@ -111,6 +112,7 @@ export function BorrowersTable({ borrowers }: { borrowers: BorrowerRow[] }) {
         ) : null}
       </tbody>
       </table>
+      </div>
     </>
   );
 }
@@ -130,7 +132,7 @@ function BorrowerActions({ borrower }: { borrower: BorrowerRow }) {
         <input name="borrower_id" type="hidden" value={borrower.id} />
         <PendingSubmitButton
           aria-label={`Delete ${borrower.name}`}
-          className="flex size-11 items-center justify-center rounded-md border border-[#fecaca] text-[#b91c1c] transition hover:bg-[#fef2f2] md:size-9"
+          className="flex size-11 items-center justify-center rounded-lg border border-[#fecaca] text-[#b91c1c] transition hover:bg-[#fef2f2] lg:size-9"
           pendingLabel={null}
         >
           <Trash2 aria-hidden="true" size={16} />
@@ -146,7 +148,7 @@ function EditBorrowerDialog({ borrower }: { borrower: BorrowerRow }) {
       <Dialog.Trigger asChild>
         <button
           aria-label={`Edit ${borrower.name}`}
-          className="flex size-11 items-center justify-center rounded-md border border-[#cfd8e3] text-[#2d3745] transition hover:bg-[#f8fafc] md:size-9"
+          className="flex size-11 items-center justify-center rounded-lg border border-[#cfd8e3] text-[#2d3745] transition hover:bg-[#f8fafc] lg:size-9"
           type="button"
         >
           <Pencil aria-hidden="true" size={16} />

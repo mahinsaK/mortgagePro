@@ -77,7 +77,7 @@ export function PortalShell({
       {mobileMenuOpen ? (
         <button
           aria-label="Close navigation menu"
-          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+        className="fixed inset-0 z-30 bg-black/40 backdrop-blur-[1px] lg:hidden"
           data-no-press-feedback
           onClick={() => setMobileMenuOpen(false)}
           type="button"
@@ -91,30 +91,30 @@ export function PortalShell({
       />
       <div
         className={`min-h-screen transition-[padding] duration-200 ${
-          collapsed ? "md:pl-20" : "md:pl-64"
+          collapsed ? "lg:pl-20" : "lg:pl-64"
         }`}
       >
         <header className="portal-topbar sticky top-0 z-20 border-b border-[#dfe5ec] backdrop-blur">
-          <div className="flex min-h-16 items-center justify-between gap-2 px-3 sm:gap-3 sm:px-4 md:min-h-20 md:gap-4 md:px-8">
+          <div className="mx-auto flex min-h-16 max-w-[var(--mp-page-max)] items-center justify-between gap-2 px-4 sm:gap-3 sm:px-6 lg:min-h-20 lg:gap-4 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <button
                 aria-label="Open navigation menu"
-                className="flex size-11 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#2d3745] md:hidden"
+                className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-[#cfd8e3] bg-white text-[#2d3745] shadow-sm transition hover:bg-[#f8fafc] lg:hidden"
                 onClick={() => setMobileMenuOpen(true)}
                 type="button"
               >
                 <Menu aria-hidden="true" size={20} />
               </button>
               <div className="min-w-0">
-                <p className="truncate text-xs font-medium text-[#657386] md:text-sm">
+                <p className="truncate text-xs font-medium text-[#657386] lg:text-sm">
                   {lender?.companyName ?? "MortgagePro"}
                 </p>
-                <p className="mt-0.5 truncate text-base font-semibold md:mt-1 md:text-xl">
+                <p className="mt-0.5 truncate text-base font-semibold lg:mt-1 lg:text-xl">
                   {lender?.status === "active" ? "Active lender" : "Lender"}
                 </p>
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-2 md:gap-3">
+            <div className="flex shrink-0 items-center gap-2 lg:gap-3">
               <p className="hidden text-sm text-[#657386] sm:block">
                 {lender?.email}
               </p>
@@ -126,7 +126,7 @@ export function PortalShell({
             </div>
           </div>
         </header>
-        <main className="portal-content mx-auto w-full max-w-[1600px] px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-5 sm:px-4 md:px-8 md:py-8">
+        <main className="portal-content mx-auto w-full max-w-[var(--mp-page-max)] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:py-8">
           {children}
         </main>
       </div>

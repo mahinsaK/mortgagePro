@@ -148,7 +148,7 @@ function PaymentsRows({
 }) {
   return (
     <>
-      <div className="divide-y divide-[#eef2f6] md:hidden">
+      <div className="divide-y divide-[#eef2f6] lg:hidden">
         {payments.map((payment) => (
           <article className="p-4" key={payment.id}>
             <div className="flex items-start justify-between gap-3">
@@ -182,7 +182,7 @@ function PaymentsRows({
         ) : null}
       </div>
       <div className="overflow-x-auto">
-        <table className="hidden w-full min-w-[680px] border-collapse text-left text-sm md:table">
+        <table className="hidden w-full min-w-[680px] border-collapse text-left text-sm lg:table">
           <thead className="bg-[#f8fafc] text-[#657386]">
             <tr>
               <th className="px-5 py-3 font-semibold">Borrower</th>

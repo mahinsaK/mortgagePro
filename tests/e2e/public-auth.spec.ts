@@ -10,12 +10,13 @@ test.describe("public authentication surfaces", () => {
   }) => {
     await page.goto("/auth/login");
 
-    await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Continue with Google" }),
     ).toBeVisible();
-    await expect(page.getByLabel("Email")).toBeVisible();
-    await expect(page.getByLabel("Password")).toBeVisible();
+    await expect(page.getByLabel("Email address")).toBeVisible();
+    await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Show password" })).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expectNoSeriousAccessibilityViolations(page);
   });
@@ -24,11 +25,11 @@ test.describe("public authentication surfaces", () => {
     await page.goto("/auth/register");
 
     await expect(
-      page.getByRole("heading", { name: "Create your lender account" }),
+      page.getByRole("heading", { name: "Request lender access" }),
     ).toBeVisible();
     await expect(page.getByLabel("Company name")).toBeVisible();
     await expect(page.getByLabel("Business email")).toBeVisible();
-    await expect(page.getByText(/reviewed and activated/i)).toBeVisible();
+    await expect(page.getByText(/reviewed and approved/i)).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expectNoSeriousAccessibilityViolations(page);
   });
@@ -39,10 +40,10 @@ test.describe("public authentication surfaces", () => {
     await page.goto("/collector/login");
 
     await expect(
-      page.getByRole("heading", { name: "Scan QR code" }),
+      page.getByRole("heading", { name: "Sign in to collect" }),
     ).toBeVisible();
     await expect(page.getByLabel("Username")).toBeVisible();
-    await expect(page.getByLabel("Password")).toBeVisible();
+    await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expectNoSeriousAccessibilityViolations(page);
   });
@@ -72,7 +73,7 @@ test.describe("public authentication surfaces", () => {
     expect(fontSize).toBeGreaterThanOrEqual(16);
   });
 
-  test("@public public entry pages fit supported mobile widths", async ({
+  test("@public public entry pages fit supported responsive widths", async ({
     page,
   }, testInfo) => {
     test.skip(
@@ -80,8 +81,11 @@ test.describe("public authentication surfaces", () => {
       "Viewport matrix runs once in Chromium",
     );
 
-    for (const width of [320, 375, 390, 430, 480, 768]) {
-      await page.setViewportSize({ height: 844, width });
+    for (const width of [320, 375, 390, 430, 480, 768, 1280, 1440]) {
+      await page.setViewportSize({
+        height: width >= 1280 ? 960 : 844,
+        width,
+      });
 
       for (const route of [
         "/auth/login",

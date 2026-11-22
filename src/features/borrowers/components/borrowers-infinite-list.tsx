@@ -70,7 +70,7 @@ export function BorrowersInfiniteList({
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
-    <section className="rounded-lg border border-[#dfe5ec] bg-white shadow-sm">
+    <section className="overflow-hidden rounded-xl border border-[#dfe5ec] bg-white shadow-[var(--mp-shadow-sm)]">
       <div className="flex flex-col gap-4 border-b border-[#dfe5ec] px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Borrowers list</h2>
@@ -80,8 +80,8 @@ export function BorrowersInfiniteList({
               : `${total} result${total === 1 ? "" : "s"} · ${borrowers.length} loaded`}
           </p>
         </div>
-        <div className="flex w-full max-w-xl items-center gap-2">
-          <label className="flex h-11 min-w-0 flex-1 items-center rounded-md border border-[#cfd8e3] bg-white px-3 transition focus-within:border-[#1d4ed8] focus-within:ring-2 focus-within:ring-[#dbeafe]">
+        <div className="flex w-full max-w-xl items-center gap-2 lg:w-auto lg:min-w-[24rem]">
+          <label className="flex h-11 min-w-0 flex-1 items-center rounded-lg border border-[#cfd8e3] bg-white px-3 transition focus-within:border-[#1d4ed8] focus-within:ring-2 focus-within:ring-[#dbeafe]">
             <Search
               aria-hidden="true"
               className="mr-2 shrink-0 text-[#657386]"
@@ -100,7 +100,7 @@ export function BorrowersInfiniteList({
           {searchInput ? (
             <button
               aria-label="Clear borrower search"
-              className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-[#cfd8e3] text-[#526174] transition hover:bg-[#f8fafc]"
+              className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-[#cfd8e3] text-[#526174] transition hover:bg-[#f8fafc]"
               onClick={() => {
                 setSearchInput("");
                 setQuery("");

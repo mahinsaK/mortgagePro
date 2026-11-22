@@ -100,7 +100,7 @@ export function LenderDashboardLoansPanel({
             {result.isPending ? "Searching…" : `${loans.length} of ${total} shown`}
           </p>
         </div>
-        <div className="divide-y divide-[#eef2f6] md:hidden">
+        <div className="divide-y divide-[#eef2f6] lg:hidden">
           {loans.map((loan) => (
             <button
               className="block w-full p-4 text-left transition active:bg-[#f8fafc]"
@@ -136,7 +136,7 @@ export function LenderDashboardLoansPanel({
           ) : null}
         </div>
         <div className="overflow-x-auto">
-          <table className="hidden w-full min-w-[980px] border-collapse text-left text-sm md:table">
+          <table className="hidden w-full min-w-[980px] border-collapse text-left text-sm lg:table">
             <thead className="bg-[#f8fafc] text-[#657386]">
               <tr>
                 <th className="px-5 py-3 font-semibold">Borrower</th>

@@ -26,7 +26,7 @@ export function HeaderActions({
 
   return (
     <Tooltip.Provider delayDuration={150}>
-      <div className="flex items-center gap-2 md:gap-3">
+      <div className="flex items-center gap-2 lg:gap-3">
         <TooltipButton
           label={theme === "dark" ? "Switch to light mode" : "Switch to night mode"}
           onClick={onToggleTheme}
@@ -47,7 +47,7 @@ export function HeaderActions({
           <Popover.Portal>
             <Popover.Content
               align="end"
-              className="z-50 w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-[#dfe5ec] bg-white p-4 text-[#15191f] shadow-xl"
+              className="z-50 w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-[#dfe5ec] bg-white p-4 text-[#15191f] shadow-xl"
               sideOffset={10}
             >
               <div className="mb-4">
@@ -118,7 +118,7 @@ function TooltipButton({
       <Tooltip.Trigger asChild>
         <button
           aria-label={label}
-          className="flex size-11 items-center justify-center rounded-md border border-[#cfd8e3] bg-white text-[#2d3745] transition hover:border-[#94a3b8] hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#dbeafe] md:size-10"
+          className="flex size-11 items-center justify-center rounded-xl border border-[#cfd8e3] bg-white text-[#2d3745] transition hover:border-[#94a3b8] hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#dbeafe] lg:size-10"
           onClick={onClick}
           type="button"
         >
@@ -143,7 +143,7 @@ function PopoverIconButton({
         <Popover.Trigger asChild>
           <button
             aria-label={label}
-            className="flex size-11 items-center justify-center rounded-md border border-[#cfd8e3] bg-white text-[#2d3745] transition hover:border-[#94a3b8] hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#dbeafe] md:size-10"
+            className="flex size-11 items-center justify-center rounded-xl border border-[#cfd8e3] bg-white text-[#2d3745] transition hover:border-[#94a3b8] hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#dbeafe] lg:size-10"
             type="button"
           >
             {children}

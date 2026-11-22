@@ -25,9 +25,9 @@ export default async function BorrowersPage({
 
   return (
     <div>
-      <div className="mb-6 md:mb-8">
+      <div className="mb-6 sm:mb-8">
         <p className="text-sm font-medium text-[#657386]">Borrowers</p>
-        <h1 className="mt-1 text-2xl font-semibold md:mt-2 md:text-3xl">Borrower profiles</h1>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:mt-2 sm:text-3xl">Borrower profiles</h1>
       </div>
 
       <AddBorrowerForm />

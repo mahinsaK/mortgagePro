@@ -105,8 +105,8 @@ function SampleCollection() {
           <span className="caption-2 text-[#657286]">Remaining balance</span>
           <span className="body-4 text-[#17233a]">LKR 630</span>
         </div>
-        <div className="button-sm mt-2 flex min-h-10 items-center justify-center rounded-lg bg-[#3156ee] text-white">
-          Collect payment
+        <div className="caption-3 mt-2 flex min-h-10 items-center justify-center rounded-lg bg-[#eaf0ff] text-[#3156ee]">
+          Scheduled amount selected
         </div>
       </div>
     </div>
@@ -137,8 +137,8 @@ function SamplePayments() {
       </div>
       <div className="mt-5 flex items-center justify-between gap-3">
         <span className="caption-2 text-[#657286]">Recent payments, latest first</span>
-        <span className="button-sm inline-flex items-center gap-1 rounded-full border border-[#dce4f1] px-3 py-2 text-[#3156ee]">
-          <ArrowDownToLine aria-hidden="true" size={15} /> CSV
+        <span className="caption-3 inline-flex items-center gap-1 text-[#3156ee]">
+          <ArrowDownToLine aria-hidden="true" size={15} /> CSV export available
         </span>
       </div>
     </div>
@@ -187,13 +187,13 @@ export function CapabilityExplorer() {
           </p>
         </div>
 
-        <div aria-label="Explore lending workflows" className="mt-8 flex gap-2 overflow-x-auto pb-2">
+        <div aria-label="Explore lending workflows" className="mt-8 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           {WORKFLOWS.map((workflow) => {
             const Icon = workflow.icon;
             return (
               <button
                 aria-pressed={activeKey === workflow.key}
-                className={`button-sm inline-flex min-h-12 shrink-0 items-center gap-2 rounded-full px-4 transition-[background-color,color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3156ee] active:scale-[0.98] ${
+                className={`button-sm inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-xl px-3 text-center transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3156ee] active:scale-[0.98] sm:rounded-full sm:px-4 ${
                   activeKey === workflow.key
                     ? "bg-[#3156ee] text-white"
                     : "border border-[#dce4f1] bg-white text-[#43516b] hover:bg-[#edf1ff]"
@@ -202,7 +202,7 @@ export function CapabilityExplorer() {
                 onClick={() => setActiveKey(workflow.key)}
                 type="button"
               >
-                <Icon aria-hidden="true" size={17} />
+                <Icon aria-hidden="true" className="shrink-0" size={17} />
                 {workflow.label}
               </button>
             );

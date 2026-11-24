@@ -69,6 +69,39 @@ test.describe("public authentication surfaces", () => {
     await expectNoSeriousAccessibilityViolations(page);
   });
 
+  test("@public lenders can explore each product workflow", async ({ page }) => {
+    await page.goto("/");
+
+    const workflows = [
+      ["Borrowers & loans", "Keep every borrower and loan in view."],
+      ["QR collections", "Give field collectors a simpler way to record payments."],
+      ["Payments & exports", "See what came in today, then take the record with you."],
+      ["Borrower messages", "Send useful updates from the same workspace."],
+    ] as const;
+
+    for (const [buttonName, heading] of workflows) {
+      const button = page.getByRole("button", { name: buttonName });
+      await button.click();
+      await expect(button).toHaveAttribute("aria-pressed", "true");
+      await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+      await expectNoHorizontalOverflow(page);
+    }
+
+    await expectNoSeriousAccessibilityViolations(page);
+  });
+
+  test("@public the sample QR collection updates the illustrated lender desk", async ({ page }) => {
+    await page.goto("/");
+
+    await page.getByRole("tab", { name: "Collector scanner" }).click();
+    await page.getByRole("button", { name: "Test sample daily payment" }).click();
+    await expect(page.getByRole("status")).toContainText("LKR 585");
+
+    await page.getByRole("button", { name: "View updated lender desk" }).click();
+    await expect(page.getByText("LKR 1,485")).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+  });
+
   test("@public mobile inputs use a zoom-safe font size", async ({ page }, testInfo) => {
     test.skip(
       !["iphone-critical", "android-critical"].includes(testInfo.project.name),

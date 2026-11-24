@@ -36,8 +36,12 @@ export default function RootLayout({
       lang="en"
       className="h-full antialiased"
       data-scroll-behavior="smooth"
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      <body
+        className="min-h-full flex flex-col"
+        suppressHydrationWarning
+      >
         <Suspense fallback={null}>
           <NavigationProgress />
         </Suspense>

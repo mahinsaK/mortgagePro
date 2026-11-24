@@ -33,22 +33,22 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: "Can another lender or collector view my borrower records?",
     answer:
-      "No. Database access runs strictly on the server with empty client permissions, and every borrower, collector, loan, and payment query is scoped to the authenticated lender boundary. Scanning a QR code never bypasses lender ownership checks.",
+      "No. Every lender has a private workspace, and your team can only view borrowers, loans, and payments belonging to your business.",
   },
   {
     question: "How are borrower SMS notifications handled?",
     answer:
-      "MortgagePro integrates with TextLK for borrower reminders and notifications. Lenders manage reusable message templates, sender approval requests, monthly quota counters, and sanitized batch send logs from the SMS section.",
+      "You can save reusable message templates, track your monthly SMS allowance, and send borrower reminders directly from the portal once your sender name is approved.",
   },
   {
     question: "Can I sign in with Google as a lender?",
     answer:
-      "Yes, once your lender profile is approved and active. Google sign in uses a short lived OAuth state cookie and connects only to existing active lender accounts without automatically creating new access.",
+      "Yes. Once your lender account is approved and active, you can sign in with email and password or with your connected Google account.",
   },
   {
     question: "Can I export borrower and payment history for accounting?",
     answer:
-      "Yes. Lenders can export borrower lists and payment records as CSV files directly from the portal, with CSV formula neutralization built in for spreadsheet safety.",
+      "Yes. You can download your borrower list and payment history as CSV spreadsheets anytime directly from your workspace.",
   },
 ];
 
@@ -90,24 +90,19 @@ const WORKFLOW_STEPS = [
 
 const SECURITY_CONTROLS = [
   {
-    title: "Records stay behind the app",
+    title: "Private to your business",
     detail:
-      "The browser cannot read database collections directly. Requests pass through application server checks.",
+      "Your borrowers, loans, collectors, and payment records stay separate from every other lender.",
   },
   {
-    title: "Each lender sees their own records",
+    title: "Clear roles for your team",
     detail:
-      "Borrower, loan, collector, and payment lookups are checked against the signed in lender account.",
+      "Lenders manage the full portfolio while field collectors only see the scanner to record repayments.",
   },
   {
-    title: "Payments and balances move together",
+    title: "Reliable payment tracking",
     detail:
-      "A payment and its loan balance change are saved in one transaction, with checks against overpayment.",
-  },
-  {
-    title: "Protected sign in",
-    detail:
-      "Lender sessions use protected browser cookies. Collector passwords are stored as salted hashes, not plain text.",
+      "Payments and remaining balances update together, helping prevent duplicate entries and overpayments.",
   },
 ];
 
@@ -269,11 +264,11 @@ export function LandingPage() {
                     <Lock aria-hidden="true" size={19} />
                   </div>
                   <h2 className="heading-3 mt-5 text-white [text-wrap:balance]">
-                    Your workspace stays yours.
+                    Your business records stay private.
                   </h2>
                   <p className="body-3 mt-4 text-[#d5dfeb] [text-wrap:pretty]">
-                    Lenders and collectors have separate access. The app checks
-                    which records belong to your workspace before showing them.
+                    Every lender works inside their own protected workspace, with
+                    simple account controls for your team.
                   </p>
                 </div>
 
@@ -295,9 +290,8 @@ export function LandingPage() {
               </div>
 
               <p className="caption-2 mt-10 max-w-[760px] text-[#c7d5e7]">
-                MortgagePro is currently a controlled pilot workspace. MFA,
-                auditable payment reversals, and independent compliance review
-                remain planned work.
+                New lender accounts are reviewed before activation so access
+                stays controlled.
               </p>
             </ScrollReveal>
           </div>

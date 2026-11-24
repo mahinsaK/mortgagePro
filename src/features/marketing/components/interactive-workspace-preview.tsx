@@ -147,7 +147,7 @@ export function InteractiveWorkspacePreview() {
                 Recent loan ledger
               </span>
               <span className="caption-4 text-[var(--mp-muted)]">
-                Tenant scoped
+                Your workspace
               </span>
             </div>
             <div className="divide-y divide-[var(--mp-border)] bg-[var(--mp-surface)]">
@@ -203,7 +203,7 @@ export function InteractiveWorkspacePreview() {
               </div>
               <p className="title-2 mt-4 text-white">{activeLoan.borrower}</p>
               <p className="caption-2 mt-1 text-[#cbd5e1]">
-                Ownership checked against lender boundary before balance opens.
+                Matched to your lending workspace before opening the balance.
               </p>
             </div>
 
@@ -233,8 +233,8 @@ export function InteractiveWorkspacePreview() {
                 Record field payment
               </p>
               <p className="body-6 mt-1 text-[var(--mp-muted)]">
-                Each submission carries a unique request key so poor mobile signal
-                never records a duplicate payment.
+                Built to prevent duplicate entries even when field connections
+                are slow.
               </p>
 
               <div className="mt-4 space-y-2">
@@ -253,7 +253,7 @@ export function InteractiveWorkspacePreview() {
                     size={16}
                   />
                   <span className="caption-4 text-[var(--mp-muted)]">
-                    Atomic transaction blocks overpayments
+                    Prevents duplicate payments and overpayments
                   </span>
                 </div>
               </div>

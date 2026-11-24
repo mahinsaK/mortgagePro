@@ -18,39 +18,43 @@ export function PublicAuthShell({
   secondaryAction?: React.ReactNode;
   wide?: boolean;
 }) {
-  const width = wide || aside ? "max-w-[1310px]" : "max-w-[500px]";
+  const width = aside
+    ? "max-w-[480px] lg:max-w-[1120px]"
+    : wide
+      ? "max-w-3xl"
+      : "max-w-[480px]";
+
+  const contentMaxWidth = wide && !aside ? "max-w-2xl" : "max-w-[420px]";
 
   return (
-    <main className="relative min-h-[100dvh] overflow-hidden bg-[#f8f6f3] px-4 py-[max(1.25rem,env(safe-area-inset-top))] text-[#10203b] sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+    <main className="relative flex min-h-[100dvh] flex-col justify-center overflow-hidden bg-[var(--background)] px-4 py-[max(1.25rem,env(safe-area-inset-top))] text-[var(--foreground)] sm:px-6 sm:py-8 lg:px-10">
       <div
         aria-hidden="true"
-        className="absolute -left-32 -top-32 size-80 rounded-full bg-[#dbeafe]/60 blur-3xl"
+        className="pointer-events-none absolute -left-32 -top-32 size-80 rounded-full bg-[#dbeafe]/50 blur-3xl"
       />
       <div
         aria-hidden="true"
-        className="absolute -bottom-36 -right-28 size-96 rounded-full bg-[#e0e7ff]/50 blur-3xl"
+        className="pointer-events-none absolute -bottom-36 -right-28 size-96 rounded-full bg-[#e0e7ff]/40 blur-3xl"
       />
 
       <div className={`relative mx-auto w-full ${width}`}>
-        <header className="mb-5 flex min-h-12 items-center justify-between gap-3 min-[840px]:mb-6">
+        <header className="mb-5 flex min-h-11 flex-wrap items-center justify-between gap-2 sm:mb-6 sm:gap-3">
           <AuthBrand />
           {secondaryAction}
         </header>
 
         <section
-          className={`overflow-hidden rounded-[1.25rem] border border-[#cbd5e1] bg-white shadow-[0_24px_60px_rgba(20,34,55,0.15)] ${
-            aside
-              ? "min-[840px]:grid min-[840px]:min-h-[clamp(540px,calc(100dvh-8.5rem),720px)] min-[840px]:grid-cols-[1.02fr_0.98fr] xl:grid-cols-[1.1fr_0.98fr]"
-              : ""
+          className={`overflow-hidden rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] shadow-[0_20px_50px_rgba(15,23,42,0.12)] ${
+            aside ? "lg:grid lg:min-h-[600px] lg:grid-cols-[1.05fr_0.95fr]" : ""
           }`}
         >
           {aside}
           <div
-            className={`p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:p-7 ${
-              aside ? "min-[840px]:flex min-[840px]:items-center min-[840px]:p-7 lg:p-9 xl:p-11" : ""
+            className={`p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:p-8 ${
+              aside ? "lg:flex lg:items-center lg:p-10" : ""
             }`}
           >
-            <div className="mx-auto w-full max-w-[540px]">{children}</div>
+            <div className={`mx-auto w-full ${contentMaxWidth}`}>{children}</div>
           </div>
         </section>
       </div>
@@ -62,13 +66,13 @@ export function AuthBrand() {
   return (
     <Link
       aria-label="MortgagePro home"
-      className="inline-flex items-center gap-2.5 text-[#172033]"
+      className="inline-flex min-h-11 items-center gap-2.5 text-[var(--foreground)]"
       href="/"
     >
-      <span className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#1672ff] to-[#0648c9] text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)] min-[840px]:size-12 min-[840px]:rounded-[0.9rem] xl:size-14 xl:rounded-2xl">
-        <Building2 aria-hidden="true" className="xl:size-7" size={21} />
+      <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#1672ff] to-[#0648c9] text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)] sm:size-11">
+        <Building2 aria-hidden="true" size={20} />
       </span>
-      <span className="text-xl font-bold tracking-[-0.035em] min-[840px]:text-2xl xl:text-[1.8rem]">
+      <span className="text-lg font-bold tracking-[-0.03em] sm:text-xl">
         MortgagePro
       </span>
     </Link>
@@ -88,21 +92,17 @@ export function AuthPageHeader({
 }) {
   return (
     <div>
-      <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#075ee8] sm:text-sm">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--mp-primary)]">
         {eyebrow}
       </p>
       <h1
-        className={`mt-3 font-bold leading-tight tracking-[-0.04em] text-[#10203b] ${
-          prominent ? "text-3xl sm:text-4xl xl:text-[2.8rem]" : "text-[1.75rem] sm:text-3xl"
+        className={`mt-2.5 font-bold leading-tight tracking-[-0.03em] text-[var(--foreground)] ${
+          prominent ? "text-2xl sm:text-3xl" : "text-2xl sm:text-[1.75rem]"
         }`}
       >
         {title}
       </h1>
-      <p
-        className={`mt-3 text-[#56647b] ${
-          prominent ? "text-base leading-7 xl:text-lg" : "text-sm leading-6"
-        }`}
-      >
+      <p className="mt-2 text-sm leading-6 text-[var(--mp-muted)] sm:text-base">
         {description}
       </p>
     </div>
@@ -136,21 +136,21 @@ export function AuthStatus({
 
 export function LoginOverviewPanel() {
   return (
-    <aside className="relative hidden overflow-hidden bg-[#0b2848] p-7 text-white min-[840px]:flex min-[840px]:flex-col lg:p-9 xl:p-12">
+    <aside className="relative hidden overflow-hidden bg-[#0b2848] p-8 text-white lg:flex lg:flex-col lg:p-10">
       <div className="relative z-10">
-        <span className="inline-flex items-center gap-2 rounded-full border border-[#8eb8df]/35 bg-white/[0.07] px-5 py-2.5 text-sm font-semibold text-[#d7eaff] shadow-inner">
-          <UsersRound aria-hidden="true" size={17} />
+        <span className="inline-flex items-center gap-2 rounded-full border border-[#8eb8df]/35 bg-white/[0.07] px-4 py-2 text-xs font-semibold text-[#d7eaff] shadow-inner sm:text-sm">
+          <UsersRound aria-hidden="true" size={16} />
           Lender workspace
         </span>
-        <h2 className="mt-6 max-w-[560px] text-[2rem] font-bold leading-[1.12] tracking-[-0.045em] lg:text-[2.4rem] xl:mt-8 xl:text-[3.15rem]">
+        <h2 className="mt-6 max-w-[440px] text-3xl font-bold leading-[1.15] tracking-[-0.035em] xl:text-4xl">
           Keep your lending operation in view.
         </h2>
-        <p className="mt-3 max-w-[550px] text-base leading-6 text-[#d5dfeb] lg:text-lg lg:leading-7 xl:mt-4 xl:text-xl">
+        <p className="mt-3 max-w-[440px] text-base leading-7 text-[#d5dfeb]">
           Manage borrowers, review loans, and follow collections from one
           organized workspace.
         </p>
 
-        <div className="mt-6 grid gap-3 xl:mt-8 xl:gap-4">
+        <div className="mt-6 grid gap-3">
           <OverviewItem
             icon={<UsersRound size={17} />}
             text="Borrower and collector management"
@@ -168,7 +168,7 @@ export function LoginOverviewPanel() {
 
       <ArchitectureArtwork />
 
-      <p className="relative z-10 mt-auto pt-5 text-xs leading-5 text-[#d5dfeb] xl:pt-8 xl:text-sm">
+      <p className="relative z-10 mt-auto pt-6 text-xs leading-5 text-[#d5dfeb]">
         Your account must be approved before lender access is enabled.
       </p>
     </aside>
@@ -178,10 +178,10 @@ export function LoginOverviewPanel() {
 export function CollectorAccessLink() {
   return (
     <Link
-      className="inline-flex h-11 items-center gap-2.5 rounded-xl border border-[#bfc8d5] bg-white/70 px-4 text-sm font-semibold text-[#10203b] shadow-sm backdrop-blur transition hover:border-[#9eabba] hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2563eb]/15 lg:h-12 lg:px-5"
+      className="inline-flex h-11 items-center gap-2 rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface)] px-3 text-xs font-semibold text-[var(--foreground)] shadow-sm transition hover:bg-[var(--mp-surface-muted)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2563eb]/15 sm:px-4 sm:text-sm"
       href="/collector/login"
     >
-      <QrCode aria-hidden="true" size={14} />
+      <QrCode aria-hidden="true" size={15} />
       Collector login
     </Link>
   );
@@ -190,10 +190,10 @@ export function CollectorAccessLink() {
 export function LenderAccessLink() {
   return (
     <Link
-      className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#d6e0eb] bg-white px-3 text-xs font-semibold text-[#425169] shadow-sm transition hover:border-[#b9c8da] hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2563eb]/15"
+      className="inline-flex h-11 items-center gap-2 rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface)] px-3 text-xs font-semibold text-[var(--foreground)] shadow-sm transition hover:bg-[var(--mp-surface-muted)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2563eb]/15 sm:px-4 sm:text-sm"
       href="/auth/login"
     >
-      <Building2 aria-hidden="true" size={14} />
+      <Building2 aria-hidden="true" size={15} />
       Lender login
     </Link>
   );
@@ -201,8 +201,8 @@ export function LenderAccessLink() {
 
 function OverviewItem({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
-    <div className="flex items-center gap-3 text-sm font-medium text-[#f1f6fb] lg:text-base xl:gap-4 xl:text-lg">
-      <span className="flex size-10 items-center justify-center rounded-xl border border-[#8eb8df]/25 bg-white/[0.07] text-[#9ed2ff] shadow-inner xl:size-12">
+    <div className="flex items-center gap-3 text-sm font-medium text-[#f1f6fb] lg:text-base">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#8eb8df]/25 bg-white/[0.07] text-[#9ed2ff] shadow-inner">
         {icon}
       </span>
       <span>{text}</span>

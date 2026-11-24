@@ -51,10 +51,10 @@ export default async function LoginPage({
 
       <LoginForm action={loginAction} message={message} status={status} />
 
-      <p className="mt-6 text-center text-sm text-[#5f6b7d] sm:text-base">
+      <p className="mt-5 text-center text-sm text-[var(--mp-muted)]">
         Need a lender account?{" "}
         <Link
-          className="font-bold text-[#075ee8] underline-offset-4 hover:underline"
+          className="inline-flex min-h-11 items-center py-2 font-semibold text-[var(--mp-primary)] underline-offset-4 hover:underline"
           href="/auth/register"
         >
           Request access

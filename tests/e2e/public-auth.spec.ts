@@ -81,7 +81,7 @@ test.describe("public authentication surfaces", () => {
       "Viewport matrix runs once in Chromium",
     );
 
-    for (const width of [320, 375, 390, 430, 480, 768, 856, 1280, 1440]) {
+    for (const width of [320, 375, 390, 430, 480, 768, 1024, 1280, 1440]) {
       await page.setViewportSize({
         height: width >= 1280 ? 960 : 844,
         width,
@@ -101,7 +101,7 @@ test.describe("public authentication surfaces", () => {
       const overviewHeading = page.getByRole("heading", {
         name: "Keep your lending operation in view.",
       });
-      if (width >= 840) {
+      if (width >= 1024) {
         await expect(overviewHeading).toBeVisible();
       } else {
         await expect(overviewHeading).toBeHidden();

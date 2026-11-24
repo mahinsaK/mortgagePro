@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, LoaderCircle } from "lucide-react";
+import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { PasswordField } from "@/features/auth/components/password-field";
 import { AuthStatus } from "@/features/auth/components/public-auth-shell";
@@ -13,13 +14,15 @@ type LoginFormProps = {
 };
 
 export function LoginForm({ action, message, status }: LoginFormProps) {
+  const [email, setEmail] = useState("");
+
   return (
-    <div className="mt-6 xl:mt-8">
+    <div className="mt-6">
       <AuthStatus message={message} status={status} />
 
-      <div className="mt-5 xl:mt-7">
+      <div className="mt-5">
         <a
-          className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-[#bfcbd9] bg-white px-4 text-base font-semibold text-[#10203b] shadow-sm transition hover:border-[#94a3b8] hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2563eb]/10 xl:h-14"
+          className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface)] px-4 text-sm font-semibold text-[var(--foreground)] shadow-sm transition hover:bg-[var(--mp-surface-muted)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2563eb]/10 sm:text-base"
           href="/auth/google"
         >
           <GoogleIcon />
@@ -27,28 +30,30 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
         </a>
       </div>
 
-      <div className="my-5 flex items-center gap-4 xl:my-6" aria-hidden="true">
-        <span className="h-px flex-1 bg-[#d9e0e8]" />
-        <span className="text-xs font-bold uppercase tracking-[0.17em] text-[#5f6b7d]">
+      <div className="my-5 flex items-center gap-4" aria-hidden="true">
+        <span className="h-px flex-1 bg-[var(--mp-border)]" />
+        <span className="text-xs font-bold uppercase tracking-[0.17em] text-[var(--mp-muted)]">
           or use email
         </span>
-        <span className="h-px flex-1 bg-[#d9e0e8]" />
+        <span className="h-px flex-1 bg-[var(--mp-border)]" />
       </div>
 
-      <form action={action} className="space-y-4 xl:space-y-5">
+      <form action={action} className="space-y-4">
         <label className="block">
-          <span className="text-sm font-semibold text-[#10203b] xl:text-base">
+          <span className="text-sm font-semibold text-[var(--foreground)]">
             Email address
           </span>
           <input
             autoCapitalize="none"
             autoComplete="email"
             autoCorrect="off"
-            className="mt-2 h-12 w-full rounded-xl border border-[#bfcbd9] px-4 text-base text-[#172033] outline-none transition placeholder:text-[#7b8799] focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10 xl:h-14 xl:px-5 xl:text-lg"
+            className="mt-2 h-12 w-full rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface)] px-4 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--mp-muted)] focus:border-[var(--mp-primary)] focus:ring-4 focus:ring-[#2563eb]/10"
             name="email"
+            onChange={(event) => setEmail(event.target.value)}
             placeholder="you@company.com"
             required
             type="email"
+            value={email}
           />
         </label>
 
@@ -61,7 +66,7 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
 
         <div className="flex justify-end">
           <Link
-            className="text-sm font-bold text-[#075ee8] underline-offset-4 hover:underline xl:text-base"
+            className="inline-flex min-h-11 items-center py-2 text-sm font-semibold text-[var(--mp-primary)] underline-offset-4 hover:underline"
             href="/auth/password-reset"
           >
             Forgot password?
@@ -101,7 +106,7 @@ function SubmitButton() {
 
   return (
     <button
-      className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#0b6cff] to-[#0755df] px-4 text-base font-bold text-white shadow-[0_10px_24px_rgba(37,99,235,0.22)] transition hover:from-[#075fe8] hover:to-[#064ac5] active:scale-[0.99] disabled:cursor-not-allowed disabled:from-[#93c5fd] disabled:to-[#93c5fd] xl:h-14 xl:text-lg"
+      className="flex h-12 w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#0b6cff] to-[#0755df] px-4 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(37,99,235,0.22)] transition hover:from-[#075fe8] hover:to-[#064ac5] active:scale-[0.99] disabled:cursor-not-allowed disabled:from-[#93c5fd] disabled:to-[#93c5fd] sm:text-base"
       disabled={pending}
       type="submit"
     >

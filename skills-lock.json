@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "skills": {
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "commit": "e4bb5d960d87126ff3b3a8af1a104b7db67560ba",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "83485963700bcf11d5bf78118facb301676b69d918fee2e45a95e7f1a2840f6c"
+    },
+    "landing-page-craft": {
+      "source": "divyanshu-iitian/agent-website-design-skills",
+      "commit": "77961873e9ee996afe7aa5cd4223b09a2360ed9c",
+      "sourceType": "github",
+      "skillPath": "landing-page-craft/SKILL.md",
+      "computedHash": "4b039e87fa7729444cb451503afe647c2a0ebd1d0b85c5c8025800085f527eb0"
+    },
+    "landing-page-design": {
+      "source": "elayadesign/ai-design-skills",
+      "commit": "456d9e0d3e2d84c748bb143c6ca3d90c45e16213",
+      "sourceType": "github",
+      "skillPath": "skills/landing-page-design/SKILL.md",
+      "computedHash": "98fa8463d5fc56f969d52f24512366d66655271080cb67b43ca0790d8e951bc6"
+    },
+    "landing-page-guru-skill": {
+      "source": "Pageree/landing-page-guru-skill",
+      "commit": "32ddf8bdf2e86f432a79c092987154204b236145",
+      "sourceType": "github",
+      "skillPath": "skills/landing-page-guru-skill/SKILL.md",
+      "computedHash": "ba205728b9e8df07ecda3dede30edacc1893438cc1ba377aa1ff19b015a1d382"
+    }
+  }
+}

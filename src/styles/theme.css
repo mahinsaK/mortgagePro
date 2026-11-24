@@ -95,3 +95,20 @@
 :root[data-theme="dark"] .fill-white {
   fill: var(--mp-surface) !important;
 }
+
+/* Public marketing keeps its light visual system independent of portal theme. */
+.marketing-page {
+  --foreground: #15191f;
+  --mp-surface: #ffffff;
+  --mp-surface-muted: #f8fafc;
+  --mp-border: #dfe5ec;
+  --mp-muted: #657386;
+  --mp-primary: #2563eb;
+  --mp-primary-strong: #1d4ed8;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] .marketing-page.bg-white,
+:root[data-theme="dark"] .marketing-page .bg-white {
+  background-color: #ffffff !important;
+}

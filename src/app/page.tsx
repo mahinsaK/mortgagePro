@@ -1,10 +1,30 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { userAgentFromString } from "next/server";
+import { LandingPage } from "@/features/marketing/components/landing-page";
 import { requireActiveCollectorPrincipal } from "@/server/services/collector-auth-service";
 import { resolvePrimaryLender } from "@/server/services/lender-service";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "MortgagePro | Lending Operations and QR Field Collections",
+  description:
+    "Run daily lending, borrower records, mobile QR field collections, and TextLK SMS notifications from one tenant isolated ledger.",
+  openGraph: {
+    title: "MortgagePro | Lending Operations and QR Field Collections",
+    description:
+      "Run daily lending, borrower records, mobile QR field collections, and TextLK SMS notifications from one tenant isolated ledger.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MortgagePro | Lending Operations and QR Field Collections",
+    description:
+      "Manage borrowers, loans, mobile QR field collections, and borrower SMS notifications from one verified ledger.",
+  },
+};
 
 export default async function Home() {
   const userAgent = (await headers()).get("user-agent") ?? "";
@@ -30,9 +50,5 @@ export default async function Home() {
     redirect("/auth/session/clear");
   }
 
-  if (lenderAuth.status === "unavailable") {
-    redirect("/auth/unavailable");
-  }
-
-  redirect(prefersCollectorLogin ? "/collector/login" : "/auth/login");
+  return <LandingPage />;
 }

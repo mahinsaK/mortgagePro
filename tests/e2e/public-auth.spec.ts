@@ -48,16 +48,25 @@ test.describe("public authentication surfaces", () => {
     await expectNoSeriousAccessibilityViolations(page);
   });
 
-  test("@public @critical root selects the expected login for the device", async ({
+  test("@public @critical root renders the MortgagePro landing page", async ({
     page,
-  }, testInfo) => {
+  }) => {
     await page.goto("/");
 
-    if (["iphone-critical", "android-critical"].includes(testInfo.project.name)) {
-      await expect(page).toHaveURL(/\/collector\/login/);
-    } else {
-      await expect(page).toHaveURL(/\/auth\/login/);
-    }
+    await expect(
+      page.getByRole("heading", {
+        name: /every loan\. every collection\. one clear view\./i,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Request lender access" }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Lender sign in" }).first(),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Collector access" })).toHaveCount(0);
+    await expectNoHorizontalOverflow(page);
+    await expectNoSeriousAccessibilityViolations(page);
   });
 
   test("@public mobile inputs use a zoom-safe font size", async ({ page }, testInfo) => {
@@ -88,6 +97,7 @@ test.describe("public authentication surfaces", () => {
       });
 
       for (const route of [
+        "/",
         "/auth/login",
         "/auth/register",
         "/auth/password-reset",

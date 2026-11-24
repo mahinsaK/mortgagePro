@@ -1,3 +1,4 @@
+import { isValidElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -23,9 +24,10 @@ vi.mock("@/server/services/lender-service", () => ({
   resolvePrimaryLender: mocks.resolvePrimaryLender,
 }));
 
+import { LandingPage } from "@/features/marketing/components/landing-page";
 import Home from "./page";
 
-describe("home login routing", () => {
+describe("home landing and session routing", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.deviceType = undefined;
@@ -36,21 +38,33 @@ describe("home login routing", () => {
     });
   });
 
-  it("sends an anonymous phone to collector login", async () => {
+  it("renders the landing page for an anonymous desktop browser", async () => {
+    const view = await Home();
+
+    expect(isValidElement(view)).toBe(true);
+    expect(view.type).toBe(LandingPage);
+    expect(mocks.requireActiveCollectorPrincipal).not.toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("renders the landing page for an anonymous mobile visitor", async () => {
     mocks.deviceType = "mobile";
 
-    await expect(Home()).rejects.toThrow("redirect:/collector/login");
+    const view = await Home();
+
+    expect(isValidElement(view)).toBe(true);
+    expect(view.type).toBe(LandingPage);
+    expect(mocks.redirect).not.toHaveBeenCalled();
   });
 
-  it("sends an anonymous tablet to collector login", async () => {
+  it("renders the landing page for an anonymous tablet visitor", async () => {
     mocks.deviceType = "tablet";
 
-    await expect(Home()).rejects.toThrow("redirect:/collector/login");
-  });
+    const view = await Home();
 
-  it("sends an anonymous desktop browser to lender login", async () => {
-    await expect(Home()).rejects.toThrow("redirect:/auth/login");
-    expect(mocks.requireActiveCollectorPrincipal).not.toHaveBeenCalled();
+    expect(isValidElement(view)).toBe(true);
+    expect(view.type).toBe(LandingPage);
+    expect(mocks.redirect).not.toHaveBeenCalled();
   });
 
   it("opens the scanner for an existing collector session on mobile", async () => {
@@ -71,5 +85,11 @@ describe("home login routing", () => {
     });
 
     await expect(Home()).rejects.toThrow("redirect:/dashboard/lender");
+  });
+
+  it("clears invalid lender sessions at the root route", async () => {
+    mocks.resolvePrimaryLender.mockResolvedValue({ status: "invalid" });
+
+    await expect(Home()).rejects.toThrow("redirect:/auth/session/clear");
   });
 });

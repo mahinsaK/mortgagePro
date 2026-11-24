@@ -1,14 +1,10 @@
 import Link from "next/link";
 import {
   Building2,
-  Check,
-  FileSpreadsheet,
   Lock,
-  MessageSquareText,
-  QrCode,
   ShieldCheck,
-  UsersRound,
 } from "lucide-react";
+import { CapabilityExplorer } from "@/features/marketing/components/capability-explorer";
 import {
   FaqAccordion,
   type FaqItem,
@@ -32,7 +28,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: "How does MortgagePro prevent duplicate payments or overpayments?",
     answer:
-      "Every payment submission generates a deterministic request identifier so repeated taps or retries return the original record instead of charging twice. Each payment and loan balance update runs in one atomic transaction that rechecks the remaining balance and rejects overpayments.",
+      "The app checks each payment request before recording it. Repeating the same request does not create a second payment, and an amount above the remaining loan balance is rejected. The payment and balance update are saved together.",
   },
   {
     question: "Can another lender or collector view my borrower records?",
@@ -56,18 +52,19 @@ const FAQ_ITEMS: FaqItem[] = [
   },
 ];
 
-const COMPARISON_BEFORE = [
-  "Balances tracked across disconnected spreadsheets and paper notebooks",
-  "Field payments confirmed through chat messages and typed manually at night",
-  "Duplicate entries when collectors tap twice on slow mobile networks",
-  "No clear separation between lender administration and collector access",
-];
-
-const COMPARISON_AFTER = [
-  "Borrower profiles, loans, and schedules maintained inside one lender portal",
-  "Camera QR scanning logs daily or custom repayments in one atomic update",
-  "Deterministic request keys block duplicate charges and reject overpayments",
-  "Separate lender and collector sessions scoped strictly to your business",
+const COMPARISON = [
+  {
+    before: "Loan balances in separate spreadsheets",
+    after: "Borrowers, loans, and balances in one workspace",
+  },
+  {
+    before: "Field payments confirmed through chat",
+    after: "QR scans record payments against the loan",
+  },
+  {
+    before: "A manual tally at the end of each day",
+    after: "A daily view of payments recorded in MortgagePro",
+  },
 ];
 
 const WORKFLOW_STEPS = [
@@ -93,24 +90,24 @@ const WORKFLOW_STEPS = [
 
 const SECURITY_CONTROLS = [
   {
-    title: "Server only database access",
+    title: "Records stay behind the app",
     detail:
-      "Browser sessions never talk directly to collections. All reads and writes run through server side clients with private runtime credentials.",
+      "The browser cannot read database collections directly. Requests pass through application server checks.",
   },
   {
-    title: "Strict lender tenant boundary",
+    title: "Each lender sees their own records",
     detail:
-      "Every borrower, loan, collector, and payment lookup checks ownership against the authenticated server session rather than client inputs.",
+      "Borrower, loan, collector, and payment lookups are checked against the signed in lender account.",
   },
   {
-    title: "Atomic repayment transactions",
+    title: "Payments and balances move together",
     detail:
-      "Payment creation and remaining balance updates commit together, verifying loan status and rejecting amounts above the open balance.",
+      "A payment and its loan balance change are saved in one transaction, with checks against overpayment.",
   },
   {
-    title: "Protected sessions and salted hashes",
+    title: "Protected sign in",
     detail:
-      "Lender sessions use HTTP only cookies with SameSite Lax protection. Collector passwords are stored as salted scrypt hashes.",
+      "Lender sessions use protected browser cookies. Collector passwords are stored as salted hashes, not plain text.",
   },
 ];
 
@@ -177,243 +174,80 @@ export function LandingPage() {
           </div>
 
           <div className="relative mx-auto mt-12 max-w-[1100px] lg:mt-16">
-            <div className="absolute -left-4 top-12 z-10 hidden rounded-2xl bg-[#101827] px-5 py-4 text-white shadow-xl lg:block">
-              <p className="text-xl font-semibold">QR collections</p>
-              <p className="mt-1 max-w-40 text-sm text-[#cfd8e5]">Record payments in the field</p>
-            </div>
-            <div className="absolute -right-5 top-20 z-10 hidden rounded-2xl bg-white px-5 py-4 shadow-[0_12px_36px_rgba(15,23,42,0.16)] lg:block">
-              <p className="text-xl font-semibold text-[#101827]">Loan balances</p>
-              <p className="mt-1 max-w-40 text-sm text-[#657286]">See what remains, clearly</p>
-            </div>
             <div className="rounded-[2rem] bg-[#e8edff] p-3 shadow-[0_20px_55px_rgba(26,45,99,0.12)] sm:p-5 lg:px-12 lg:py-9">
               <InteractiveWorkspacePreview />
-            </div>
-            <div className="absolute -bottom-5 left-10 z-10 hidden rounded-2xl bg-white px-5 py-4 shadow-[0_12px_36px_rgba(15,23,42,0.14)] lg:block">
-              <p className="text-xl font-semibold text-[#101827]">Daily overview</p>
-              <p className="mt-1 max-w-40 text-sm text-[#657286]">Review collections together</p>
             </div>
           </div>
           <p className="mt-7 text-center text-sm text-[#657286]">Interactive product illustration with sample records, not live customer data.</p>
         </section>
 
-        {/* Problem to solution */}
-        <section className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <ScrollReveal>
-            <div className="max-w-[680px]">
-              <h2 className="heading-3 text-[var(--foreground)]">
-                Replace scattered spreadsheets and manual nightly tallying
-              </h2>
-              <p className="body-3 mt-4 text-[var(--mp-muted)]">
-                Small lending teams lose hours reconciling cash collected in the
-                field against office records. MortgagePro connects both sides
-                directly.
-              </p>
-            </div>
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:gap-16">
+              <div className="max-w-[380px]">
+                <h2 className="heading-3 text-[#17233a] [text-wrap:balance]">
+                  Less chasing. More clarity at the end of the day.
+                </h2>
+                <p className="body-3 mt-4 text-[#657286] [text-wrap:pretty]">
+                  MortgagePro connects the lender desk with payments recorded in
+                  the field, so the next step is easier to see.
+                </p>
+              </div>
 
-            <div className="mt-8 grid gap-6 lg:grid-cols-2">
-              <article className="rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6 sm:p-8">
-                <h3 className="title-1 text-[var(--foreground)]">
-                  Manual spreadsheets and chat receipts
-                </h3>
-                <ul className="mt-6 space-y-4">
-                  {COMPARISON_BEFORE.map((item) => (
-                    <li
-                      className="body-6 flex items-start gap-3 text-[var(--mp-muted)]"
-                      key={item}
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="mt-2 size-2 shrink-0 rounded-full bg-[var(--mp-muted)]/60"
-                      />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-
-              <article className="rounded-2xl border border-[#1d3b5c] bg-[#0b2848] p-6 text-white sm:p-8">
-                <h3 className="title-1 text-white">
-                  With MortgagePro ledger and scanner
-                </h3>
-                <ul className="mt-6 space-y-4">
-                  {COMPARISON_AFTER.map((item) => (
-                    <li
-                      className="body-6 flex items-start gap-3 text-[#d5dfeb]"
-                      key={item}
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-white/15 text-[#9ed2ff]"
-                      >
-                        <Check size={13} />
-                      </span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </article>
+              <div className="border-t border-[#dce4f1]">
+                {COMPARISON.map((item) => (
+                  <div
+                    className="grid gap-3 border-b border-[#dce4f1] py-6 sm:grid-cols-2 sm:gap-8"
+                    key={item.before}
+                  >
+                    <div>
+                      <p className="caption-3 text-[#657286]">Before</p>
+                      <p className="body-3 mt-2 text-[#657286]">{item.before}</p>
+                    </div>
+                    <div>
+                      <p className="caption-3 text-[#3156ee]">With MortgagePro</p>
+                      <p className="body-2 mt-2 text-[#17233a]">{item.after}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </ScrollReveal>
         </section>
 
-        {/* Capabilities */}
-        <section
-          className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-16"
-          id="capabilities"
-        >
-          <ScrollReveal>
-            <div className="max-w-[680px]">
-              <h2 className="heading-3 text-[var(--foreground)]">
-                Built around the four jobs a lending desk runs every day
-              </h2>
-              <p className="body-3 mt-4 text-[var(--mp-muted)]">
-                Every route in MortgagePro maps to an operational task rather
-                than bloated reporting menus.
-              </p>
-            </div>
-
-            <div className="mt-8 grid gap-6 lg:grid-cols-12">
-              <article className="rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6 sm:p-8 lg:col-span-7">
-                <div className="flex size-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface-muted)] text-[var(--mp-primary)]">
-                  <QrCode aria-hidden="true" size={20} />
-                </div>
-                <h3 className="heading-5 mt-6 text-[var(--foreground)]">
-                  QR field collection with atomic balance updates
-                </h3>
-                <p className="body-3 mt-3 text-[var(--mp-muted)]">
-                  Each loan generates a downloadable QR code. Collectors scan
-                  the code on their phone camera, inspect the remaining balance,
-                  and record the scheduled daily installment or a custom amount
-                  without typing loan IDs.
-                </p>
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface-muted)] p-4">
-                    <p className="body-4 text-[var(--foreground)]">
-                      Duplicate safe retries
-                    </p>
-                    <p className="caption-2 mt-1 text-[var(--mp-muted)]">
-                      Deterministic request IDs keep unstable mobile connections
-                      from double posting.
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface-muted)] p-4">
-                    <p className="body-4 text-[var(--foreground)]">
-                      Overpayment rejection
-                    </p>
-                    <p className="caption-2 mt-1 text-[var(--mp-muted)]">
-                      Transactions recheck remaining balance before committing
-                      any change.
-                    </p>
-                  </div>
-                </div>
-              </article>
-
-              <article className="rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6 sm:p-8 lg:col-span-5">
-                <div className="flex size-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface-muted)] text-[var(--mp-primary)]">
-                  <FileSpreadsheet aria-hidden="true" size={20} />
-                </div>
-                <h3 className="heading-5 mt-6 text-[var(--foreground)]">
-                  Portfolio visibility and clean CSV exports
-                </h3>
-                <p className="body-3 mt-3 text-[var(--mp-muted)]">
-                  Monitor daily collections, open balances, and overdue loans
-                  from the lender dashboard. Export borrower directories and
-                  payment histories to CSV whenever your bookkeeper needs a
-                  copy.
-                </p>
-                <ul className="mt-6 space-y-2">
-                  <li className="body-6 flex items-center gap-2 text-[var(--foreground)]">
-                    <Check
-                      aria-hidden="true"
-                      className="text-[var(--mp-primary)]"
-                      size={16}
-                    />
-                    Dedicated daily collection breakdown view
-                  </li>
-                  <li className="body-6 flex items-center gap-2 text-[var(--foreground)]">
-                    <Check
-                      aria-hidden="true"
-                      className="text-[var(--mp-primary)]"
-                      size={16}
-                    />
-                    One click overdue loan drawer with borrower details
-                  </li>
-                  <li className="body-6 flex items-center gap-2 text-[var(--foreground)]">
-                    <Check
-                      aria-hidden="true"
-                      className="text-[var(--mp-primary)]"
-                      size={16}
-                    />
-                    Formula safe CSV export formatting
-                  </li>
-                </ul>
-              </article>
-
-              <article className="rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6 sm:p-8 lg:col-span-5">
-                <div className="flex size-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface-muted)] text-[var(--mp-primary)]">
-                  <UsersRound aria-hidden="true" size={20} />
-                </div>
-                <h3 className="heading-5 mt-6 text-[var(--foreground)]">
-                  Separate access for lenders and collectors
-                </h3>
-                <p className="body-3 mt-3 text-[var(--mp-muted)]">
-                  Lenders manage borrowers, issue loans, and review reports from
-                  the full portal. Field collectors sign in with lender issued
-                  usernames and see only the scanner workflow they need.
-                </p>
-              </article>
-
-              <article className="rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6 sm:p-8 lg:col-span-7">
-                <div className="flex size-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface-muted)] text-[var(--mp-primary)]">
-                  <MessageSquareText aria-hidden="true" size={20} />
-                </div>
-                <h3 className="heading-5 mt-6 text-[var(--foreground)]">
-                  Borrower SMS notifications with quota control
-                </h3>
-                <p className="body-3 mt-3 text-[var(--mp-muted)]">
-                  Send borrower updates through TextLK directly from your
-                  workspace. Manage lender owned templates, track monthly SMS
-                  usage against your quota, request approved sender IDs, and
-                  review sanitized delivery logs without exposing borrower phone
-                  lists outside your account.
-                </p>
-              </article>
-            </div>
-          </ScrollReveal>
-        </section>
+        <CapabilityExplorer />
 
         {/* Mandatory scroll activated tagline reveal */}
         <TaglineReveal />
 
         {/* How it works */}
         <section
-          className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-16"
+          className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-20"
           id="workflow"
         >
           <ScrollReveal>
             <div className="max-w-[680px]">
-              <h2 className="heading-3 text-[var(--foreground)]">
-                From workspace request to first field receipt in three steps
+              <h2 className="heading-3 text-[#17233a] [text-wrap:balance]">
+                From account request to the first field payment.
               </h2>
-              <p className="body-3 mt-4 text-[var(--mp-muted)]">
-                Start with your existing borrowers and field staff without
-                complex integrations.
+              <p className="body-3 mt-4 text-[#657286] [text-wrap:pretty]">
+                Three practical steps connect the lender desk and collector phone.
               </p>
             </div>
 
-            <ol className="mt-8 grid gap-6 md:grid-cols-3">
+            <ol className="mt-10 grid gap-8 md:grid-cols-3 md:gap-10">
               {WORKFLOW_STEPS.map((step) => (
                 <li
-                  className="rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6"
+                  className="border-t-2 border-[#dce4f1] pt-5"
                   key={step.number}
                 >
-                  <span className="caption-3 inline-flex rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface-muted)] px-3 py-1 font-mono text-[var(--mp-primary)]">
-                    Step {step.number}
+                  <span className="title-1 text-[#3156ee]">
+                    {step.number}
                   </span>
-                  <h3 className="title-1 mt-4 text-[var(--foreground)]">
+                  <h3 className="title-1 mt-5 text-[#17233a]">
                     {step.title}
                   </h3>
-                  <p className="body-6 mt-2 text-[var(--mp-muted)]">
+                  <p className="body-6 mt-2 text-[#657286] [text-wrap:pretty]">
                     {step.description}
                   </p>
                 </li>
@@ -424,54 +258,49 @@ export function LandingPage() {
 
         {/* Security & architecture transparency */}
         <section
-          className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-16"
+          className="bg-[#0b2848] px-4 py-16 text-white sm:px-6 sm:py-20"
           id="security"
         >
-          <ScrollReveal>
-            <div className="rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6 sm:p-10">
-              <div className="max-w-[680px]">
-                <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface-muted)] px-3 py-1 text-[var(--foreground)]">
-                  <Lock aria-hidden="true" size={14} />
-                  <span className="caption-3">Verified security controls</span>
+          <div className="mx-auto w-full max-w-6xl">
+            <ScrollReveal>
+              <div className="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
+                <div className="max-w-[420px]">
+                  <div className="inline-flex size-10 items-center justify-center rounded-xl bg-white/10 text-[#b9d4ff]">
+                    <Lock aria-hidden="true" size={19} />
+                  </div>
+                  <h2 className="heading-3 mt-5 text-white [text-wrap:balance]">
+                    Your workspace stays yours.
+                  </h2>
+                  <p className="body-3 mt-4 text-[#d5dfeb] [text-wrap:pretty]">
+                    Lenders and collectors have separate access. The app checks
+                    which records belong to your workspace before showing them.
+                  </p>
                 </div>
-                <h2 className="heading-3 mt-4 text-[var(--foreground)]">
-                  Designed for strict multi lender separation
-                </h2>
-                <p className="body-3 mt-3 text-[var(--mp-muted)]">
-                  Every safeguard below is implemented and covered by automated
-                  tests inside this codebase.
-                </p>
-              </div>
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                {SECURITY_CONTROLS.map((control) => (
-                  <div
-                    className="rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface-muted)] p-5"
-                    key={control.title}
-                  >
-                    <div className="flex items-center gap-2 text-[var(--foreground)]">
+                <div className="border-t border-white/20">
+                  {SECURITY_CONTROLS.map((control) => (
+                    <div className="flex gap-4 border-b border-white/20 py-5" key={control.title}>
                       <ShieldCheck
                         aria-hidden="true"
-                        className="shrink-0 text-[#166534]"
-                        size={18}
+                        className="mt-0.5 shrink-0 text-[#a9c7ff]"
+                        size={19}
                       />
-                      <h3 className="title-3">{control.title}</h3>
+                      <div>
+                        <h3 className="title-3 text-white">{control.title}</h3>
+                        <p className="body-6 mt-1 text-[#d5dfeb]">{control.detail}</p>
+                      </div>
                     </div>
-                    <p className="body-6 mt-2 text-[var(--mp-muted)]">
-                      {control.detail}
-                    </p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
-              <p className="caption-2 mt-6 text-[var(--mp-muted)]">
-                Transparency note: MortgagePro is currently provided as a
-                controlled pilot lending workspace. Mandatory MFA, immutable
-                payment void reversals, and third party compliance audits are
-                planned for future releases.
+              <p className="caption-2 mt-10 max-w-[760px] text-[#c7d5e7]">
+                MortgagePro is currently a controlled pilot workspace. MFA,
+                auditable payment reversals, and independent compliance review
+                remain planned work.
               </p>
-            </div>
-          </ScrollReveal>
+            </ScrollReveal>
+          </div>
         </section>
 
         {/* FAQ */}

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, LoaderCircle } from "lucide-react";
+import { ArrowRight, LoaderCircle, LockKeyhole, Mail } from "lucide-react";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { PasswordField } from "@/features/auth/components/password-field";
@@ -43,23 +43,27 @@ export function LoginForm({ action, message, status }: LoginFormProps) {
           <span className="text-sm font-semibold text-[var(--foreground)]">
             Email address
           </span>
-          <input
-            autoCapitalize="none"
-            autoComplete="email"
-            autoCorrect="off"
-            className="mt-2 h-12 w-full rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface)] px-4 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--mp-muted)] focus:border-[var(--mp-primary)] focus:ring-4 focus:ring-[#2563eb]/10"
-            name="email"
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@company.com"
-            required
-            type="email"
-            value={email}
-          />
+          <span className="relative mt-2 block">
+            <Mail aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#596b85]" size={19} />
+            <input
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect="off"
+              className="h-12 w-full rounded-xl border border-[var(--mp-border)] bg-white pl-12 pr-4 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--mp-muted)] focus:border-[var(--mp-primary)] focus:ring-4 focus:ring-[#2563eb]/10"
+              name="email"
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@company.com"
+              required
+              type="email"
+              value={email}
+            />
+          </span>
         </label>
 
         <PasswordField
           autoComplete="current-password"
           label="Password"
+          leadingIcon={<LockKeyhole aria-hidden="true" size={19} />}
           name="password"
           placeholder="Enter your password"
         />

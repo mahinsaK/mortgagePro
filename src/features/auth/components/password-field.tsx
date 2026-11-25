@@ -8,12 +8,13 @@ export const PasswordField = forwardRef<
   {
     autoComplete: "current-password" | "new-password";
     label: string;
+    leadingIcon?: React.ReactNode;
     minLength?: number;
     name: string;
     placeholder: string;
   }
 >(function PasswordField(
-  { autoComplete, label, minLength, name, placeholder },
+  { autoComplete, label, leadingIcon, minLength, name, placeholder },
   ref,
 ) {
   const [visible, setVisible] = useState(false);
@@ -29,10 +30,15 @@ export const PasswordField = forwardRef<
         {label}
       </label>
       <span className="relative mt-2 block">
+        {leadingIcon ? (
+          <span aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#596b85]">
+            {leadingIcon}
+          </span>
+        ) : null}
         <input
           ref={ref}
           autoComplete={autoComplete}
-          className="h-12 w-full rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface)] px-4 pr-12 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--mp-muted)] focus:border-[var(--mp-primary)] focus:ring-4 focus:ring-[#2563eb]/10"
+          className={`h-12 w-full rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface)] pr-12 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--mp-muted)] focus:border-[var(--mp-primary)] focus:ring-4 focus:ring-[#2563eb]/10 ${leadingIcon ? "pl-12" : "pl-4"}`}
           id={inputId}
           minLength={minLength}
           name={name}

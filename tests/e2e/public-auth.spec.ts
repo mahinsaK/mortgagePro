@@ -142,7 +142,7 @@ test.describe("public authentication surfaces", () => {
 
       await page.goto("/auth/login");
       const overviewHeading = page.getByRole("heading", {
-        name: "Keep your lending operation in view.",
+        name: "Keep your lending operations in view.",
       });
       if (width >= 1024) {
         await expect(overviewHeading).toBeVisible();

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   BarChart3,
   Building2,
@@ -19,12 +20,12 @@ export function PublicAuthShell({
   wide?: boolean;
 }) {
   const width = aside
-    ? "max-w-[480px] lg:max-w-[1120px]"
+    ? "max-w-[480px] lg:max-w-[1280px]"
     : wide
       ? "max-w-3xl"
       : "max-w-[480px]";
 
-  const contentMaxWidth = wide && !aside ? "max-w-2xl" : "max-w-[420px]";
+  const contentMaxWidth = wide && !aside ? "max-w-2xl" : aside ? "max-w-[470px]" : "max-w-[420px]";
 
   return (
     <main className="relative flex min-h-[100dvh] flex-col justify-center overflow-hidden bg-[var(--background)] px-4 py-[max(1.25rem,env(safe-area-inset-top))] text-[var(--foreground)] sm:px-6 sm:py-8 lg:px-10">
@@ -44,14 +45,16 @@ export function PublicAuthShell({
         </header>
 
         <section
-          className={`overflow-hidden rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] shadow-[0_20px_50px_rgba(15,23,42,0.12)] ${
-            aside ? "lg:grid lg:min-h-[600px] lg:grid-cols-[1.05fr_0.95fr]" : ""
+          className={`overflow-hidden rounded-2xl border border-[var(--mp-border)] shadow-[0_20px_50px_rgba(15,23,42,0.12)] ${
+            aside
+              ? "bg-[#f4f7ff] lg:grid lg:min-h-[700px] lg:grid-cols-2"
+              : "bg-[var(--mp-surface)]"
           }`}
         >
           {aside}
           <div
             className={`p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:p-8 ${
-              aside ? "lg:flex lg:items-center lg:p-10" : ""
+              aside ? "lg:flex lg:items-center lg:p-10 xl:p-12" : ""
             }`}
           >
             <div className={`mx-auto w-full ${contentMaxWidth}`}>{children}</div>
@@ -136,41 +139,47 @@ export function AuthStatus({
 
 export function LoginOverviewPanel() {
   return (
-    <aside className="relative hidden overflow-hidden bg-[#0b2848] p-8 text-white lg:flex lg:flex-col lg:p-10">
-      <div className="relative z-10">
-        <span className="inline-flex items-center gap-2 rounded-full border border-[#8eb8df]/35 bg-white/[0.07] px-4 py-2 text-xs font-semibold text-[#d7eaff] shadow-inner sm:text-sm">
-          <UsersRound aria-hidden="true" size={16} />
+    <aside className="hidden min-w-0 flex-col justify-between p-10 text-[#102449] lg:flex xl:p-12">
+      <div>
+        <span className="inline-flex items-center gap-2 rounded-xl border border-[#d2e1ff] bg-[#e8f0ff] px-4 py-2 text-sm font-semibold text-[#0755df]">
+          <UsersRound aria-hidden="true" size={17} />
           Lender workspace
         </span>
-        <h2 className="mt-6 max-w-[440px] text-3xl font-bold leading-[1.15] tracking-[-0.035em] xl:text-4xl">
-          Keep your lending operation in view.
+        <h2 className="mt-7 max-w-[470px] text-4xl font-bold leading-tight tracking-[-0.035em] text-[#101d36] text-balance">
+          Keep your lending operations in view.
         </h2>
-        <p className="mt-3 max-w-[440px] text-base leading-7 text-[#d5dfeb]">
+        <p className="mt-4 max-w-[470px] text-base leading-7 text-[#51627d] text-pretty">
           Manage borrowers, review loans, and follow collections from one
           organized workspace.
         </p>
 
-        <div className="mt-6 grid gap-3">
+        <div className="mt-8 grid gap-4">
           <OverviewItem
             icon={<UsersRound size={17} />}
             text="Borrower and collector management"
+            detail="Keep your lending contacts organized."
           />
           <OverviewItem
             icon={<WalletCards size={17} />}
             text="Loan and payment tracking"
+            detail="Review loans, payments, and balances."
           />
           <OverviewItem
             icon={<BarChart3 size={17} />}
             text="Daily collection visibility"
+            detail="See today's collections at a glance."
           />
         </div>
       </div>
-
-      <ArchitectureArtwork />
-
-      <p className="relative z-10 mt-auto pt-6 text-xs leading-5 text-[#d5dfeb]">
-        Your account must be approved before lender access is enabled.
-      </p>
+      <Image
+        alt=""
+        aria-hidden="true"
+        className="mx-auto mt-5 h-auto max-h-[260px] w-full object-contain object-bottom"
+        height={1024}
+        priority
+        src="/lender-workspace-illustration.png"
+        width={1536}
+      />
     </aside>
   );
 }
@@ -199,35 +208,16 @@ export function LenderAccessLink() {
   );
 }
 
-function OverviewItem({ icon, text }: { icon: React.ReactNode; text: string }) {
+function OverviewItem({ icon, text, detail }: { icon: React.ReactNode; text: string; detail: string }) {
   return (
-    <div className="flex items-center gap-3 text-sm font-medium text-[#f1f6fb] lg:text-base">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#8eb8df]/25 bg-white/[0.07] text-[#9ed2ff] shadow-inner">
+    <div className="flex items-center gap-4">
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#e4edff] text-[#0755df]">
         {icon}
       </span>
-      <span>{text}</span>
-    </div>
-  );
-}
-
-function ArchitectureArtwork() {
-  return (
-    <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[48%] overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-t from-[#09223e] via-[#102f54]/80 to-transparent" />
-      <svg
-        className="absolute bottom-10 left-0 h-[90%] w-full opacity-80"
-        preserveAspectRatio="none"
-        viewBox="0 0 700 360"
-      >
-        <path d="M0 292 305 180 700 277V360H0Z" fill="#173b64" opacity=".72" />
-        <path d="M0 326 302 248 545 305 700 280V360H0Z" fill="#0a2441" />
-        <path d="M340 250 470 112 700 155V296H340Z" fill="#102b4c" stroke="#dbeafe" strokeWidth="2" />
-        <path d="m470 112 112 36v147H340v-45Z" fill="#15395f" opacity=".82" />
-        <path d="M405 235V188l120-42v135" fill="#071b31" stroke="#bcd8f4" strokeWidth="1.5" />
-        <path d="M436 224v-48l28-10v52Zm35-14v-46l29-10v49Z" fill="#d8a67e" opacity=".78" />
-        <path d="M582 148v147M340 250l130-138 230 43" fill="none" stroke="#f1f5f9" strokeWidth="2" />
-        <path d="M0 326 302 248l243 57" fill="none" stroke="#9cc8f2" strokeWidth="1.5" opacity=".75" />
-      </svg>
+      <span className="min-w-0">
+        <span className="block text-base font-semibold text-[#122344]">{text}</span>
+        <span className="block text-sm text-[#596b85]">{detail}</span>
+      </span>
     </div>
   );
 }

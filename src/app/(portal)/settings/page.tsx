@@ -21,7 +21,7 @@ export default async function SettingsPage() {
         <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:mt-2 sm:text-3xl">Lender profile</h1>
       </div>
 
-      <section className="max-w-3xl rounded-xl border border-[#dfe5ec] bg-white p-4 shadow-[var(--mp-shadow-sm)] sm:p-6">
+      <section className="portal-card max-w-3xl p-4 sm:p-6">
         <div className="mb-5">
           <p className="text-sm font-medium text-[#657386]">Business details</p>
           <h2 className="mt-1 text-lg font-semibold">Update profile</h2>
@@ -77,7 +77,7 @@ export default async function SettingsPage() {
         </form>
       </section>
 
-      <section className="mt-5 max-w-3xl rounded-xl border border-[#dfe5ec] bg-white p-4 shadow-[var(--mp-shadow-sm)] sm:mt-6 sm:p-6">
+      <section className="portal-card mt-5 max-w-3xl p-4 sm:mt-6 sm:p-6">
         <div className="mb-5">
           <p className="text-sm font-medium text-[#657386]">Security</p>
           <h2 className="mt-1 text-lg font-semibold">Change password</h2>
@@ -89,7 +89,7 @@ export default async function SettingsPage() {
         <LenderPasswordForm />
       </section>
 
-      <section className="mt-5 max-w-3xl rounded-xl border border-[#dfe5ec] bg-white p-4 shadow-[var(--mp-shadow-sm)] sm:mt-6 sm:p-6">
+      <section className="portal-card mt-5 max-w-3xl p-4 sm:mt-6 sm:p-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <p className="text-sm font-medium text-[#657386]">Device sessions</p>

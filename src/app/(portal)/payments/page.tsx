@@ -17,7 +17,7 @@ export default async function PaymentsPage() {
         <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:mt-2 sm:text-3xl">Payment history</h1>
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-[#dfe5ec] bg-white shadow-[var(--mp-shadow-sm)]">
+      <section className="portal-card overflow-hidden">
         <div className="border-b border-[#dfe5ec] px-5 py-4">
           <h2 className="text-lg font-semibold">Payments list</h2>
         </div>

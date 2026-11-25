@@ -12,7 +12,7 @@ export type SmsReportingData = {
 
 export function SmsUsageDashboard({ data }: { data: SmsReportingData }) {
   return (
-    <section className="w-full max-w-5xl rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
+    <section className="portal-card w-full max-w-5xl p-4">
       <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-[#657386]">
@@ -95,7 +95,7 @@ export function SmsUsageDashboard({ data }: { data: SmsReportingData }) {
 
 export function SmsRecentBatches({ batches }: { batches: SmsBatchSummary[] }) {
   return (
-    <details className="group overflow-hidden rounded-lg border border-[#dfe5ec] bg-white shadow-sm">
+    <details className="portal-card group overflow-hidden">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 marker:hidden">
         <div>
           <h2 className="text-base font-semibold text-[#15191f]">

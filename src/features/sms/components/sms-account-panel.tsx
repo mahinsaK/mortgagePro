@@ -37,7 +37,7 @@ export function SmsAccountPanel({
   const suspended = management.account?.status === "suspended";
 
   return (
-    <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
+    <section className="portal-card p-4">
       <div className="mb-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-[#657386]">
           SMS settings

@@ -93,7 +93,7 @@ export function LenderDashboardLoansPanel({
         />
       </div>
 
-      <section className="rounded-lg border border-[#dfe5ec] bg-white shadow-sm">
+      <section className="portal-card overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#dfe5ec] px-5 py-4">
           <h2 className="text-lg font-semibold">Loans list</h2>
           <p className="text-sm text-[#657386]">

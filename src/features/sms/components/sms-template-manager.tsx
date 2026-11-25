@@ -27,7 +27,7 @@ export function SmsTemplateManager({
   const [isCreating, setIsCreating] = useState(false);
 
   return (
-    <section className="flex aspect-square min-h-0 w-full flex-col overflow-hidden rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm xl:absolute xl:inset-0 xl:aspect-auto">
+    <section className="portal-card flex aspect-square min-h-0 w-full flex-col overflow-hidden p-4 xl:absolute xl:inset-0 xl:aspect-auto">
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-[#15191f]">

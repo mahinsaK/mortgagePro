@@ -13,7 +13,7 @@ export function BorrowerLoansGrid({ loans }: { loans: LoanRow[] }) {
       <div className="grid gap-4 xl:grid-cols-2">
         {loans.map((loan) => (
           <article
-            className="group relative cursor-pointer rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm transition hover:bg-[#f8fafc] md:p-5"
+            className="portal-card portal-card--interactive group relative cursor-pointer p-4 md:p-5"
             key={loan.id}
           >
             <button
@@ -52,7 +52,7 @@ export function BorrowerLoansGrid({ loans }: { loans: LoanRow[] }) {
           </article>
         ))}
         {loans.length === 0 ? (
-          <div className="rounded-lg border border-[#dfe5ec] bg-white p-6 text-sm text-[#657386] shadow-sm">
+          <div className="portal-card p-6 text-sm text-[#657386]">
             No loans found for this borrower.
           </div>
         ) : null}

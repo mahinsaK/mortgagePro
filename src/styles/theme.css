@@ -6,6 +6,9 @@
   --mp-primary: #2563eb;
   --mp-primary-strong: #1d4ed8;
   --mp-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.05), 0 8px 24px rgb(15 23 42 / 0.04);
+  --mp-card-surface: #ffffff;
+  --mp-card-border: #e4eaf2;
+  --mp-card-shadow: 0 14px 38px rgb(25 49 99 / 0.07), 0 2px 7px rgb(25 49 99 / 0.035);
 }
 
 :root[data-theme="dark"] {
@@ -18,6 +21,40 @@
   --mp-primary-strong: #9bb7ff;
   --mp-surface-muted: #121820;
   --mp-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.25), 0 8px 24px rgb(0 0 0 / 0.12);
+  --mp-card-surface: #171d24;
+  --mp-card-border: #344151;
+  --mp-card-shadow: 0 14px 38px rgb(0 0 0 / 0.22), 0 2px 7px rgb(0 0 0 / 0.12);
+}
+
+/* Shared lender-portal surface: one visual treatment for lists, metrics, and settings. */
+.portal-card {
+  min-width: 0;
+  border: 1px solid var(--mp-card-border);
+  border-radius: 1.25rem;
+  background-color: var(--mp-card-surface);
+  box-shadow: var(--mp-card-shadow);
+}
+
+.portal-card--interactive {
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+@media (hover: hover) {
+  .portal-card--interactive:not(:disabled):hover {
+    border-color: var(--mp-primary);
+    box-shadow: 0 18px 42px rgb(25 49 99 / 0.11), 0 2px 7px rgb(25 49 99 / 0.035);
+  }
+
+  :root[data-theme="dark"] .portal-card--interactive:not(:disabled):hover {
+    box-shadow: 0 18px 42px rgb(0 0 0 / 0.3), 0 2px 7px rgb(0 0 0 / 0.12);
+  }
+}
+
+@media (max-width: 639px) {
+  .portal-card {
+    border-radius: 1rem;
+    box-shadow: var(--mp-shadow-sm);
+  }
 }
 
 :root[data-theme="dark"] body {

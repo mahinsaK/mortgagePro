@@ -16,7 +16,7 @@ export function DashboardDateTime({ initialIso }: { initialIso: string }) {
   return (
     <div
       aria-label="Current date and time"
-      className="flex w-full items-center justify-between gap-4 rounded-lg border border-[#dfe5ec] bg-white px-4 py-3 shadow-sm sm:w-auto sm:min-w-72"
+      className="portal-card flex w-full items-center justify-between gap-4 px-4 py-3 sm:w-auto sm:min-w-72"
     >
       <div className="flex min-w-0 items-center gap-2.5">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-[#eef4ff] text-[#1d4ed8]">

@@ -191,7 +191,7 @@ export function SmsWorkbench({
             : "grid"
         }
       >
-        <section className="rounded-lg border border-[#dfe5ec] bg-white p-4 shadow-sm">
+        <section className="portal-card p-4">
           <div className="mb-4">
             <p className="text-sm font-medium text-[#657386]">Selected SMS</p>
             <h2 className="mt-1 text-lg font-semibold">Message recipients</h2>

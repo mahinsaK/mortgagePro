@@ -66,7 +66,7 @@ export function DailyCollectionsTable({
   );
 
   return (
-    <section className="rounded-lg border border-[#dfe5ec] bg-white shadow-sm">
+    <section className="portal-card overflow-hidden">
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#dfe5ec] px-5 py-4">
         <div>
           <h2 className="text-lg font-semibold">Collection details</h2>

@@ -84,7 +84,7 @@ export function LenderDashboardStats({
           if (stat.label === "Overdue loans") {
             return (
               <button
-                className="block min-h-28 rounded-xl border border-[#dfe5ec] bg-white p-4 text-left shadow-[var(--mp-shadow-sm)] transition hover:border-[#f59e0b] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d4ed8] focus-visible:ring-offset-2 disabled:cursor-default disabled:hover:border-[#dfe5ec] disabled:hover:shadow-sm sm:min-h-36 sm:p-5"
+                className="portal-card portal-card--interactive block min-h-28 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d4ed8] focus-visible:ring-offset-2 disabled:cursor-default sm:min-h-36 sm:p-5"
                 disabled={overdueTotal === 0}
                 key={`${stat.label}-${index}`}
                 onClick={openOverdueLoans}
@@ -220,7 +220,7 @@ export function LenderDashboardStats({
 
 function StatCard({ stat }: { stat: DashboardStat }) {
   return (
-    <article className="h-full min-h-28 rounded-xl border border-[#dfe5ec] bg-white p-4 shadow-[var(--mp-shadow-sm)] transition hover:border-[#c7d2fe] sm:min-h-36 sm:p-5">
+    <article className="portal-card h-full min-h-28 p-4 sm:min-h-36 sm:p-5">
       <p className="text-sm font-medium text-[#657386]">{stat.label}</p>
       <p className="mt-2 text-2xl font-semibold tracking-tight sm:mt-3 sm:text-3xl">
         {stat.value}

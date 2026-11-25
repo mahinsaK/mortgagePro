@@ -49,7 +49,7 @@ export default async function LoansPage({
         </div>
       ) : null}
 
-      <section className="overflow-hidden rounded-xl border border-[#dfe5ec] bg-white shadow-[var(--mp-shadow-sm)]">
+      <section className="portal-card overflow-hidden">
         <div className="border-b border-[#dfe5ec] px-5 py-4">
           <h2 className="text-lg font-semibold">Loans list</h2>
         </div>

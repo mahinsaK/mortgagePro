@@ -30,7 +30,7 @@ export default async function CollectorsPage() {
 
       <AddCollectorForm />
 
-      <section className="@container min-w-0 overflow-hidden rounded-xl border border-[#dfe5ec] bg-white shadow-[var(--mp-shadow-sm)]">
+      <section className="portal-card @container overflow-hidden">
         <div className="border-b border-[#dfe5ec] px-5 py-4">
           <h2 className="text-lg font-semibold">Collectors list</h2>
         </div>
@@ -51,7 +51,7 @@ function SummaryCard({
   wideOnMobile?: boolean;
 }) {
   return (
-    <article className={`rounded-xl border border-[#dfe5ec] bg-white p-4 shadow-[var(--mp-shadow-sm)] sm:col-span-1 lg:p-5 ${wideOnMobile ? "col-span-2" : ""}`}>
+    <article className={`portal-card p-4 sm:col-span-1 lg:p-5 ${wideOnMobile ? "col-span-2" : ""}`}>
       <p className="text-xs font-medium leading-tight text-[#657386] sm:text-sm">{label}</p>
       <p className="mt-2 text-xl font-semibold tracking-tight sm:mt-3 sm:text-2xl">{value}</p>
     </article>

@@ -104,7 +104,7 @@ function toColomboDateInputValue(date: Date) {
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <article className="rounded-lg border border-[#dfe5ec] bg-white p-3 shadow-sm md:p-5">
+    <article className="portal-card p-3 md:p-5">
       <p className="text-xs font-medium text-[#657386] md:text-sm">{label}</p>
       <p className="mt-2 truncate text-xl font-semibold capitalize md:mt-3 md:text-2xl">{value}</p>
     </article>

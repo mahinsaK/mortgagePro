@@ -70,7 +70,7 @@ export function BorrowersInfiniteList({
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
-    <section className="overflow-hidden rounded-xl border border-[#dfe5ec] bg-white shadow-[var(--mp-shadow-sm)]">
+    <section className="portal-card overflow-hidden">
       <div className="flex flex-col gap-4 border-b border-[#dfe5ec] px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Borrowers list</h2>

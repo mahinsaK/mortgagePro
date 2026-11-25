@@ -97,7 +97,7 @@ export function NotificationsPageContent() {
   const notifications = useLocalNotifications(true);
 
   return (
-    <section className="rounded-lg border border-[#dfe5ec] bg-white shadow-sm">
+    <section className="portal-card overflow-hidden">
       <div className="flex flex-col gap-3 border-b border-[#dfe5ec] p-4 sm:flex-row sm:items-center sm:justify-between md:p-5">
         <div>
           <h2 className="text-lg font-semibold">Action centre</h2>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   Building2,
   Lock,
@@ -187,6 +188,14 @@ export function LandingPage() {
                   MortgagePro connects the lender desk with payments recorded in
                   the field, so the next step is easier to see.
                 </p>
+                <Image
+                  alt="Illustration of borrower records, loan overview, collections, and QR scanning"
+                  className="mx-auto mt-8 h-auto w-full max-w-[380px] object-contain lg:mx-0"
+                  height={1024}
+                  sizes="(max-width: 640px) 90vw, 380px"
+                  src="/lender-workspace-overview.png"
+                  width={1536}
+                />
               </div>
 
               <div className="border-t border-[#dce4f1]">

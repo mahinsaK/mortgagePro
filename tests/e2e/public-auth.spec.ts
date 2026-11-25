@@ -65,6 +65,11 @@ test.describe("public authentication surfaces", () => {
       page.getByRole("link", { name: "Lender sign in" }).first(),
     ).toBeVisible();
     await expect(page.getByRole("link", { name: "Collector access" })).toHaveCount(0);
+    await expect(
+      page.getByRole("img", {
+        name: "Illustration of borrower records, loan overview, collections, and QR scanning",
+      }),
+    ).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expectNoSeriousAccessibilityViolations(page);
   });

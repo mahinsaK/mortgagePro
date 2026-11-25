@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import {
   BarChart3,
   Building2,
@@ -143,47 +142,36 @@ export function AuthStatus({
 
 export function LoginOverviewPanel() {
   return (
-    <aside className="hidden min-w-0 flex-col justify-between px-10 py-8 text-[#102449] lg:flex xl:px-14">
-      <div>
-        <span className="inline-flex items-center gap-2 rounded-xl border border-[#d2e1ff] bg-[#e8f0ff] px-4 py-2 text-sm font-semibold text-[#0755df]">
-          <UsersRound aria-hidden="true" size={17} />
-          Lender workspace
-        </span>
-        <h2 className="mt-6 max-w-[530px] text-4xl font-bold leading-tight tracking-[-0.035em] text-[#101d36] text-balance xl:text-5xl">
-          Keep your lending operations in view.
-        </h2>
-        <p className="mt-3 max-w-[480px] text-base leading-7 text-[#51627d] text-pretty">
-          Manage borrowers, review loans, and follow collections from one
-          organized workspace.
-        </p>
+    <aside className="hidden min-w-0 flex-col justify-center overflow-hidden px-10 py-8 text-[#102449] lg:flex xl:px-14">
+      <div className="w-full">
+        <div className="relative z-10">
+          <h2 className="max-w-[530px] text-4xl font-bold leading-tight tracking-[-0.035em] text-[#101d36] text-balance xl:text-5xl">
+            Keep your lending operations in view.
+          </h2>
+          <p className="mt-3 max-w-[480px] text-base leading-7 text-[#51627d] text-pretty">
+            Manage borrowers, review loans, and follow collections from one
+            organized workspace.
+          </p>
 
-        <div className="mt-6 grid gap-3">
-          <OverviewItem
-            icon={<UsersRound size={17} />}
-            text="Borrower and collector management"
-            detail="Keep your lending contacts organized."
-          />
-          <OverviewItem
-            icon={<WalletCards size={17} />}
-            text="Loan and payment tracking"
-            detail="Review loans, payments, and balances."
-          />
-          <OverviewItem
-            icon={<BarChart3 size={17} />}
-            text="Daily collection visibility"
-            detail="See today's collections at a glance."
-          />
+          <div className="mt-6 grid gap-3 rounded-2xl border border-white/80 bg-white/65 p-4 shadow-[0_12px_32px_rgba(39,84,156,0.08)] backdrop-blur-xl">
+            <OverviewItem
+              icon={<UsersRound size={17} />}
+              text="Borrower and collector management"
+              detail="Keep your lending contacts organized."
+            />
+            <OverviewItem
+              icon={<WalletCards size={17} />}
+              text="Loan and payment tracking"
+              detail="Review loans, payments, and balances."
+            />
+            <OverviewItem
+              icon={<BarChart3 size={17} />}
+              text="Daily collection visibility"
+              detail="See today's collections at a glance."
+            />
+          </div>
         </div>
       </div>
-      <Image
-        alt=""
-        aria-hidden="true"
-        className="mx-auto mt-4 h-[clamp(200px,32vh,320px)] w-full object-contain object-bottom"
-        height={1024}
-        priority
-        src="/lender-workspace-overview.png"
-        width={1536}
-      />
     </aside>
   );
 }

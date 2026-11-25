@@ -144,10 +144,17 @@ test.describe("public authentication surfaces", () => {
       const overviewHeading = page.getByRole("heading", {
         name: "Keep your lending operations in view.",
       });
+      const collectorShortcut = page.getByRole("link", { name: "Collector login" });
       if (width >= 1024) {
         await expect(overviewHeading).toBeVisible();
+        await expect(collectorShortcut).toBeHidden();
       } else {
         await expect(overviewHeading).toBeHidden();
+        if (width < 768) {
+          await expect(collectorShortcut).toBeVisible();
+        } else {
+          await expect(collectorShortcut).toBeHidden();
+        }
       }
     }
   });

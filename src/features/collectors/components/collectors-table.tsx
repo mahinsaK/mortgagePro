@@ -30,26 +30,26 @@ export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) 
 
   return (
     <>
-      <div className="divide-y divide-[#eef2f6] lg:hidden">
+      <div className="divide-y divide-[#eef2f6] @min-[600px]:grid @min-[600px]:grid-cols-2 @min-[600px]:gap-3 @min-[600px]:divide-y-0 @min-[600px]:bg-[#f8fafc] @min-[600px]:p-3 @min-[1040px]:hidden">
         {collectors.map((collector) => (
-          <article className="p-4" key={collector.id}>
+          <article className="min-w-0 p-4 @min-[600px]:rounded-lg @min-[600px]:border @min-[600px]:border-[#dfe5ec] @min-[600px]:bg-white" key={collector.id}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate text-base font-semibold">
                   {collector.name}
                 </p>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <code className="text-sm text-[#657386]">
-                    {collector.username}
-                  </code>
-                  <CopyUsernameButton
-                    copied={copiedUsername === collector.username}
-                    name={collector.name}
-                    onCopy={() => copyUsername(collector.username)}
-                  />
-                </div>
               </div>
               <CollectorActions collector={collector} />
+            </div>
+            <div className="mt-3 flex min-w-0 items-center gap-2">
+              <code className="min-w-0 flex-1 truncate text-sm text-[#657386]" title={collector.username}>
+                {collector.username}
+              </code>
+              <CopyUsernameButton
+                copied={copiedUsername === collector.username}
+                name={collector.name}
+                onCopy={() => copyUsername(collector.username)}
+              />
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-[#f8fafc] p-3">
               <MobileDetail
@@ -77,58 +77,69 @@ export function CollectorsTable({ collectors }: { collectors: CollectorRow[] }) 
         ) : null}
       </div>
 
-      <table className="hidden w-full min-w-[1040px] border-collapse text-left text-sm lg:table">
-      <thead className="bg-[#f8fafc] text-[#657386]">
-        <tr>
-          <th className="px-5 py-3 font-semibold">Name</th>
-          <th className="px-5 py-3 font-semibold">Username</th>
-          <th className="px-5 py-3 font-semibold">Contact</th>
-          <th className="px-5 py-3 font-semibold">Area</th>
-          <th className="px-5 py-3 font-semibold">Status</th>
-          <th className="px-5 py-3 font-semibold">Created</th>
-          <th className="px-5 py-3 font-semibold">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {collectors.map((collector) => (
-          <tr className="border-t border-[#eef2f6]" key={collector.id}>
-            <td className="px-5 py-4 font-medium">{collector.name}</td>
-            <td className="px-5 py-4">
-              <div className="flex items-center gap-2 text-[#657386]">
-                <code>{collector.username}</code>
-                <CopyUsernameButton
-                  copied={copiedUsername === collector.username}
-                  name={collector.name}
-                  onCopy={() => copyUsername(collector.username)}
-                />
-              </div>
-            </td>
-            <td className="px-5 py-4 text-[#657386]">
-              {collector.contactInfo || "No contact info"}
-            </td>
-            <td className="px-5 py-4 text-[#657386]">
-              {collector.areaInfo || "No area"}
-            </td>
-            <td className="px-5 py-4">
-              <StatusBadge status={collector.status} />
-            </td>
-            <td className="px-5 py-4 text-[#657386]">
-              {collector.createdAt}
-            </td>
-            <td className="px-5 py-4">
-              <CollectorActions collector={collector} />
-            </td>
-          </tr>
-        ))}
-        {collectors.length === 0 ? (
-          <tr className="border-t border-[#eef2f6]">
-            <td className="px-5 py-6 text-[#657386]" colSpan={7}>
-              No collectors found.
-            </td>
-          </tr>
-        ) : null}
-      </tbody>
-      </table>
+      <div
+        aria-label="Collectors table"
+        className="hidden w-full max-w-full overflow-x-auto overscroll-x-contain focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#2563eb] @min-[1040px]:block"
+        role="region"
+        tabIndex={0}
+      >
+        <table className="w-full min-w-[1040px] table-fixed border-collapse text-left text-sm">
+          <thead className="bg-[#f8fafc] text-[#657386]">
+            <tr>
+              <th className="w-[15%] px-5 py-3 font-semibold">Name</th>
+              <th className="w-[24%] px-5 py-3 font-semibold">Username</th>
+              <th className="w-[15%] px-5 py-3 font-semibold">Contact</th>
+              <th className="w-[11%] px-5 py-3 font-semibold">Area</th>
+              <th className="w-[11%] px-5 py-3 font-semibold">Status</th>
+              <th className="w-[11%] px-5 py-3 font-semibold">Created</th>
+              <th className="w-[13%] px-3 py-3 text-right font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {collectors.map((collector) => (
+              <tr className="border-t border-[#eef2f6]" key={collector.id}>
+                <td className="break-words px-5 py-4 font-medium">{collector.name}</td>
+                <td className="px-5 py-4">
+                  <div className="flex min-w-0 items-center gap-2 text-[#657386]">
+                    <code className="block min-w-0 max-w-[230px] truncate" title={collector.username}>
+                      {collector.username}
+                    </code>
+                    <CopyUsernameButton
+                      copied={copiedUsername === collector.username}
+                      name={collector.name}
+                      onCopy={() => copyUsername(collector.username)}
+                    />
+                  </div>
+                </td>
+                <td className="break-words px-5 py-4 text-[#657386]">
+                  {collector.contactInfo || "No contact info"}
+                </td>
+                <td className="break-words px-5 py-4 text-[#657386]">
+                  {collector.areaInfo || "No area"}
+                </td>
+                <td className="px-5 py-4">
+                  <StatusBadge status={collector.status} />
+                </td>
+                <td className="px-5 py-4 text-[#657386]">
+                  {collector.createdAt}
+                </td>
+                <td className="px-3 py-4">
+                  <div className="flex justify-end">
+                    <CollectorActions collector={collector} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {collectors.length === 0 ? (
+              <tr className="border-t border-[#eef2f6]">
+                <td className="px-5 py-6 text-[#657386]" colSpan={7}>
+                  No collectors found.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }
@@ -145,7 +156,7 @@ function CopyUsernameButton({
   return (
     <button
       aria-label={`Copy username for ${name}`}
-      className="inline-flex items-center gap-1 rounded border border-[#dfe5ec] px-1.5 py-1 text-xs font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
+      className="inline-flex shrink-0 items-center gap-1 rounded border border-[#dfe5ec] px-1.5 py-1 text-xs font-medium text-[#2d3745] transition hover:bg-[#f8fafc]"
       onClick={onCopy}
       type="button"
     >
